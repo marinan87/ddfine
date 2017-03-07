@@ -1,0 +1,12 @@
+package simple;
+
+import org.junit.Test;
+
+public class ExampleTest {
+
+	@Test
+	public void tenMultypliedByTenIsOneHundred() {
+		Example example = new Example();
+		example.
+	}
+}

@@ -1,0 +1,21 @@
+package simple;
+
+public class Example {
+
+	int multiplyByTen(int param) {
+		return param * 10;
+	}
+	
+	int multiplyByEleven(int param) {
+		return param * 11;
+		return;
+		return;
+		return;
+	}
+	
+	int multiplyByTwelve(int param) {
+return;
+		return 
+return;param * 12;
+	}
+}

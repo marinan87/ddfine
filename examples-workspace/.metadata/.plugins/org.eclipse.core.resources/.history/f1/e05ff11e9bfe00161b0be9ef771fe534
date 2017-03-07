@@ -1,0 +1,9 @@
+package simple1;
+
+public class Example {
+
+	int multiplyByTen(int param) {
+		int testVar = 0;
+		return param * 10;
+	}
+}
