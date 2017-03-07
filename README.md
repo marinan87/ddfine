@@ -1,1 +1,1 @@
-# regressionfinder
+<a href="https://github.com/marinan87/regressionfinder/wiki/Setting-up-the-project">How to set up and run the project</a>
