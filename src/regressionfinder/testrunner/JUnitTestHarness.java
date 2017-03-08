@@ -53,8 +53,8 @@ public class JUnitTestHarness extends TestHarness<SourceCodeChange> {
 				.collect(Collectors.toList());
 		
 		// This is required because IsolatedURLClassLoader should be able to find IsolatedClassLoaderTestRunner class, 
-		// which resides in the plug-in project. Hard-coded value will be replaced later.
-		urlList.add(new URL("file:/C:/regressions/utils/regression-finder/bin/"));
+		// which resides in the plug-in project.
+		urlList.add(new URL("file:" + IsolatedClassLoaderTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "bin/"));
 		
 		return (URL[]) urlList.toArray(new URL[urlList.size()]);
 	}
