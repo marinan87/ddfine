@@ -64,7 +64,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 	}
 	
 	private void applyFailureInducingChanges(ICompilationUnit sourceCU, List<SourceCodeChange> failureInducingChanges) throws Exception {
-		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, failureInducingChanges);
+		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, failureInducingChanges);
 	}
 	
 	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, List<SourceCodeChange> failureInducingChanges) throws Exception {

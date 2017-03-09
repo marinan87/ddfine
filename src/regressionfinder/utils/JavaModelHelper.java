@@ -70,10 +70,10 @@ public class JavaModelHelper {
 		return aPackage.getCompilationUnit(fileName);
 	}
 	
-	public static ICompilationUnit createCopyOfCompilationUnit(ICompilationUnit cu, String fileName) throws JavaModelException {
+	public static ICompilationUnit createCopyOfCompilationUnit(ICompilationUnit cu) throws JavaModelException {
 		IJavaProject stagingProject = findJavaProjectInWorkspace("StagingArea");
 		IPackageFragment stagingPackage = findPackageInProject(stagingProject, "src", "simple");
-		ICompilationUnit copy = stagingPackage.createCompilationUnit(fileName, cu.getSource(), true, null);
+		ICompilationUnit copy = stagingPackage.createCompilationUnit(cu.getElementName(), cu.getSource(), true, null);
 		copy.becomeWorkingCopy(new NullProgressMonitor());
 		copy.commitWorkingCopy(false, new NullProgressMonitor());  
 		copy.makeConsistent(new NullProgressMonitor());

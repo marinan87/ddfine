@@ -25,8 +25,8 @@ public class SourceCodeManipulator {
 	private final IDocument document;
 	private int offset = 0; // temporary workaround
 	
-	public SourceCodeManipulator(ICompilationUnit cu, String fileName) throws Exception {			
-		ICompilationUnit copyOfSource = JavaModelHelper.createCopyOfCompilationUnit(cu, fileName);
+	public SourceCodeManipulator(ICompilationUnit cu) throws Exception {	
+		ICompilationUnit copyOfSource = JavaModelHelper.createCopyOfCompilationUnit(cu);
 		ITextEditor textEditor = JavaModelHelper.openTextEditor(copyOfSource);
 		document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
 	}
@@ -94,9 +94,8 @@ public class SourceCodeManipulator {
 		return result;
 	}
 	
-	public static void copyAndModifyLocalizationSource(ICompilationUnit sourceCU, String fileName,
-			List<SourceCodeChange> selectedSourceCodeChangeSet) throws Exception {
-		SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU, fileName);
+	public static void copyAndModifyLocalizationSource(ICompilationUnit sourceCU, List<SourceCodeChange> selectedSourceCodeChangeSet) throws Exception {
+		SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU);
 		
 		// SourceCodeChange provided by ChangeDistiller currently does not contain enough information in order to 
 		// apply detected insertions to the original source code file. ChangeDistiller will be updated later. 

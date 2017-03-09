@@ -24,7 +24,6 @@ import regressionfinder.utils.JavaModelHelper;
 public class JUnitTestHarness extends TestHarness<SourceCodeChange> {
 	
 	private static final String TEMP_PROJECT = "StagingArea";
-	private static final String LOCALIZATION_SOURCE = "Example.java"; // currently hard-coded value
 	private static final String TEST_CLASS = "simple.ExampleTest"; // currently hard-coded value
 	
 	private final ICompilationUnit sourceCU;
@@ -64,7 +63,7 @@ public class JUnitTestHarness extends TestHarness<SourceCodeChange> {
 		boolean testPassed = true;
 		try {
 			// TODO: instead of obtaining new copy each time, try to undo previous changes?
-			SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, selectedSourceCodeChangeSet);
+			SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, selectedSourceCodeChangeSet);
 			testPassed = runUnitTest();
 		} catch (Exception e) {
 			return TestHarness.UNRESOLVED;
