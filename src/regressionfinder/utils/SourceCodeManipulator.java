@@ -16,23 +16,45 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
 
 /*
- * Helper for manipulating source code file. 
- * A trivial mock implementation working only for a few hard-coded cases, with no proper exception handling etc.
- * Will be completely replaced later with normal logic for applying particular source code change. 
+ * Utility class for applying source code change deltas to original file. 
+ * A trivial mock implementation working only for a few hard-coded cases, with no proper exception handling etc. 
  */
 public class SourceCodeManipulator {
 	
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\(.*\\)$");
 	private final IDocument document;
-	private int offset = 0; // temporary workaround
+	private int offset = 0;
 	
 	public SourceCodeManipulator(ICompilationUnit cu) throws Exception {	
 		ICompilationUnit copyOfSource = JavaModelHelper.createCopyOfCompilationUnit(cu);
 		ITextEditor textEditor = JavaModelHelper.openTextEditor(copyOfSource);
 		document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
 	}
+	
+	private void applySourceCodeChanges(List<SourceCodeChange> sourceCodeChanges) throws Exception {
+		sourceCodeChanges.sort((o1, o2) -> getStartPosition(o1) - getStartPosition(o2));
+
+		for (SourceCodeChange sourceCodeChange : sourceCodeChanges) {
+			applySourceCodeChange(sourceCodeChange);
+		}
 		
-	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
+		JavaModelHelper.saveModifiedFiles();
+	}
+
+	private int getStartPosition(SourceCodeChange sourceCodeChange) {
+		switch (sourceCodeChange.getChangeType()) {
+			case STATEMENT_INSERT:
+				return 78;
+			case STATEMENT_UPDATE:
+				return ((Update) sourceCodeChange).getChangedEntity().getStartPosition();
+			case REMOVED_FUNCTIONALITY:
+				return ((Delete) sourceCodeChange).getChangedEntity().getStartPosition();
+			default:
+				return -1;
+		}
+	}
+
+	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {		
 		switch (sourceCodeChange.getChangeType()) {
 			case STATEMENT_INSERT:
 				applyInsertSourceCodeChange(sourceCodeChange);	
@@ -42,8 +64,9 @@ public class SourceCodeManipulator {
 				break;
 			case REMOVED_FUNCTIONALITY:
 				applyDeleteSourceCodeChange(sourceCodeChange);
+				break;
 			default:
-				return;
+				break;
 		}
 	}
 	
@@ -52,8 +75,11 @@ public class SourceCodeManipulator {
 		
 		if (sourceCodeChange.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
 			String textToInsert = insert.getChangedEntity().getUniqueName() + TextUtilities.getDefaultLineDelimiter(document);
+			// SourceCodeChange provided by ChangeDistiller currently does not contain enough information in order to 
+			// apply detected insertions to the original source code file. The insert position is now hard-coded.
+			// ChangeDistiller will be updated later. 
 			document.replace(78, 0, textToInsert);
-			offset += textToInsert.length(); // temporary workaround
+			offset += textToInsert.length();
 		}		
 	}
 
@@ -64,9 +90,9 @@ public class SourceCodeManipulator {
 			String newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
 			int startPosition = update.getChangedEntity().getStartPosition();
 			int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition;
-			
+
 			document.replace(startPosition + offset, changedEntityValueLength, newStatement);
-			offset += newStatement.length() - changedEntityValueLength; // temporary workaround
+			offset += newStatement.length() - changedEntityValueLength; 
 		}
 	}	
 	
@@ -78,7 +104,7 @@ public class SourceCodeManipulator {
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 			
 			document.replace(startPosition + offset, changedEntityValueLength, "");
-//			offset -= changedEntityValueLength; // temporary workaround
+			offset -= changedEntityValueLength;
 		}
 	}
 	
@@ -97,13 +123,6 @@ public class SourceCodeManipulator {
 	
 	public static void copyAndModifyLocalizationSource(ICompilationUnit sourceCU, List<SourceCodeChange> selectedSourceCodeChangeSet) throws Exception {
 		SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU);
-		
-		// SourceCodeChange provided by ChangeDistiller currently does not contain enough information in order to 
-		// apply detected insertions to the original source code file. ChangeDistiller will be updated later. 
-		for (SourceCodeChange change : selectedSourceCodeChangeSet) {
-			sourceCodeHelper.applySourceCodeChange(change);
-		}
-
-		JavaModelHelper.saveModifiedFiles();
+		sourceCodeHelper.applySourceCodeChanges(selectedSourceCodeChangeSet);
 	}
 }
