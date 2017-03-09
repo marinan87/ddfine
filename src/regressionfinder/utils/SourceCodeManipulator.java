@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.java.JavaEntityType;
@@ -50,7 +51,7 @@ public class SourceCodeManipulator {
 		Insert insert = (Insert) sourceCodeChange;
 		
 		if (sourceCodeChange.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
-			String textToInsert = insert.getChangedEntity().getUniqueName() + "\r\n";
+			String textToInsert = insert.getChangedEntity().getUniqueName() + TextUtilities.getDefaultLineDelimiter(document);
 			document.replace(78, 0, textToInsert);
 			offset += textToInsert.length(); // temporary workaround
 		}		
