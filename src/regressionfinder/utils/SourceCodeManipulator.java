@@ -9,6 +9,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.java.JavaEntityType;
+import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
@@ -22,7 +23,7 @@ public class SourceCodeManipulator {
 	
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\(.*\\)$");
 	private final IDocument document;
-	private int offset = 0;
+	private int offset = 0; // temporary workaround
 	
 	public SourceCodeManipulator(ICompilationUnit cu, String fileName) throws Exception {			
 		ICompilationUnit copyOfSource = JavaModelHelper.createCopyOfCompilationUnit(cu, fileName);
@@ -38,18 +39,20 @@ public class SourceCodeManipulator {
 			case STATEMENT_UPDATE:
 				applyUpdateSourceCodeChange(sourceCodeChange);
 				break;
+			case REMOVED_FUNCTIONALITY:
+				applyDeleteSourceCodeChange(sourceCodeChange);
 			default:
 				return;
 		}
 	}
-
+	
 	private void applyInsertSourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
 		Insert insert = (Insert) sourceCodeChange;
 		
 		if (sourceCodeChange.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
 			String textToInsert = insert.getChangedEntity().getUniqueName() + "\r\n";
 			document.replace(78, 0, textToInsert);
-			offset += textToInsert.length();
+			offset += textToInsert.length(); // temporary workaround
 		}		
 	}
 
@@ -59,12 +62,24 @@ public class SourceCodeManipulator {
 		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			String newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
 			int startPosition = update.getChangedEntity().getStartPosition();
-			int oldStatementLength = update.getChangedEntity().getEndPosition() - startPosition;
+			int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition;
 			
-			document.replace(startPosition + offset, oldStatementLength, newStatement);
-			offset += newStatement.length() - oldStatementLength;
+			document.replace(startPosition + offset, changedEntityValueLength, newStatement);
+			offset += newStatement.length() - changedEntityValueLength; // temporary workaround
 		}
 	}	
+	
+	private void applyDeleteSourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
+		Delete delete = (Delete) sourceCodeChange;
+
+		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD) {
+			int startPosition = delete.getChangedEntity().getStartPosition();
+			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
+			
+			document.replace(startPosition + offset, changedEntityValueLength, "");
+//			offset -= changedEntityValueLength; // temporary workaround
+		}
+	}
 	
 	private String normalizeEntityValue(String entityValue) {
 		String result = "";

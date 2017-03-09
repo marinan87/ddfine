@@ -18,28 +18,28 @@ public class IsolatedClassLoaderTestRunner {
 		ensureLoadedInIsolatedClassLoader(this);
 	}
 
-	public int run_invokedReflectively(List<String> testClasses) throws ClassNotFoundException  {
-        ensureLoadedInIsolatedClassLoader(this);
-        
-        List<Class<?>> classes = new ArrayList<>();
-        for (String testClass : testClasses) {
-        	classes.add(Class.forName(testClass));
-        }
+	public int run_invokedReflectively(List<String> testClasses) throws ClassNotFoundException {
+		ensureLoadedInIsolatedClassLoader(this);
+
+		List<Class<?>> classes = new ArrayList<>();
+		for (String testClass : testClasses) {
+			classes.add(Class.forName(testClass));
+		}
 
 		Computer computer = new Computer();
-        JUnitCore junit = new JUnitCore();
-        ensureLoadedInIsolatedClassLoader(junit);
-        
-        Result result = junit.run(computer, classes.toArray(new Class[0]));
-        boolean hasUnresolvedCompilationProblem = result.getFailures().stream()
-        	.map(Failure::getMessage)
-        	.anyMatch(message -> message.contains("Unresolved compilation problem"));
-        if (hasUnresolvedCompilationProblem) {
-        	throw new IllegalStateException();
-        }
-                
-        return result.getFailureCount();
-    }
+		JUnitCore junit = new JUnitCore();
+		ensureLoadedInIsolatedClassLoader(junit);
+
+		Result result = junit.run(computer, classes.toArray(new Class[0]));
+		boolean hasUnresolvedCompilationProblem = result.getFailures().stream()
+				.map(Failure::getMessage)
+				.anyMatch(message -> message.contains("Unresolved compilation problem"));
+		if (hasUnresolvedCompilationProblem) {
+			throw new IllegalStateException();
+		}
+
+		return result.getFailureCount();
+	}
 
 	private void ensureLoadedInIsolatedClassLoader(Object o) {
 		String objectClassLoader = o.getClass().getClassLoader().getClass().getName();
