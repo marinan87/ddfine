@@ -18,7 +18,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import dd.TestHarness;
-import regressionfinder.utils.DOMHelper;
+import regressionfinder.utils.SourceCodeManipulator;
 import regressionfinder.utils.JavaModelHelper;
 
 public class JUnitTestHarness extends TestHarness<SourceCodeChange> {
@@ -64,7 +64,7 @@ public class JUnitTestHarness extends TestHarness<SourceCodeChange> {
 		boolean testPassed = true;
 		try {
 			// TODO: instead of obtaining new copy each time, try to undo previous changes?
-			DOMHelper.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, selectedSourceCodeChangeSet);
+			SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, selectedSourceCodeChangeSet);
 			testPassed = runUnitTest();
 		} catch (Exception e) {
 			return TestHarness.UNRESOLVED;

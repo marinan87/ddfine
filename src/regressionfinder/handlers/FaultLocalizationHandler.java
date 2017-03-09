@@ -6,17 +6,11 @@ import java.util.List;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import ch.uzh.ifi.seal.changedistiller.ChangeDistiller;
@@ -25,8 +19,8 @@ import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import dd.DeltaDebug;
 import regressionfinder.testrunner.JUnitTestHarness;
-import regressionfinder.utils.DOMHelper;
 import regressionfinder.utils.JavaModelHelper;
+import regressionfinder.utils.SourceCodeManipulator;
 
 /*
  * Starting point. 
@@ -70,7 +64,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 	}
 	
 	private void applyFailureInducingChanges(ICompilationUnit sourceCU, List<SourceCodeChange> failureInducingChanges) throws Exception {
-		DOMHelper.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, failureInducingChanges);
+		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, LOCALIZATION_SOURCE, failureInducingChanges);
 	}
 	
 	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, List<SourceCodeChange> failureInducingChanges) throws Exception {
@@ -78,11 +72,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 			return;
 		}
 		
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		IWorkbenchPage page = window.getActivePage();
-		IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(cu.getPath());
-		IEditorPart editor = IDE.openEditor(page, file, true);
-		ITextEditor textEditor = (ITextEditor) editor;
+		ITextEditor textEditor = JavaModelHelper.openTextEditor(cu);
 		
 		// Seems that there is no way to highlight all changes at once. 
 		// Currently only highlighting the first change.
