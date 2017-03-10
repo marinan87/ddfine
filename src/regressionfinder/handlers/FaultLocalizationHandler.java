@@ -1,6 +1,7 @@
 package regressionfinder.handlers;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		List<SourceCodeChange> failureInducingChanges = null;
+		List<SourceCodeChange> failureInducingChanges = new ArrayList<>();
 		try {
 			ICompilationUnit sourceCU = JavaModelHelper.getCompilationUnit(VERSION_BEFORE_REGRESSION, LOCALIZATION_SOURCE);
 			ICompilationUnit regressionCU = JavaModelHelper.getCompilationUnit(VERSION_WITH_REGRESSION, LOCALIZATION_SOURCE);
@@ -62,12 +63,6 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private List<SourceCodeChange> excludeSafeChanges(List<SourceCodeChange> allChanges) {
-		return allChanges.stream()
-				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE)
-				.collect(Collectors.toList());
-	}
-
 	private List<SourceCodeChange> extractSourceCodeChanges(ICompilationUnit originalCU, ICompilationUnit regressionCU) throws JavaModelException {
 		File left = JavaModelHelper.getFile(originalCU);
 		File right = JavaModelHelper.getFile(regressionCU);
@@ -77,6 +72,12 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		return distiller.getSourceCodeChanges();
 	}
 	
+	private List<SourceCodeChange> excludeSafeChanges(List<SourceCodeChange> allChanges) {
+		return allChanges.stream()
+				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE)
+				.collect(Collectors.toList());
+	}
+
 	private void applyFailureInducingChanges(ICompilationUnit sourceCU, List<SourceCodeChange> failureInducingChanges) throws Exception {
 		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, failureInducingChanges);
 	}
@@ -133,6 +134,4 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		
 		return builder.toString();
 	}
-	
-	
 }
