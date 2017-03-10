@@ -32,7 +32,15 @@ public class SourceCodeManipulator {
 	}
 	
 	private void applySourceCodeChanges(List<SourceCodeChange> sourceCodeChanges) throws Exception {
-		sourceCodeChanges.sort((o1, o2) -> getStartPosition(o1) - getStartPosition(o2));
+		sourceCodeChanges.sort((o1, o2) -> {
+			int firstStartPosition = o1.getChangedEntity().getStartPosition();
+			int secondStartPosition = o2.getChangedEntity().getStartPosition();	
+			
+			if (firstStartPosition == secondStartPosition && o1 instanceof Insert && o2 instanceof Insert) {
+				return ((Insert) o1).getPosition() - ((Insert) o2).getPosition();
+			} 
+			return firstStartPosition - secondStartPosition;
+		});
 
 		for (SourceCodeChange sourceCodeChange : sourceCodeChanges) {
 			applySourceCodeChange(sourceCodeChange);
@@ -41,51 +49,33 @@ public class SourceCodeManipulator {
 		JavaModelHelper.saveModifiedFiles();
 	}
 
-	private int getStartPosition(SourceCodeChange sourceCodeChange) {
-		switch (sourceCodeChange.getChangeType()) {
-			case STATEMENT_INSERT:
-				return 78;
-			case STATEMENT_UPDATE:
-				return ((Update) sourceCodeChange).getChangedEntity().getStartPosition();
-			case REMOVED_FUNCTIONALITY:
-				return ((Delete) sourceCodeChange).getChangedEntity().getStartPosition();
-			default:
-				return -1;
-		}
-	}
-
 	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {		
 		switch (sourceCodeChange.getChangeType()) {
 			case STATEMENT_INSERT:
-				applyInsertSourceCodeChange(sourceCodeChange);	
+				applyInsertSourceCodeChange((Insert) sourceCodeChange);	
 				break;
 			case STATEMENT_UPDATE:
-				applyUpdateSourceCodeChange(sourceCodeChange);
+				applyUpdateSourceCodeChange((Update) sourceCodeChange);
 				break;
 			case REMOVED_FUNCTIONALITY:
-				applyDeleteSourceCodeChange(sourceCodeChange);
+				applyDeleteSourceCodeChange((Delete) sourceCodeChange);
 				break;
 			default:
 				break;
 		}
 	}
 	
-	private void applyInsertSourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
-		Insert insert = (Insert) sourceCodeChange;
-		
-		if (sourceCodeChange.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
+	private void applyInsertSourceCodeChange(Insert insert) throws BadLocationException {		
+		if (insert.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
 			String textToInsert = insert.getChangedEntity().getUniqueName() + TextUtilities.getDefaultLineDelimiter(document);
-			// SourceCodeChange provided by ChangeDistiller currently does not contain enough information in order to 
-			// apply detected insertions to the original source code file. The insert position is now hard-coded.
-			// ChangeDistiller will be updated later. 
-			document.replace(78, 0, textToInsert);
+			int startPosition = insert.getChangedEntity().getStartPosition();
+			
+			document.replace(startPosition + offset, 0, textToInsert);
 			offset += textToInsert.length();
 		}		
 	}
 
-	private void applyUpdateSourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
-		Update update = (Update) sourceCodeChange;
-
+	private void applyUpdateSourceCodeChange(Update update) throws BadLocationException {
 		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			String newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
 			int startPosition = update.getChangedEntity().getStartPosition();
@@ -96,9 +86,7 @@ public class SourceCodeManipulator {
 		}
 	}	
 	
-	private void applyDeleteSourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
-		Delete delete = (Delete) sourceCodeChange;
-
+	private void applyDeleteSourceCodeChange(Delete delete) throws BadLocationException {
 		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD) {
 			int startPosition = delete.getChangedEntity().getStartPosition();
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
