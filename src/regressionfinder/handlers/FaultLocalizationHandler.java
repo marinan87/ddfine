@@ -108,6 +108,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		builder.append("Regression is caused by the following changes:\r\n\r\n");
 		
 		for (SourceCodeChange change : failureInducingChanges) {
+			// TODO: specify positions as well
 			if (change instanceof Insert) {
 				Insert insert = (Insert) change;
 				builder.append("Inserted\t");

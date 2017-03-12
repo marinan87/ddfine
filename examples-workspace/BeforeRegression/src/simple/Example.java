@@ -1,13 +1,15 @@
 package simple;
 
 public class Example {
-
-	int multiplyByTen(int param) {
-		return param * 10;
-	}
+	
+	private double classVariable = 0;
 	
 	int multiplyByEleven(int param) {
 		return param * 11;
+	}
+	
+	int multiplyByTen(int param) {
+		return param * 10;
 	}
 	
 	int multiplyByTwelve(int param) {
@@ -18,5 +20,25 @@ public class Example {
 		int a = 5;
 		a += 10;
 		a -= 2;
+	}
+	
+	private void increasingAccessibilityReplacePrivateWithPublicExample() {
+		
+	}
+	
+	protected void increasingAccessibilityReplaceProtectedWithPublicExample() {
+		
+	}
+	
+	void decreasingAccessibilityInsertPrivateExample() {
+		
+	}
+	
+	protected void decreasingAccessibilityReplaceProtectedWithPrivateExample() {
+		
+	}
+	
+	public void decreasingAccessibilityReplacePublicWithPrivateExample() {
+		
 	}
 }

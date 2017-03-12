@@ -1,6 +1,7 @@
 package regressionfinder.utils;
 
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -21,7 +22,7 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
  */
 public class SourceCodeManipulator {
 	
-	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\(.*\\)$");
+	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
 	private final IDocument document;
 	private int offset = 0;
 	
@@ -48,62 +49,115 @@ public class SourceCodeManipulator {
 		
 		JavaModelHelper.saveModifiedFiles();
 	}
-
-	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {		
-		switch (sourceCodeChange.getChangeType()) {
+	
+	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
+		if (sourceCodeChange instanceof Insert) {
+			applySourceCodeChange((Insert) sourceCodeChange);
+		} else if (sourceCodeChange instanceof Update) {
+			applySourceCodeChange((Update) sourceCodeChange);
+		} else if (sourceCodeChange instanceof Delete) {
+			applySourceCodeChange((Delete) sourceCodeChange);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	private void applySourceCodeChange(Insert insert) throws BadLocationException {
+		boolean inline = false;
+		switch (insert.getChangeType()) {
 			case STATEMENT_INSERT:
-				applyInsertSourceCodeChange((Insert) sourceCodeChange);	
+				inline = false;
 				break;
-			case STATEMENT_UPDATE:
-				applyUpdateSourceCodeChange((Update) sourceCodeChange);
+			case REMOVING_CLASS_DERIVABILITY:
+				inline = true;
 				break;
-			case REMOVED_FUNCTIONALITY:
-				applyDeleteSourceCodeChange((Delete) sourceCodeChange);
+			case REMOVING_METHOD_OVERRIDABILITY:
+				inline = true;
+				break;
+			case REMOVING_ATTRIBUTE_MODIFIABILITY:
+				inline = true;
+				break;
+			case INCREASING_ACCESSIBILITY_CHANGE:
+				inline = true;
+				break;
+			case DECREASING_ACCESSIBILITY_CHANGE:
+				inline = true;
 				break;
 			default:
-				break;
+				return;		
 		}
+		
+		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getUniqueName(), inline); 
+		int startPosition = insert.getChangedEntity().getStartPosition();
+		
+		document.replace(startPosition + offset, 0, textToInsert.toString());
+		offset += textToInsert.length();
 	}
 	
-	private void applyInsertSourceCodeChange(Insert insert) throws BadLocationException {		
-		if (insert.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT) {			
-			String textToInsert = insert.getChangedEntity().getUniqueName() + TextUtilities.getDefaultLineDelimiter(document);
-			int startPosition = insert.getChangedEntity().getStartPosition();
-			
-			document.replace(startPosition + offset, 0, textToInsert);
-			offset += textToInsert.length();
-		}		
+	private StringBuilder appendDelimiters(String string, boolean inline) {
+		StringBuilder result = new StringBuilder();
+		if (inline) {
+			result.append(" ");
+		}
+		else {
+			result.append(TextUtilities.getDefaultLineDelimiter(document));
+		}
+		result.append(string);
+		if (inline) {
+			result.append(" ");
+		} else {
+			result.append(TextUtilities.getDefaultLineDelimiter(document));
+		}
+		return result;
 	}
 
-	private void applyUpdateSourceCodeChange(Update update) throws BadLocationException {
-		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
-			String newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
-			int startPosition = update.getChangedEntity().getStartPosition();
-			int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition;
-
-			document.replace(startPosition + offset, changedEntityValueLength, newStatement);
-			offset += newStatement.length() - changedEntityValueLength; 
+	private void applySourceCodeChange(Update update) throws BadLocationException {
+		switch (update.getChangeType()) {
+			case STATEMENT_UPDATE:
+			case INCREASING_ACCESSIBILITY_CHANGE:
+			case DECREASING_ACCESSIBILITY_CHANGE:
+				break;
+			default:
+				throw new UnsupportedOperationException();
 		}
+		
+		String newStatement = null;
+		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
+			newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
+		} else {
+			newStatement = normalizeEntityValue(update.getNewEntity().getUniqueName());
+		}
+		int startPosition = update.getChangedEntity().getStartPosition();
+		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;
+		document.replace(startPosition + offset, changedEntityValueLength, newStatement);
+		offset += newStatement.length() - changedEntityValueLength; 
 	}	
 	
-	private void applyDeleteSourceCodeChange(Delete delete) throws BadLocationException {
+	private void applySourceCodeChange(Delete delete) throws BadLocationException {
+		switch (delete.getChangeType()) {
+			case REMOVED_FUNCTIONALITY:
+				break;
+			default:
+				throw new UnsupportedOperationException();
+		}
+		
 		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD) {
 			int startPosition = delete.getChangedEntity().getStartPosition();
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 			
 			document.replace(startPosition + offset, changedEntityValueLength, "");
 			offset -= changedEntityValueLength;
+		} else {
+			throw new UnsupportedOperationException();
 		}
 	}
 	
 	private String normalizeEntityValue(String entityValue) {
-		String result = "";
-		if (entityValue.charAt(entityValue.length() - 1) == ';') {
-			result = entityValue.substring(0, entityValue.length() - 1);
-		}
-		
-		if (INSIDE_PARENTHESES.matcher(result).matches()) {
-			result = result.substring(1, result.length() - 1);
+		String result = entityValue;
+	
+		Matcher matcher = INSIDE_PARENTHESES.matcher(result);
+		if (matcher.matches()) {
+			result = matcher.group(1) + ";";
 		}
 		
 		return result;

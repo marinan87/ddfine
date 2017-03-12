@@ -1,15 +1,17 @@
 package simple;
 
-public class Example {
-
-	int multiplyByTen(int param) {
+public final class Example {
+	
+	private final double classVariable = 0;
+	
+	public int multiplyByEleven(int param) {
+		return 11 * param;
+	}
+	
+	final int multiplyByTen(int param) {
 		// failure-inducing change
 		int factor = 12;
 		return param * factor;
-	}
-	
-	int multiplyByEleven(int param) {
-		return 11 * param;
 	}
 	
 	void doSomething() {
@@ -18,5 +20,25 @@ public class Example {
 		a *= 3;
 		a++;
 		a -= 2;
+	}
+	
+	public void increasingAccessibilityReplacePrivateWithPublicExample() {
+		
+	}
+	
+	public void increasingAccessibilityReplaceProtectedWithPublicExample() {
+		
+	}
+	
+	private void decreasingAccessibilityInsertPrivateExample() {
+		
+	}
+	
+	private void decreasingAccessibilityReplaceProtectedWithPrivateExample() {
+		
+	}
+	
+	private void decreasingAccessibilityReplacePublicWithPrivateExample() {
+		
 	}
 }
