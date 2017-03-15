@@ -3,6 +3,7 @@ package simple;
 public final class Example {
 	
 	private final double classVariable = 0;
+	private double newClassVariable;
 	
 	public int multiplyByEleven(int param) {
 		return 11 * param;
@@ -30,6 +31,10 @@ public final class Example {
 		
 	}
 	
+	protected void increasingAccessibilityInsertProtectedExample() {
+		
+	}
+	
 	private void decreasingAccessibilityInsertPrivateExample() {
 		
 	}
@@ -39,6 +44,19 @@ public final class Example {
 	}
 	
 	private void decreasingAccessibilityReplacePublicWithPrivateExample() {
+		
+	}
+	
+	void newMethod() {
+		
+	}
+	
+	static class NewNestedClass {
+		
+	}
+	
+
+	void parameterChangeExample(int param, int newParam) {
 		
 	}
 }

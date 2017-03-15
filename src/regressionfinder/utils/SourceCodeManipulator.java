@@ -63,7 +63,8 @@ public class SourceCodeManipulator {
 	}
 	
 	private void applySourceCodeChange(Insert insert) throws BadLocationException {
-		boolean inline = false;
+		// TODO: refactor
+		boolean inline = false, commaDelimiter = false;
 		switch (insert.getChangeType()) {
 			case STATEMENT_INSERT:
 				inline = false;
@@ -83,32 +84,48 @@ public class SourceCodeManipulator {
 			case DECREASING_ACCESSIBILITY_CHANGE:
 				inline = true;
 				break;
+			case ADDITIONAL_FUNCTIONALITY:
+				inline = false;
+				break;
+			case ADDITIONAL_OBJECT_STATE:
+				inline = false;
+				break;
+			case ADDITIONAL_CLASS:
+				inline = false;
+				break;
+			case PARAMETER_INSERT:
+				inline = true;
+				if (insert.getPosition() > 0) {
+					commaDelimiter = true;
+				}
+				break;
 			default:
 				return;		
 		}
 		
-		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getUniqueName(), inline); 
+		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter); 
 		int startPosition = insert.getChangedEntity().getStartPosition();
 		
 		document.replace(startPosition + offset, 0, textToInsert.toString());
 		offset += textToInsert.length();
 	}
 	
-	private StringBuilder appendDelimiters(String string, boolean inline) {
+	private StringBuilder appendDelimiters(String string, boolean inline, boolean commaDelimiter) {
 		StringBuilder result = new StringBuilder();
-		if (inline) {
-			result.append(" ");
-		}
-		else {
-			result.append(TextUtilities.getDefaultLineDelimiter(document));
-		}
+		result.append(getProperStartDelimiter(inline, commaDelimiter));
 		result.append(string);
-		if (inline) {
-			result.append(" ");
-		} else {
-			result.append(TextUtilities.getDefaultLineDelimiter(document));
-		}
+		result.append(getProperEndDelimiter(inline));
 		return result;
+	}
+	
+	private String getProperStartDelimiter(boolean inline, boolean commaDelimiter) {
+		return inline 
+				? (commaDelimiter ? "," : " ")
+				: TextUtilities.getDefaultLineDelimiter(document);
+	}
+	
+	private String getProperEndDelimiter(boolean inline) {
+		return inline ? " " : TextUtilities.getDefaultLineDelimiter(document);
 	}
 
 	private void applySourceCodeChange(Update update) throws BadLocationException {
@@ -121,12 +138,12 @@ public class SourceCodeManipulator {
 				throw new UnsupportedOperationException();
 		}
 		
-		String newStatement = null;
+		String newStatement = "";
 		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
-			newStatement = "return " + normalizeEntityValue(update.getNewEntity().getUniqueName());
-		} else {
-			newStatement = normalizeEntityValue(update.getNewEntity().getUniqueName());
+			newStatement = "return "; 
 		}
+		newStatement += normalizeEntityValue(update.getNewEntity().getContent());
+		
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;
 		document.replace(startPosition + offset, changedEntityValueLength, newStatement);

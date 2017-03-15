@@ -30,6 +30,10 @@ public class Example {
 		
 	}
 	
+	void increasingAccessibilityInsertProtectedExample() {
+		
+	}
+	
 	void decreasingAccessibilityInsertPrivateExample() {
 		
 	}
@@ -39,6 +43,10 @@ public class Example {
 	}
 	
 	public void decreasingAccessibilityReplacePublicWithPrivateExample() {
+		
+	}
+	
+	void parameterChangeExample(int param) {
 		
 	}
 }
