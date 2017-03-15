@@ -133,6 +133,8 @@ public class SourceCodeManipulator {
 			case STATEMENT_UPDATE:
 			case INCREASING_ACCESSIBILITY_CHANGE:
 			case DECREASING_ACCESSIBILITY_CHANGE:
+			case PARAMETER_RENAMING:
+			case PARAMETER_TYPE_CHANGE:
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -141,8 +143,13 @@ public class SourceCodeManipulator {
 		String newStatement = "";
 		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			newStatement = "return "; 
+		} 
+		
+		if (update.getChangedEntity().getType() != JavaEntityType.PARAMETER) {
+			newStatement += normalizeEntityValue(update.getNewEntity().getContent());
+		} else {
+			newStatement = update.getNewEntity().getUniqueName();
 		}
-		newStatement += normalizeEntityValue(update.getNewEntity().getContent());
 		
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;

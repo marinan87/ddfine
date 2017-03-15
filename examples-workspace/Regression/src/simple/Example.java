@@ -56,7 +56,11 @@ public final class Example {
 	}
 	
 
-	void parameterChangeExample(int param, int newParam) {
+	void parameterAddingExample(int param, int newParam) {
 		
 	}
+	
+	public void methodToCheckParameterRenaming(Object aRenameParam) {}
+	
+	public void methodToCheckParameterTypeChange(Object first, String typeChange) {}
 }
