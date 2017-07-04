@@ -1,9 +1,0 @@
-package simple;
-
-public class Example {
-
-	public int multiplyByTen(int param) {
-		int factor = 10;
-		return param * factor;
-	}
-}

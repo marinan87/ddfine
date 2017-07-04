@@ -1,8 +1,0 @@
-package simple1;
-
-public class Example {
-
-	int multiplyByTen(int param) {
-		return param * 10;
-	}
-}
