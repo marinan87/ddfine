@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="lib/ddmin.jar" sourcepath="/DeltaDebug"/>
+	<classpathentry exported="true" kind="lib" path="lib/ddcore.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/junit-4.12.jar" sourcepath="C:/eclipse-neon/plugins/junit-4.12-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/aopalliance-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/changedistiller.jar" sourcepath="/changedistiller"/>

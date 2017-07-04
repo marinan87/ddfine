@@ -23,5 +23,5 @@ Bundle-ClassPath: .,
  lib/aopalliance-1.0.jar,
  lib/commons-lang3-3.1.jar,
  lib/junit-4.12.jar,
- lib/ddmin.jar
+ lib/ddcore.jar
 

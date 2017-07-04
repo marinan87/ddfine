@@ -27,7 +27,7 @@ public class SourceCodeManipulator {
 	private int offset = 0;
 	
 	public SourceCodeManipulator(ICompilationUnit cu) throws Exception {	
-		ICompilationUnit copyOfSource = JavaModelHelper.createCopyOfCompilationUnit(cu);
+		ICompilationUnit copyOfSource = JavaModelHelper.copyCompilationUnitToStagingArea(cu);
 		ITextEditor textEditor = JavaModelHelper.openTextEditor(copyOfSource);
 		document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
 	}
@@ -58,7 +58,7 @@ public class SourceCodeManipulator {
 		} else if (sourceCodeChange instanceof Delete) {
 			applySourceCodeChange((Delete) sourceCodeChange);
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(); // TODO: Move operation?
 		}
 	}
 	
@@ -187,8 +187,12 @@ public class SourceCodeManipulator {
 		return result;
 	}
 	
-	public static void copyAndModifyLocalizationSource(ICompilationUnit sourceCU, List<SourceCodeChange> selectedSourceCodeChangeSet) throws Exception {
-		SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU);
-		sourceCodeHelper.applySourceCodeChanges(selectedSourceCodeChangeSet);
+	public static void copyToStagingAreaWithModifications(ICompilationUnit sourceCU, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+		try {
+			SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU);
+			sourceCodeHelper.applySourceCodeChanges(selectedSourceCodeChangeSet);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

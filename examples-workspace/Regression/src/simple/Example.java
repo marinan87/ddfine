@@ -1,5 +1,7 @@
 package simple;
 
+import java.io.Serializable;
+
 public final class Example {
 	
 	private final double classVariable = 0;

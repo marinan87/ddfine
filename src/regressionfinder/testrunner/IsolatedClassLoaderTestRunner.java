@@ -1,44 +1,68 @@
 package regressionfinder.testrunner;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
-import org.junit.runner.Computer;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
+import org.deltadebugging.ddcore.tester.JUnitTester;
+import org.junit.runner.Description;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.NoTestsRemainException;
+
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.TestFailure;
+import junit.framework.TestResult;
 
 /*
  * Workaround for "No runnable methods" exception when running JUnit tests using JunitCore.run
  * See here: http://stackoverflow.com/questions/24319697/java-lang-exception-no-runnable-methods-exception-in-running-junits/24319836
  */
 public class IsolatedClassLoaderTestRunner {
-
-	public IsolatedClassLoaderTestRunner() {
+	
+	private JUnitTester tester;
+	private Throwable originalException;
+	
+	public IsolatedClassLoaderTestRunner(String testClassName, String testMethodName) throws ClassNotFoundException, NoTestsRemainException {
 		ensureLoadedInIsolatedClassLoader(this);
+
+		Class<?> testClass = Class.forName(testClassName);		
+		JUnit4TestAdapter testAdapter = new JUnit4TestAdapter(testClass);
+		testAdapter.filter(Filter.matchMethodDescription(Description.createTestDescription(testClass, testMethodName)));
+		
+		TestResult result = new TestResult();
+		testAdapter.run(result);
+		
+		List<TestFailure> allProblems = new ArrayList<>();
+		Enumeration<TestFailure> failures = result.failures();
+		while (failures.hasMoreElements()) {
+			allProblems.add(failures.nextElement());
+		}
+		Enumeration<TestFailure> errors = result.errors();
+		while (errors.hasMoreElements()) {
+			allProblems.add(errors.nextElement());
+		}
+		
+		originalException = allProblems.get(0).thrownException();
+	}
+	
+	public Throwable getOriginalException() {
+		return originalException;
+	}
+	
+	public IsolatedClassLoaderTestRunner(String testClassName, String testMethodName, Throwable throwable) throws ClassNotFoundException, NoTestsRemainException {
+		ensureLoadedInIsolatedClassLoader(this);
+		
+		Class<?> testClass = Class.forName(testClassName);		
+		JUnit4TestAdapter testAdapter = new JUnit4TestAdapter(testClass);
+		testAdapter.filter(Filter.matchMethodDescription(Description.createTestDescription(testClass, testMethodName)));
+				
+		tester = new JUnitTester(testAdapter);
+		tester.setThrowable(throwable);
 	}
 
-	public int run_invokedReflectively(List<String> testClasses) throws ClassNotFoundException {
+	public int runTest() {
 		ensureLoadedInIsolatedClassLoader(this);
-
-		List<Class<?>> classes = new ArrayList<>();
-		for (String testClass : testClasses) {
-			classes.add(Class.forName(testClass));
-		}
-
-		Computer computer = new Computer();
-		JUnitCore junit = new JUnitCore();
-		ensureLoadedInIsolatedClassLoader(junit);
-
-		Result result = junit.run(computer, classes.toArray(new Class[0]));
-		boolean hasUnresolvedCompilationProblem = result.getFailures().stream()
-				.map(Failure::getMessage)
-				.anyMatch(message -> message.contains("Unresolved compilation problem"));
-		if (hasUnresolvedCompilationProblem) {
-			throw new IllegalStateException();
-		}
-
-		return result.getFailureCount();
+		return tester.test(null);
 	}
 
 	private void ensureLoadedInIsolatedClassLoader(Object o) {

@@ -9,7 +9,9 @@ public class Example {
 	}
 	
 	int multiplyByTen(int param) {
-		return param * 10;
+		
+int factor = 12;
+return param * 10;
 	}
 	
 	int multiplyByTwelve(int param) {
@@ -22,11 +24,15 @@ public class Example {
 		a -= 2;
 	}
 	
-	public void increasingAccessibilityReplacePrivateWithPublicExample() {
+	private void increasingAccessibilityReplacePrivateWithPublicExample() {
 		
 	}
 	
 	protected void increasingAccessibilityReplaceProtectedWithPublicExample() {
+		
+	}
+	
+	void increasingAccessibilityInsertProtectedExample() {
 		
 	}
 	
@@ -38,7 +44,15 @@ public class Example {
 		
 	}
 	
-	private void decreasingAccessibilityReplacePublicWithPrivateExample() {
+	public void decreasingAccessibilityReplacePublicWithPrivateExample() {
 		
 	}
+	
+	void parameterAddingExample(int param) {
+		
+	}
+	
+	public void methodToCheckParameterRenaming(Object aRenamePara) {}
+	
+	public void methodToCheckParameterTypeChange(Object first, int typeChange) {}
 }

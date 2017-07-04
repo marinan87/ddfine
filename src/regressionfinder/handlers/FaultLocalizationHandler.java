@@ -1,10 +1,12 @@
 package regressionfinder.handlers;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.deltadebugging.ddcore.DD;
+import org.deltadebugging.ddcore.DeltaSet;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -24,33 +26,39 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Move;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
-import dd.DeltaDebug;
-import regressionfinder.testrunner.JUnitTestHarness;
+import regressionfinder.testrunner.DeltaSetEvaluator;
 import regressionfinder.utils.JavaModelHelper;
-import regressionfinder.utils.SourceCodeManipulator;
 
-/*
- * Starting point. 
- */
 public class FaultLocalizationHandler extends AbstractHandler {
 
-	private static final String VERSION_BEFORE_REGRESSION = "BeforeRegression";
-	private static final String VERSION_WITH_REGRESSION = "Regression";
-	private static final String LOCALIZATION_SOURCE = "Example.java";
+	private static final String REFERENCE_VERSION = "BeforeRegression";
+	private static final String FAULTY_VERSION = "Regression";
+	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
+	private static final String TEST_CLASS_NAME = "simple.ExampleTest";
+	private static final String TEST_METHOD_NAME = "tenMultipliedByTenIsOneHundred";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		List<SourceCodeChange> failureInducingChanges = new ArrayList<>();
+		SourceCodeChange[] failureInducingChanges = null;
 		try {
-			ICompilationUnit sourceCU = JavaModelHelper.getCompilationUnit(VERSION_BEFORE_REGRESSION, LOCALIZATION_SOURCE);
-			ICompilationUnit regressionCU = JavaModelHelper.getCompilationUnit(VERSION_WITH_REGRESSION, LOCALIZATION_SOURCE);
+			ICompilationUnit sourceCU = JavaModelHelper.getCompilationUnit(REFERENCE_VERSION, SOURCE_OF_LOCALIZATION);
+			ICompilationUnit regressionCU = JavaModelHelper.getCompilationUnit(FAULTY_VERSION, SOURCE_OF_LOCALIZATION);
 
-			List<SourceCodeChange> allChanges = extractSourceCodeChanges(sourceCU, regressionCU);
-			List<SourceCodeChange> filteredChanges = excludeSafeChanges(allChanges);
+			List<SourceCodeChange> allChanges = extractDistilledChanges(sourceCU, regressionCU);
+			List<SourceCodeChange> filteredChanges = filterOutSafeChanges(allChanges);
 						
-			JUnitTestHarness testHarness = new JUnitTestHarness(sourceCU);
-			failureInducingChanges = DeltaDebug.ddmin(filteredChanges, testHarness);
-			System.out.println(failureInducingChanges);
+//			filteredChanges = filteredChanges.stream()
+//				.filter(change -> ((change instanceof Insert) && ((Insert) change).getChangeType() == ChangeType.STATEMENT_INSERT && ((Insert) change).getChangedEntity().getContent().contains("factor")) 
+//						|| (change instanceof Update) && ((Update) change).getNewEntity().getContent().contains("factor"))
+//				.collect(Collectors.toList());
+			
+			DeltaSet completeDeltaSet = new DeltaSet();
+			completeDeltaSet.addAll(filteredChanges);
+						
+			EvaluationTask task = new EvaluationTask(sourceCU, regressionCU, TEST_CLASS_NAME, TEST_METHOD_NAME);
+			DeltaSetEvaluator evaluator = new DeltaSetEvaluator(task);			
+			Object[] resultArray = new DD(evaluator).ddMin(completeDeltaSet).toArray();
+			failureInducingChanges = Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
 			
 			applyFailureInducingChanges(sourceCU, failureInducingChanges);
 			highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
@@ -63,7 +71,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private List<SourceCodeChange> extractSourceCodeChanges(ICompilationUnit originalCU, ICompilationUnit regressionCU) throws JavaModelException {
+	private List<SourceCodeChange> extractDistilledChanges(ICompilationUnit originalCU, ICompilationUnit regressionCU) throws JavaModelException {
 		File left = JavaModelHelper.getFile(originalCU);
 		File right = JavaModelHelper.getFile(regressionCU);
 		
@@ -72,41 +80,46 @@ public class FaultLocalizationHandler extends AbstractHandler {
 		return distiller.getSourceCodeChanges();
 	}
 	
-	private List<SourceCodeChange> excludeSafeChanges(List<SourceCodeChange> allChanges) {
+	private List<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {
 		return allChanges.stream()
 				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE)
 				.collect(Collectors.toList());
 	}
-
-	private void applyFailureInducingChanges(ICompilationUnit sourceCU, List<SourceCodeChange> failureInducingChanges) throws Exception {
-		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, failureInducingChanges);
+	
+	private void applyFailureInducingChanges(ICompilationUnit sourceCU, SourceCodeChange[] failureInducingChanges) throws Exception {
+		System.out.println(Arrays.toString(failureInducingChanges));
+//		SourceCodeManipulator.copyAndModifyLocalizationSource(sourceCU, failureInducingChanges);
 	}
 	
-	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, List<SourceCodeChange> failureInducingChanges) throws Exception {
-		if (failureInducingChanges.isEmpty()) {
+	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, SourceCodeChange[] failureInducingChanges) throws Exception {
+		if (failureInducingChanges == null || failureInducingChanges.length == 0) {
 			return;
 		}
 		
 		ITextEditor textEditor = JavaModelHelper.openTextEditor(cu);
 		
-		// Seems that there is no way to highlight all changes at once. 
+		// Seems that there is no way to highlight all changes at once in Eclipse. 
 		// Currently only highlighting the first change.
-		SourceCodeChange firstChange = failureInducingChanges.get(0);
+		SourceCodeChange firstChange = failureInducingChanges[0];
 		int startPosition = firstChange.getChangedEntity().getStartPosition();
 		int length = firstChange.getChangedEntity().getEndPosition() - startPosition;
 		textEditor.setHighlightRange(startPosition, length, false);
 		textEditor.selectAndReveal(startPosition, length);
 	}
 	
-	private void displayDoneDialog(ExecutionEvent event, List<SourceCodeChange> failureInducingChanges) throws ExecutionException {
+	private void displayDoneDialog(ExecutionEvent event, SourceCodeChange[] failureInducingChanges) throws ExecutionException {
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
 		MessageDialog.openInformation(window.getShell(), "RegressionFinder", getStringRepresentation(failureInducingChanges));
 	}
 
-	private String getStringRepresentation(List<SourceCodeChange> failureInducingChanges) {
+	private String getStringRepresentation(SourceCodeChange[] failureInducingChanges) {
+		if (failureInducingChanges == null || failureInducingChanges.length == 0) {
+			return "No changes detected";
+		}
+		
 		StringBuilder builder = new StringBuilder();
 		builder.append("Regression is caused by the following changes:\r\n\r\n");
-		
+				
 		for (SourceCodeChange change : failureInducingChanges) {
 			// TODO: specify positions as well
 			if (change instanceof Insert) {
