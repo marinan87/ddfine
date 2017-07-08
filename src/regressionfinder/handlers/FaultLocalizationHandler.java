@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
-import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -29,7 +28,7 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
 import regressionfinder.testrunner.DeltaSetEvaluator;
 import regressionfinder.utils.JavaModelHelper;
 
-public class FaultLocalizationHandler extends AbstractHandler {
+public class FaultLocalizationHandler {
 
 	private static final String REFERENCE_VERSION = "BeforeRegression";
 	private static final String FAULTY_VERSION = "Regression";
@@ -37,15 +36,15 @@ public class FaultLocalizationHandler extends AbstractHandler {
 	private static final String TEST_CLASS_NAME = "simple.ExampleTest";
 	private static final String TEST_METHOD_NAME = "tenMultipliedByTenIsOneHundred";
 
-	@Override
-	public Object execute(ExecutionEvent event) throws ExecutionException {
+	public static void main(String[] args) {
 		SourceCodeChange[] failureInducingChanges = null;
 		try {
 			ICompilationUnit sourceCU = JavaModelHelper.getCompilationUnit(REFERENCE_VERSION, SOURCE_OF_LOCALIZATION);
 			ICompilationUnit regressionCU = JavaModelHelper.getCompilationUnit(FAULTY_VERSION, SOURCE_OF_LOCALIZATION);
 
-			List<SourceCodeChange> allChanges = extractDistilledChanges(sourceCU, regressionCU);
-			List<SourceCodeChange> filteredChanges = filterOutSafeChanges(allChanges);
+			FaultLocalizationHandler handler = new FaultLocalizationHandler();
+			List<SourceCodeChange> allChanges = handler.extractDistilledChanges(sourceCU, regressionCU);
+			List<SourceCodeChange> filteredChanges = handler.filterOutSafeChanges(allChanges);
 								
 			DeltaSet completeDeltaSet = new DeltaSet();
 			completeDeltaSet.addAll(filteredChanges);
@@ -55,15 +54,13 @@ public class FaultLocalizationHandler extends AbstractHandler {
 			Object[] resultArray = new DD(evaluator).ddMin(completeDeltaSet).toArray();
 			failureInducingChanges = Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
 			
-			applyFailureInducingChanges(sourceCU, failureInducingChanges);
-			highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
+			handler.applyFailureInducingChanges(sourceCU, failureInducingChanges);
+//			highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		} 
 		
-		displayDoneDialog(event, failureInducingChanges);
-		return null;
+//		displayDoneDialog(event, failureInducingChanges);
 	}
 
 	private List<SourceCodeChange> extractDistilledChanges(ICompilationUnit originalCU, ICompilationUnit regressionCU) throws JavaModelException {
