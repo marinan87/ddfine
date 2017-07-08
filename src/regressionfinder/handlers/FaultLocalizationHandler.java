@@ -46,12 +46,7 @@ public class FaultLocalizationHandler extends AbstractHandler {
 
 			List<SourceCodeChange> allChanges = extractDistilledChanges(sourceCU, regressionCU);
 			List<SourceCodeChange> filteredChanges = filterOutSafeChanges(allChanges);
-						
-//			filteredChanges = filteredChanges.stream()
-//				.filter(change -> ((change instanceof Insert) && ((Insert) change).getChangeType() == ChangeType.STATEMENT_INSERT && ((Insert) change).getChangedEntity().getContent().contains("factor")) 
-//						|| (change instanceof Update) && ((Update) change).getNewEntity().getContent().contains("factor"))
-//				.collect(Collectors.toList());
-			
+								
 			DeltaSet completeDeltaSet = new DeltaSet();
 			completeDeltaSet.addAll(filteredChanges);
 						
