@@ -12,7 +12,6 @@ public abstract class IsolatedClassLoaderAwareJUnitTestRunner {
 
 	public IsolatedClassLoaderAwareJUnitTestRunner(String testClassName, String testMethodName) 
 			throws ClassNotFoundException, NoTestsRemainException {
-		
 		ensureLoadedInIsolatedClassLoader(this);
 		
 		Class<?> testClass = Class.forName(testClassName);		
@@ -27,5 +26,5 @@ public abstract class IsolatedClassLoaderAwareJUnitTestRunner {
 					String.format("Instance of %s not loaded by a IsolatedURLClassLoader (loaded by %s)", 
 							o.getClass(), objectClassLoader));
 		}
-	}
+	}	
 }

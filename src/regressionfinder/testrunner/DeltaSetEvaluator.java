@@ -1,5 +1,7 @@
 package regressionfinder.testrunner;
 
+import static java.util.stream.Collectors.toList;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -7,10 +9,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.eclipse.core.runtime.IPath;
@@ -54,12 +54,12 @@ public class DeltaSetEvaluator extends JUnitTester {
 					}
 				})
 				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+				.collect(toList());
 		
-		// This is required because IsolatedURLClassLoader should be able to find IsolatedClassLoaderTestRunner class, 
-		// which resides in the plugin project.
-		urlList.add(new URL("file:" + IsolatedClassLoaderTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "bin/"));
-		urlList.add(DD.class.getProtectionDomain().getCodeSource().getLocation());
+		// This is required because IsolatedURLClassLoader should be able to locate DeltaDebuggerTestRunner and JUnitTestRunner class, 
+		// which reside in the plugin project.
+		urlList.add(new URL("file:" + DeltaDebuggerTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "bin/"));
+		urlList.add(JUnitTester.class.getProtectionDomain().getCodeSource().getLocation());
 
 		return (URL[]) urlList.toArray(new URL[urlList.size()]);
 	}
@@ -67,39 +67,33 @@ public class DeltaSetEvaluator extends JUnitTester {
 	private Throwable obtainOriginalStacktrace() {
 		SourceCodeManipulator.copyToStagingAreaWithModifications(task.getRegressionCU(), new ArrayList<>());
 		
-		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(urls)) {
-			Class<?> runnerClass = isolatedClassLoader.loadClass(IsolatedClassLoaderTestRunner.class.getName());
-			Constructor<IsolatedClassLoaderTestRunner> constructor = 
-					(Constructor<IsolatedClassLoaderTestRunner>) runnerClass.getConstructor(String.class, String.class);
-			
-			Object isolatedTestRunner = constructor.newInstance(task.getTestClassName(), task.getTestMethodName());
-			
-			Method method = isolatedTestRunner.getClass().getMethod("getOriginalException");
-			return (Throwable) method.invoke(isolatedTestRunner);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		return (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
+				new MethodDescriptor("getOriginalException", null, null));
 	}
 	
 	@Override
 	public int test(DeltaSet c) {
-		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) c.stream().collect(Collectors.toList());
+		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) c.stream().collect(toList());
 		return testSelectedChangeSet(selectedChangeSet); 
 	}
 	
 	private int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		SourceCodeManipulator.copyToStagingAreaWithModifications(task.getSourceCU(), selectedSourceCodeChangeSet);
 		
+		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
+				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
+	}
+	
+	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz,
+			MethodDescriptor methodDescriptor) {
 		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(urls)) {
-			// TODO: reload only changed classes programmatically
-			Class<?> runnerClass = isolatedClassLoader.loadClass(IsolatedClassLoaderTestRunner.class.getName());
-			Constructor<IsolatedClassLoaderTestRunner> constructor = 
-					(Constructor<IsolatedClassLoaderTestRunner>) runnerClass.getConstructor(String.class, String.class, Throwable.class);
+			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
+			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
 			
-			Object isolatedTestRunner = constructor.newInstance(task.getTestClassName(), task.getTestMethodName(), throwable);
+			Object isolatedTestRunner = constructor.newInstance(task.getTestClassName(), task.getTestMethodName());
 		
-			Method method = isolatedTestRunner.getClass().getMethod("runTest");
-			return (int) method.invoke(isolatedTestRunner);
+			Method method = isolatedTestRunner.getClass().getMethod(methodDescriptor.getMethodName(), methodDescriptor.getParameterTypes());
+			return method.invoke(isolatedTestRunner, methodDescriptor.getArgs());			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
