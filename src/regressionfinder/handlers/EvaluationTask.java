@@ -1,29 +1,27 @@
 package regressionfinder.handlers;
 
-import org.eclipse.jdt.core.ICompilationUnit;
-
 public class EvaluationTask {
 
-	private final ICompilationUnit sourceCU;
-	private final ICompilationUnit regressionCU;
+	private final String referenceVersion;
+	private final String faultyVersion;
 	private final String testClassName;
 	private final String testMethodName;
 	
-	public EvaluationTask(ICompilationUnit sourceCU, ICompilationUnit regressionCU, String testClassName, String testMethodName) {
-		this.sourceCU = sourceCU;
-		this.regressionCU = regressionCU;
+	public EvaluationTask(String referenceVersion, String faultyVersion, String testClassName, String testMethodName) {
+		this.referenceVersion = referenceVersion;
+		this.faultyVersion = faultyVersion;
 		this.testClassName = testClassName;
 		this.testMethodName = testMethodName;
 	}
 	
-	public ICompilationUnit getSourceCU() {
-		return sourceCU;
+	public String getReferenceVersion() {
+		return referenceVersion;
 	}
 	
-	public ICompilationUnit getRegressionCU() {
-		return regressionCU;
+	public String getFaultyVersion() {
+		return faultyVersion;
 	}
-	
+
 	public String getTestClassName() {
 		return testClassName;
 	}

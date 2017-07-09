@@ -23,5 +23,6 @@ Bundle-ClassPath: .,
  lib/aopalliance-1.0.jar,
  lib/commons-lang3-3.1.jar,
  lib/junit-4.12.jar,
- lib/ddcore.jar
+ lib/ddcore.jar,
+ lib/maven-invoker-2.2.jar
 

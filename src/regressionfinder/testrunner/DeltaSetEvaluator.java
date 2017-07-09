@@ -4,68 +4,63 @@ import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.launching.JavaRuntime;
+import org.hamcrest.SelfDescribing;
+import org.junit.runner.manipulation.NoTestsRemainException;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.handlers.EvaluationTask;
-import regressionfinder.utils.JavaModelHelper;
 import regressionfinder.utils.SourceCodeManipulator;
 
 public class DeltaSetEvaluator extends JUnitTester {
 	
-	private static final String WORK_AREA = "StagingArea";
+	public static final String WORK_AREA = "StagingArea";
 
 	private final URL[] urls;
 	private final Throwable throwable;
 	private final EvaluationTask task;
+	private final String basePath;
 	
-	public DeltaSetEvaluator(EvaluationTask task) throws Exception {
+	public DeltaSetEvaluator(EvaluationTask task, String basePath) throws Exception {
 		super();
 		
 		this.task = task;
+		this.basePath = basePath;
 		urls = collectClasspaths(); 
 		throwable = obtainOriginalStacktrace();
 	}
 	
 	private URL[] collectClasspaths() throws Exception {
-		IJavaProject project = JavaModelHelper.findJavaProjectInWorkspace(WORK_AREA);
-		String[] classPathEntries = JavaRuntime.computeDefaultRuntimeClassPath(project);
-		// These paths are required because IsolatedClassLoaderTestRunner needs to find JUnit test classes in StagingArea project.
-		// See implementation of IsolatedClassLoaderTestRunner.runTest().
-		List<URL> urlList = Stream.of(classPathEntries)
-				.map(entry -> {
-					IPath path = new Path(entry);
-					try {
-						return path.toFile().toURI().toURL();
-					} catch (MalformedURLException e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull)
-				.collect(toList());
+		String stagingAreaBasePath = Paths.get(basePath, WORK_AREA).toString();
+		String stagingAreaCodePath = Paths.get(stagingAreaBasePath, "target", "classes").toString();
+		String stagingAreaTestsPath = Paths.get(stagingAreaBasePath, "target", "test-classes").toString();
+		stagingAreaCodePath = stagingAreaCodePath.replace("\\", "/");
+		stagingAreaTestsPath = stagingAreaTestsPath.replace("\\", "/");
+		
+		List<URL> urlList = new ArrayList<>();
+		// These paths are required because DeltaDebuggerTestRunner needs to find JUnit test classes inside StagingArea subfolder.
+		// See implementation of DeltaDebuggerTestRunner.runTest().
+		urlList.add(new URL("file:/" + stagingAreaCodePath + "/"));
+		urlList.add(new URL("file:/" + stagingAreaTestsPath + "/"));
 		
 		// This is required because IsolatedURLClassLoader should be able to locate DeltaDebuggerTestRunner and JUnitTestRunner class, 
 		// which reside in the plugin project.
-		urlList.add(new URL("file:" + DeltaDebuggerTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "bin/"));
+		urlList.add(new URL("file:" + DeltaDebuggerTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath()));
 		urlList.add(JUnitTester.class.getProtectionDomain().getCodeSource().getLocation());
+		urlList.add(NoTestsRemainException.class.getProtectionDomain().getCodeSource().getLocation());
+		urlList.add(SelfDescribing.class.getProtectionDomain().getCodeSource().getLocation());
 
-		return (URL[]) urlList.toArray(new URL[urlList.size()]);
+		return (URL[]) urlList.toArray(new URL[0]);
 	}
 	
 	private Throwable obtainOriginalStacktrace() {
-		SourceCodeManipulator.copyToStagingAreaWithModifications(task.getRegressionCU(), new ArrayList<>());
+		SourceCodeManipulator.copyToStagingAreaWithModifications(basePath, task.getFaultyVersion(), new ArrayList<>());
 		
 		return (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
 				new MethodDescriptor("getOriginalException", null, null));
@@ -78,7 +73,7 @@ public class DeltaSetEvaluator extends JUnitTester {
 	}
 	
 	private int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
-		SourceCodeManipulator.copyToStagingAreaWithModifications(task.getSourceCU(), selectedSourceCodeChangeSet);
+		SourceCodeManipulator.copyToStagingAreaWithModifications(basePath, task.getReferenceVersion(), selectedSourceCodeChangeSet);
 		
 		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));

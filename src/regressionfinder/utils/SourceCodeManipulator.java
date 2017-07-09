@@ -1,14 +1,10 @@
 package regressionfinder.utils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.TextUtilities;
-import org.eclipse.ui.texteditor.ITextEditor;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.java.JavaEntityType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
@@ -23,13 +19,14 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
 public class SourceCodeManipulator {
 	
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
-	private final IDocument document;
+	
+	private final StringBuilder content;
+	private final Path copyOfSource;
 	private int offset = 0;
 	
-	public SourceCodeManipulator(ICompilationUnit cu) throws Exception {	
-		ICompilationUnit copyOfSource = JavaModelHelper.copyCompilationUnitToStagingArea(cu);
-		ITextEditor textEditor = JavaModelHelper.openTextEditor(copyOfSource);
-		document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
+	public SourceCodeManipulator(String basePath, String source) throws Exception {
+		copyOfSource = FileUtils.copyFileToStagingArea(basePath, source);
+        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
 	}
 	
 	private void applySourceCodeChanges(List<SourceCodeChange> sourceCodeChanges) throws Exception {
@@ -47,10 +44,10 @@ public class SourceCodeManipulator {
 			applySourceCodeChange(sourceCodeChange);
 		}
 		
-		JavaModelHelper.saveModifiedFiles();
+		FileUtils.saveModifiedFiles(content, copyOfSource); 
 	}
 	
-	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) throws BadLocationException {
+	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {
 		if (sourceCodeChange instanceof Insert) {
 			applySourceCodeChange((Insert) sourceCodeChange);
 		} else if (sourceCodeChange instanceof Update) {
@@ -62,7 +59,7 @@ public class SourceCodeManipulator {
 		}
 	}
 	
-	private void applySourceCodeChange(Insert insert) throws BadLocationException {
+	private void applySourceCodeChange(Insert insert) {
 		// TODO: refactor
 		boolean inline = false, commaDelimiter = false;
 		switch (insert.getChangeType()) {
@@ -106,7 +103,7 @@ public class SourceCodeManipulator {
 		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter); 
 		int startPosition = insert.getChangedEntity().getStartPosition();
 		
-		document.replace(startPosition + offset, 0, textToInsert.toString());
+		content.replace(startPosition + offset, startPosition + offset, textToInsert.toString());
 		offset += textToInsert.length();
 	}
 	
@@ -121,14 +118,14 @@ public class SourceCodeManipulator {
 	private String getProperStartDelimiter(boolean inline, boolean commaDelimiter) {
 		return inline 
 				? (commaDelimiter ? "," : " ")
-				: TextUtilities.getDefaultLineDelimiter(document);
+				: "\r\n";
 	}
 	
 	private String getProperEndDelimiter(boolean inline) {
-		return inline ? " " : TextUtilities.getDefaultLineDelimiter(document);
+		return inline ? " " : "\r\n";
 	}
 
-	private void applySourceCodeChange(Update update) throws BadLocationException {
+	private void applySourceCodeChange(Update update) {
 		switch (update.getChangeType()) {
 			case STATEMENT_UPDATE:
 			case INCREASING_ACCESSIBILITY_CHANGE:
@@ -153,11 +150,12 @@ public class SourceCodeManipulator {
 		
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;
-		document.replace(startPosition + offset, changedEntityValueLength, newStatement);
+		
+		content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, newStatement);
 		offset += newStatement.length() - changedEntityValueLength; 
 	}	
 	
-	private void applySourceCodeChange(Delete delete) throws BadLocationException {
+	private void applySourceCodeChange(Delete delete) {
 		switch (delete.getChangeType()) {
 			case REMOVED_FUNCTIONALITY:
 				break;
@@ -169,7 +167,7 @@ public class SourceCodeManipulator {
 			int startPosition = delete.getChangedEntity().getStartPosition();
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 			
-			document.replace(startPosition + offset, changedEntityValueLength, "");
+			content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, "");
 			offset -= changedEntityValueLength;
 		} else {
 			throw new UnsupportedOperationException();
@@ -187,9 +185,9 @@ public class SourceCodeManipulator {
 		return result;
 	}
 	
-	public static void copyToStagingAreaWithModifications(ICompilationUnit sourceCU, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public static void copyToStagingAreaWithModifications(String basePath, String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
-			SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(sourceCU);
+			SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(basePath, fileToCopy);
 			sourceCodeHelper.applySourceCodeChanges(selectedSourceCodeChangeSet);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
