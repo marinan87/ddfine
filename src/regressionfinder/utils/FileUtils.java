@@ -54,15 +54,17 @@ public class FileUtils {
 		while (!stagingAreaPath.getFileName().endsWith(DeltaSetEvaluator.WORK_AREA)) {
 			stagingAreaPath = stagingAreaPath.getParent();
 		}
-
+		
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile(Paths.get(stagingAreaPath.toString(), "pom.xml").toFile());
 		request.setGoals(Arrays.asList("compile"));
-
+		request.setThreads("1C");
+		request.setMavenOpts("-XX:+TieredCompilation -XX:TieredStopAtLevel=1");
+		
 		Invoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File(System.getenv("MAVEN_HOME")));
 		invoker.execute(request); 		
-		
+
 		// TODO: run incremental build
 	}
 
