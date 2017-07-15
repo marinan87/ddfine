@@ -22,8 +22,8 @@ import regressionfinder.utils.FileUtils;
 
 public class FaultLocalizationHandler {
 
-	private static final String REFERENCE_VERSION = "BeforeRegression";
-	private static final String FAULTY_VERSION = "Regression";
+	private static final String REFERENCE_VERSION = "reference";
+	private static final String FAULTY_VERSION = "faulty";
 	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
 	private static final String TEST_CLASS_NAME = "simple.ExampleTest";
 	private static final String TEST_METHOD_NAME = "tenMultipliedByTenIsOneHundred";
