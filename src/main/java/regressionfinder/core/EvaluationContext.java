@@ -1,6 +1,11 @@
 package regressionfinder.core;
 
 import static java.util.stream.Collectors.toList;
+import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
+import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
+import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
+import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
+import static regressionfinder.runner.CommandLineOption.WORKING_AREA;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -8,13 +13,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,18 +21,12 @@ import org.springframework.stereotype.Component;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.manipulation.FileUtils;
 import regressionfinder.manipulation.SourceCodeManipulator;
+import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class EvaluationContext extends JUnitTester {
 
 	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
-	
-	private static final String OPTION_REFERENCE_VERSION = "r";
-	private static final String OPTION_FAULTY_VERSION = "f";
-	private static final String OPTION_WORKING_AREA = "t";
-	private static final String OPTION_FAILING_TEST_CLASS = "cn";
-	private static final String OPTION_FAILING_METHOD = "mn";
-	
 
 	private String referenceVersion;
 	private String faultyVersion;
@@ -46,15 +38,13 @@ public class EvaluationContext extends JUnitTester {
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
 	
 	
-	public void initFromArgs(String[] args) {
-		try {
-			CommandLine cmd = parseCommandLineArguments(args);
-			
-			referenceVersion = FileUtils.getPathToJavaFile(cmd.getOptionValue(OPTION_REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
-			faultyVersion = FileUtils.getPathToJavaFile(cmd.getOptionValue(OPTION_FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
-			workingArea = cmd.getOptionValue(OPTION_WORKING_AREA);
-			testClassName = cmd.getOptionValue(OPTION_FAILING_TEST_CLASS);
-			testMethodName = cmd.getOptionValue(OPTION_FAILING_METHOD);
+	public void initFromProvidedArguments(CommandLineArgumentsInterpreter arguments) {
+		try {			
+			referenceVersion = FileUtils.getPathToJavaFile(arguments.getValue(REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
+			faultyVersion = FileUtils.getPathToJavaFile(arguments.getValue(FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
+			workingArea = arguments.getValue(WORKING_AREA);
+			testClassName = arguments.getValue(FAILING_CLASS);
+			testMethodName = arguments.getValue(FAILING_METHOD);
 			
 			SourceCodeManipulator.copyToWorkingAreaWithoutModifications(workingArea, faultyVersion);
 			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
@@ -64,31 +54,6 @@ public class EvaluationContext extends JUnitTester {
 		}
 	}
 
-	private CommandLine parseCommandLineArguments(String[] args) {
-		Options options = new Options();
-		options.addOption(mandatoryOption(OPTION_REFERENCE_VERSION, "path to reference version"));
-		options.addOption(mandatoryOption(OPTION_FAULTY_VERSION, "path to faulty version"));
-		// TODO: staging area - create in temp folder automatically.
-		options.addOption(mandatoryOption(OPTION_WORKING_AREA, "path to working area"));
-		options.addOption(mandatoryOption(OPTION_FAILING_TEST_CLASS, "fully qualified name of test class which contains failed test"));
-		options.addOption(mandatoryOption(OPTION_FAILING_METHOD, "name of failed test method"));
-		
-		CommandLineParser parser = new DefaultParser();
-		try {
-			return parser.parse(options, args);
-		} catch (ParseException e) {
-			System.out.println("Error: " + e.getMessage());
-			new HelpFormatter().printHelp("regressionfinder", options);
-			throw new RuntimeException(e);
-		}
-	}
-
-	private Option mandatoryOption(String argName, String description) {
-		return Option.builder(argName).argName(argName).desc(description)
-				.required().hasArg()
-				.build();
-	}
-	
 	public List<URL> getWorkingAreaClassPaths() {
 		try {
 			List<URL> urls = new ArrayList<>();
