@@ -1,7 +1,5 @@
 package regressionfinder.core;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -9,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
-import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -70,15 +67,7 @@ public class RegressionFinder {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
 				
-		JUnitTester evaluator = new JUnitTester() {
-			@Override
-			public int test(DeltaSet c) {
-				@SuppressWarnings("unchecked")
-				List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) c.stream().collect(toList());
-				return evaluationContext.testSelectedChangeSet(selectedChangeSet); 
-			}
-		};
-		Object[] resultArray = new DD(evaluator).ddMin(completeDeltaSet).toArray();
+		Object[] resultArray = new DD(evaluationContext).ddMin(completeDeltaSet).toArray();
 		
 		return Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
 	}

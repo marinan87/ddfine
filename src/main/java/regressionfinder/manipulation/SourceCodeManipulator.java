@@ -2,6 +2,7 @@ package regressionfinder.manipulation;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -185,12 +186,16 @@ public class SourceCodeManipulator {
 		return result;
 	}
 	
-	public static void copyToStagingAreaWithModifications(String stagingAreaPath, String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public static void copyToWorkingAreaWithModifications(String stagingAreaPath, String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
 			SourceCodeManipulator sourceCodeHelper = new SourceCodeManipulator(stagingAreaPath, fileToCopy);
 			sourceCodeHelper.applySourceCodeChanges(selectedSourceCodeChangeSet);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public static void copyToWorkingAreaWithoutModifications(String workingAreaPath, String fileToCopy) {
+		copyToWorkingAreaWithModifications(workingAreaPath, fileToCopy, new ArrayList<>());
 	}
 }
