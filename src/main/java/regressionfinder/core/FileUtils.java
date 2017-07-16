@@ -18,7 +18,7 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
  * Helper class for performing simplistic operations with files in working directory.
  * Will be completely rewritten later.
  */
-// TODO: move to EvaluationContext
+// TODO: move to EvaluationContext?
 public class FileUtils {
 	
 	private static final String PATH_TO_SOURCES = "src";

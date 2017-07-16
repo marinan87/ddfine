@@ -5,6 +5,10 @@ public class MethodDescriptor {
 	private final Class<?>[] parameterTypes;
 	private final Object[] args;
 	
+	public MethodDescriptor(String methodName) {
+		this(methodName, null, null);
+	}
+	
 	public MethodDescriptor(String methodName, Class<?>[] parameterTypes, Object[] args) {
 		this.methodName = methodName;
 		this.parameterTypes = parameterTypes;

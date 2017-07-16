@@ -1,5 +1,7 @@
 package regressionfinder.core;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -17,7 +19,12 @@ import org.hamcrest.SelfDescribing;
 import org.junit.runner.manipulation.NoTestsRemainException;
 import org.springframework.stereotype.Component;
 
+import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
+import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
+import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
+import regressionfinder.isolatedrunner.JUnitTestRunner;
+import regressionfinder.isolatedrunner.MethodDescriptor;
 
 @Component
 public class EvaluationContext {
@@ -33,7 +40,7 @@ public class EvaluationContext {
 	private String testMethodName = "tenMultipliedByTenIsOneHundred";
 	
 	private URL[] classPathUrls;
-
+	private Throwable throwable;
 	
 	public void initFromArgs(String[] args) {
 		try {
@@ -43,7 +50,8 @@ public class EvaluationContext {
 			faultyVersion = FileUtils.getPathToJavaFile(cmd.getOptionValue("f"), SOURCE_OF_LOCALIZATION);
 			workingArea = cmd.getOptionValue("t");
 			
-			classPathUrls = gatherClassPathsForIsolatedClassLoader();
+			gatherClassPathsForIsolatedClassLoader();
+			obtainOriginalStacktrace();
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			e.printStackTrace();
@@ -73,7 +81,7 @@ public class EvaluationContext {
 				.build();
 	}
 	
-	private URL[] gatherClassPathsForIsolatedClassLoader() throws MalformedURLException {	
+	private void gatherClassPathsForIsolatedClassLoader() throws MalformedURLException {	
 		List<URL> urlList = new ArrayList<>();
 		// These paths are required because DeltaDebuggerTestRunner needs to find JUnit test classes inside StagingArea subfolder.
 		// See implementation of DeltaDebuggerTestRunner.runTest().
@@ -86,15 +94,44 @@ public class EvaluationContext {
 		urlList.add(NoTestsRemainException.class.getProtectionDomain().getCodeSource().getLocation());
 		urlList.add(SelfDescribing.class.getProtectionDomain().getCodeSource().getLocation());
 
-		return (URL[]) urlList.toArray(new URL[0]);
+		classPathUrls = (URL[]) urlList.toArray(new URL[0]);
 	}
 	
 	private String getWorkingAreaClassesPath() {
-		return Paths.get(getWorkingArea(), "target", "classes").toString().replace("\\", "/");
+		return Paths.get(workingArea, "target", "classes").toString().replace("\\", "/");
 	}
 	
 	private String getWorkingAreaTestClassesPath() {
-		return Paths.get(getWorkingArea(), "target", "test-classes").toString().replace("\\", "/");
+		return Paths.get(workingArea, "target", "test-classes").toString().replace("\\", "/");
+	}
+	
+	private void obtainOriginalStacktrace() {
+		SourceCodeManipulator.copyToStagingAreaWithModifications(workingArea, faultyVersion, new ArrayList<>());
+		
+		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
+				new MethodDescriptor("getOriginalException"));
+	}
+	
+	public int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
+		// TODO: sourcecodemanipulator - singleton beans
+		SourceCodeManipulator.copyToStagingAreaWithModifications(workingArea, referenceVersion, selectedSourceCodeChangeSet);
+		
+		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
+				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
+	}
+	
+	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, MethodDescriptor methodDescriptor) {
+		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPathUrls)) {
+			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
+			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
+			
+			Object isolatedTestRunner = constructor.newInstance(testClassName, testMethodName);
+		
+			Method method = isolatedTestRunner.getClass().getMethod(methodDescriptor.getMethodName(), methodDescriptor.getParameterTypes());
+			return method.invoke(isolatedTestRunner, methodDescriptor.getArgs());			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public String getReferenceVersion() {
