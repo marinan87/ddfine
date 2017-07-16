@@ -5,14 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import ch.uzh.ifi.seal.changedistiller.ChangeDistiller;
 import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
@@ -24,84 +20,29 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Move;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
 
+@Component
 public class RegressionFinder {
 
-	public static final String WORK_AREA = "StagingArea";
-	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
-	private static final String TEST_CLASS_NAME = "simple.ExampleTest";
-	private static final String TEST_METHOD_NAME = "tenMultipliedByTenIsOneHundred";
-	
-	private final String pathToReferenceVersion;
-	private final String pathToFaultyVersion;
-	private final String pathToStagingArea;
-	
-	public RegressionFinder(String[] args) {
-		Options options = new Options();
-		options.addOption(Option.builder("r")
-				.argName("-r")
-				.required()
-				.hasArg()
-				.desc("path to reference version")
-				.build());
-		options.addOption(Option.builder("f")
-				.argName("-f")
-				.required()
-				.hasArg()
-				.desc("path to faulty version")
-				.build());
-		options.addOption(Option.builder("t")
-				.argName("-t")
-				.required()
-				.hasArg()
-				.desc("path to working area")
-				.build());
-		
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmd = null;
-		try {
-			cmd = parser.parse(options, args);
-		} catch (ParseException e) {
-			System.out.println("Usage: " + e.getMessage());
-			System.exit(1);
-		}
-		// TODO: move to execution context initialization 
-		
-		
-		// TODO: staging area - create in temp folder automatically.
-			
-		pathToReferenceVersion = FileUtils.getPathToJavaFile(cmd.getOptionValue("r"), SOURCE_OF_LOCALIZATION);		
-		pathToFaultyVersion = FileUtils.getPathToJavaFile(cmd.getOptionValue("f"), SOURCE_OF_LOCALIZATION);
-		pathToStagingArea = cmd.getOptionValue("t");
-		//only inside src folders! expect standard Maven structure
-		//
-		//added, removed files? fileops
-		//modified files - first by size, if equal - then calculate hash, if changed -> Distiller
-		//added, removed dirs? fileops
-		//then folders with same name recursively. Repeat in each dir. 
-		//
-		//Tree structure  (Guava?)
-		//
-		//
-		//0) Diff between two versions - Git mode.
-		//1) Textual diff first, compare only changed files. 
-		//2) Make work with a set of files. Very simple example with only one change (applying operation is supported)
-		//3) Evaluate only changed files via ChangeDistiller.
-	}
+	@Autowired
+	private EvaluationContext evaluationContext;
 
-	public SourceCodeChange[] runDeltaDebugging(List<SourceCodeChange> filteredChanges) throws Exception {
+	public SourceCodeChange[] runDeltaDebugging(List<SourceCodeChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
-		
-		EvaluationContext task = new EvaluationContext(pathToReferenceVersion, pathToFaultyVersion, TEST_CLASS_NAME, TEST_METHOD_NAME);
-		
-		DeltaSetEvaluator evaluator = new DeltaSetEvaluator(task, pathToStagingArea);			
-		Object[] resultArray = new DD(evaluator).ddMin(completeDeltaSet).toArray();
-		return Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
+				
+		try {
+			DeltaSetEvaluator evaluator = new DeltaSetEvaluator(evaluationContext);			
+			Object[] resultArray = new DD(evaluator).ddMin(completeDeltaSet).toArray();
+			SourceCodeChange[] result = Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
+			return result;
+		} catch (Exception e) {
+			throw new RuntimeException();
+		}
 	}
 
 	public List<SourceCodeChange> extractDistilledChanges() {
-		File left = FileUtils.getFile(pathToReferenceVersion);
-		File right = FileUtils.getFile(pathToFaultyVersion);
+		File left = FileUtils.getFile(evaluationContext.getReferenceVersion());
+		File right = FileUtils.getFile(evaluationContext.getFaultyVersion());
 		
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
 		distiller.extractClassifiedSourceCodeChanges(left, right);

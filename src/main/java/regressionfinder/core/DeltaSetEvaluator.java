@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toList;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,29 +24,22 @@ public class DeltaSetEvaluator extends JUnitTester {
 	
 	private final URL[] urls;
 	private final Throwable throwable;
-	private final EvaluationContext context;
-	private final String stagingAreaPath;
+	private final EvaluationContext evaluationContext;
 	
-	public DeltaSetEvaluator(EvaluationContext task, String stagingAreaPath) throws Exception {
+	public DeltaSetEvaluator(EvaluationContext evaluationContext) throws Exception {
 		super();
 		
-		this.context = task;
-		this.stagingAreaPath = stagingAreaPath;
+		this.evaluationContext = evaluationContext;
 		urls = collectClasspaths(); 
 		throwable = obtainOriginalStacktrace();
 	}
 	
-	private URL[] collectClasspaths() throws Exception {
-		String stagingAreaCodePath = Paths.get(stagingAreaPath, "target", "classes").toString();
-		String stagingAreaTestsPath = Paths.get(stagingAreaPath, "target", "test-classes").toString();
-		stagingAreaCodePath = stagingAreaCodePath.replace("\\", "/");
-		stagingAreaTestsPath = stagingAreaTestsPath.replace("\\", "/");
-		
+	private URL[] collectClasspaths() throws Exception {		
 		List<URL> urlList = new ArrayList<>();
 		// These paths are required because DeltaDebuggerTestRunner needs to find JUnit test classes inside StagingArea subfolder.
 		// See implementation of DeltaDebuggerTestRunner.runTest().
-		urlList.add(new URL("file:/" + stagingAreaCodePath + "/"));
-		urlList.add(new URL("file:/" + stagingAreaTestsPath + "/"));
+		urlList.add(new URL("file:/" + evaluationContext.getWorkingAreaClassesPath() + "/"));
+		urlList.add(new URL("file:/" + evaluationContext.getWorkingAreaTestClassesPath() + "/"));
 		
 		// This is required because IsolatedURLClassLoader should be able to locate DeltaDebuggerTestRunner and JUnitTestRunner class, 
 		// which reside in the plugin project.
@@ -60,7 +52,7 @@ public class DeltaSetEvaluator extends JUnitTester {
 	}
 	
 	private Throwable obtainOriginalStacktrace() {
-		SourceCodeManipulator.copyToStagingAreaWithModifications(stagingAreaPath, context.getFaultyVersion(), new ArrayList<>());
+		SourceCodeManipulator.copyToStagingAreaWithModifications(evaluationContext.getWorkingArea(), evaluationContext.getFaultyVersion(), new ArrayList<>());
 		
 		return (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
 				new MethodDescriptor("getOriginalException", null, null));
@@ -75,19 +67,18 @@ public class DeltaSetEvaluator extends JUnitTester {
 	
 	private int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		// TODO: evaluationcontext, sourcecodemanipulator, deltasetevaluator - singleton beans
-		SourceCodeManipulator.copyToStagingAreaWithModifications(stagingAreaPath, context.getReferenceVersion(), selectedSourceCodeChangeSet);
+		SourceCodeManipulator.copyToStagingAreaWithModifications(evaluationContext.getWorkingArea(), evaluationContext.getReferenceVersion(), selectedSourceCodeChangeSet);
 		
 		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 	}
 	
-	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz,
-			MethodDescriptor methodDescriptor) {
+	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, MethodDescriptor methodDescriptor) {
 		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(urls)) {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
 			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
 			
-			Object isolatedTestRunner = constructor.newInstance(context.getTestClassName(), context.getTestMethodName());
+			Object isolatedTestRunner = constructor.newInstance(evaluationContext.getTestClassName(), evaluationContext.getTestMethodName());
 		
 			Method method = isolatedTestRunner.getClass().getMethod(methodDescriptor.getMethodName(), methodDescriptor.getParameterTypes());
 			return method.invoke(isolatedTestRunner, methodDescriptor.getArgs());			
