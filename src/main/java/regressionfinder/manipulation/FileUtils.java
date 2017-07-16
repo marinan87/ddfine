@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.manipulation;
 
 import java.io.File;
 import java.io.IOException;

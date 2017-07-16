@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.manipulation;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

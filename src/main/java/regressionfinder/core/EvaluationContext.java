@@ -25,6 +25,8 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
+import regressionfinder.manipulation.FileUtils;
+import regressionfinder.manipulation.SourceCodeManipulator;
 
 @Component
 public class EvaluationContext {
