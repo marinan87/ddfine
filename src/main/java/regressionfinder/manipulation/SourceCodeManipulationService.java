@@ -25,9 +25,6 @@ import regressionfinder.core.EvaluationContext;
 public class SourceCodeManipulationService {
 
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
-
-	@Autowired
-	private FileSystemService fileService;
 	
 	@Autowired
 	private EvaluationContext context;
@@ -72,7 +69,7 @@ public class SourceCodeManipulationService {
 				applySourceCodeChange(sourceCodeChange);
 			}
 
-			fileService.saveModifiedFiles(content, copyOfSource);
+			context.getWorkingAreaProject().saveModifiedFiles(content, copyOfSource);
 			context.getWorkingAreaProject().triggerCompilation();
 		}
 

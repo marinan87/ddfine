@@ -21,11 +21,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 public class MavenProject {
+	// TODO: make more general
+	private static final String PATH_TO_PACKAGE = "simple";
+	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
 
 	private static final String SOURCES_DIR = "src";
 	private static final String TARGET_DIR = "target";
-	// TODO: make more general
-	private static final String PATH_TO_PACKAGE = "simple";
 	private static final String CLASSES_DIR = "classes";
 	private static final String TEST_CLASSES_DIR = "test-classes";
 	
@@ -37,12 +38,14 @@ public class MavenProject {
 		
 	private final String rootDirectory;
 	private final File rootPomXml;
+	private final File sourcesDirectory;
 	private final Path targetClassesPath, targetTestClassesPath;
 	
 	public MavenProject(String rootDirectory) {
 		this.rootDirectory = rootDirectory;
 		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
 		
+		this.sourcesDirectory = Paths.get(rootDirectory, SOURCES_DIR).toFile();
 		File targetDirectory = Paths.get(rootDirectory, TARGET_DIR).toFile();
 		this.targetClassesPath = targetDirectory.toPath().resolve(CLASSES_DIR);
 		this.targetTestClassesPath = targetDirectory.toPath().resolve(TEST_CLASSES_DIR);
@@ -53,7 +56,7 @@ public class MavenProject {
 	private void checkIsMavenProject() {
 		String errorMessageTemplate = String.format("Folder %s is not a root of Maven project! ", rootDirectory).concat("%s");
 		Preconditions.checkState(rootPomXml.isFile(), errorMessageTemplate, "Root pom.xml file is missing.");
-		Preconditions.checkState(Paths.get(rootDirectory, SOURCES_DIR).toFile().isDirectory(), errorMessageTemplate, "Source directory is missing.");
+		Preconditions.checkState(sourcesDirectory.isDirectory(), errorMessageTemplate, "Sources directory is missing.");
 		Preconditions.checkState(targetClassesPath.toFile().isDirectory(), errorMessageTemplate, "Target classes directory is missing.");
 		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate, "Target test-classes directory is missing.");
 	}
@@ -89,9 +92,20 @@ public class MavenProject {
 	
 	public Path copyHere(String sourceFile) throws IOException {
 		Path source = Paths.get(sourceFile);
-		Path copy = Paths.get(rootDirectory);
 		return Files.copy(source, 
-				copy.resolve(Paths.get(SOURCES_DIR, PATH_TO_PACKAGE, source.getFileName().toString())), 
+				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, source.getFileName().toString())),
 				StandardCopyOption.REPLACE_EXISTING);
+	}
+	
+	public File getJavaFile() {
+		return sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION).toString()).toFile();
+	}
+	
+	public void saveModifiedFiles(StringBuilder content, Path path) {
+		try {
+			Files.write(path, content.toString().getBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

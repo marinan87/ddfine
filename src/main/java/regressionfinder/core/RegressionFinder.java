@@ -14,17 +14,12 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.manipulation.FileSystemService;
 
 @Component
 public class RegressionFinder {
 
 	@Autowired
-	private EvaluationContext evaluationContext;
-	
-	@Autowired
-	private FileSystemService fileService;
-	
+	private EvaluationContext evaluationContext;	
 	
 	public void run() {
 		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
@@ -52,7 +47,7 @@ public class RegressionFinder {
 
 	public List<SourceCodeChange> extractDistilledChanges() {
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
-		distiller.extractClassifiedSourceCodeChanges(fileService.getReferenceVersion(), fileService.getFaultyVersion());
+		distiller.extractClassifiedSourceCodeChanges(evaluationContext.getReferenceProject().getJavaFile(), evaluationContext.getFaultyProject().getJavaFile());
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges());
 	}

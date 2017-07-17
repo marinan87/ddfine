@@ -15,35 +15,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.manipulation.FileSystemService;
 import regressionfinder.manipulation.SourceCodeManipulationService;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class EvaluationContext extends JUnitTester {
 
-	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
-
-	private String referenceVersion;
-	private String faultyVersion;
 	private String testClassName;
 	private String testMethodName;
+	private MavenProject referenceVersionProject;
+	private MavenProject faultyVersionProject;
 	private MavenProject workingAreaProject;
 
 	
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
-	
-	@Autowired
-	private FileSystemService fileService;
-	
+		
 	@Autowired
 	private SourceCodeManipulationService sourceCodeManipulationService;
 	
 	public void initFromProvidedArguments(CommandLineArgumentsInterpreter arguments) {
-		try {			
-			referenceVersion = fileService.getPathToJavaFile(arguments.getValue(REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
-			faultyVersion = fileService.getPathToJavaFile(arguments.getValue(FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
+		try {		
+			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
+			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
 			// TODO: create temp directory and copy all artifacts from reference version there.
 			// TODO: evaluation of failing version (obtaining original throwable should be done in the faulty folder). Compile and run test. Correct classpaths.
 			// Files.createTempDirectory("regressionfinder");  automatically
@@ -52,20 +46,20 @@ public class EvaluationContext extends JUnitTester {
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
-			sourceCodeManipulationService.copyToWorkingAreaWithoutModifications(faultyVersion);
+			sourceCodeManipulationService.copyToWorkingAreaWithoutModifications(faultyVersionProject.getJavaFile().toString());
 			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			System.exit(1);
 		}
 	}
-		
-	public String getReferenceVersion() {
-		return referenceVersion;
+	
+	public MavenProject getReferenceProject() {
+		return referenceVersionProject;
 	}
 	
-	public String getFaultyVersion() {
-		return faultyVersion;
+	public MavenProject getFaultyProject() {
+		return faultyVersionProject;
 	}
 	
 	public MavenProject getWorkingAreaProject() {
@@ -76,7 +70,7 @@ public class EvaluationContext extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) set.stream().collect(toList());
-		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersion, selectedChangeSet);
+		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersionProject.getJavaFile().toString(), selectedChangeSet);
 		
 		return reflectionalInvoker.testSelectedChangeSet(selectedChangeSet); 
 	}
