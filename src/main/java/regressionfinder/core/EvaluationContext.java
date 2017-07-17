@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.manipulation.FileUtils;
-import regressionfinder.manipulation.SourceCodeManipulator;
+import regressionfinder.manipulation.FileSystemService;
+import regressionfinder.manipulation.SourceCodeManipulationService;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
@@ -37,16 +37,21 @@ public class EvaluationContext extends JUnitTester {
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
 	
+	@Autowired
+	private FileSystemService fileService;
+	
+	@Autowired
+	private SourceCodeManipulationService sourceCodeManipulationService;
 	
 	public void initFromProvidedArguments(CommandLineArgumentsInterpreter arguments) {
 		try {			
-			referenceVersion = FileUtils.getPathToJavaFile(arguments.getValue(REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
-			faultyVersion = FileUtils.getPathToJavaFile(arguments.getValue(FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
+			referenceVersion = fileService.getPathToJavaFile(arguments.getValue(REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
+			faultyVersion = fileService.getPathToJavaFile(arguments.getValue(FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
 			workingArea = arguments.getValue(WORKING_AREA);
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
-			SourceCodeManipulator.copyToWorkingAreaWithoutModifications(workingArea, faultyVersion);
+			sourceCodeManipulationService.copyToWorkingAreaWithoutModifications(faultyVersion);
 			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
@@ -57,15 +62,15 @@ public class EvaluationContext extends JUnitTester {
 	public List<URL> getWorkingAreaClassPaths() {
 		try {
 			List<URL> urls = new ArrayList<>();
-			urls.add(new URL("file:/" + getClassPath("classes") + "/"));
-			urls.add(new URL("file:/" + getClassPath("test-classes") + "/"));
+			urls.add(new URL("file:/" + getWorkingAreaClassPath("classes") + "/"));
+			urls.add(new URL("file:/" + getWorkingAreaClassPath("test-classes") + "/"));
 			return urls;
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("Error while initializing working area class paths");
 		}
 	}
 		
-	private String getClassPath(String targetSubfolder) {
+	private String getWorkingAreaClassPath(String targetSubfolder) {
 		return Paths.get(workingArea, "target", targetSubfolder).toString().replace("\\", "/");
 	}
 		
@@ -77,12 +82,15 @@ public class EvaluationContext extends JUnitTester {
 		return faultyVersion;
 	}
 	
+	public String getWorkingArea() {
+		return workingArea;
+	}
+	
 	@Override
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) set.stream().collect(toList());
-		// TODO: sourcecodemanipulator - singleton beans
-		SourceCodeManipulator.copyToWorkingAreaWithModifications(workingArea, referenceVersion, selectedChangeSet);
+		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersion, selectedChangeSet);
 		
 		return reflectionalInvoker.testSelectedChangeSet(selectedChangeSet); 
 	}

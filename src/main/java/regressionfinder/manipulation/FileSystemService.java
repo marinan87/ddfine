@@ -13,51 +13,58 @@ import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import regressionfinder.core.EvaluationContext;
 
 /*
  * Helper class for performing simplistic operations with files in working directory.
  * Will be completely rewritten later.
  */
-// TODO: move to EvaluationContext?
-public class FileUtils {
+@Service
+public class FileSystemService {
 	
 	private static final String PATH_TO_SOURCES = "src";
 	private static final String PATH_TO_PACKAGE = "simple";
 	
-	private FileUtils() {
-	}
+	@Autowired
+	private EvaluationContext context;
+
 	
-	public static String getPathToJavaFile(String versionBasePath, String fileName) {
+	public String getPathToJavaFile(String versionBasePath, String fileName) {
 		return Paths.get(versionBasePath, PATH_TO_SOURCES, PATH_TO_PACKAGE, fileName).toString();
 	}
 	
 	
-	public static Path copyFileToStagingArea(/* TODO: store in context! */ String stagingAreaPath, String sourceFile) throws IOException {
+	public Path copyFileToStagingArea(String sourceFile) throws IOException {
 		Path source = Paths.get(sourceFile);
-		Path copy = Paths.get(stagingAreaPath);
+		Path copy = Paths.get(context.getWorkingArea());
 		return Files.copy(source, 
 				copy.resolve(Paths.get(PATH_TO_SOURCES, PATH_TO_PACKAGE, source.getFileName().toString())), 
 				StandardCopyOption.REPLACE_EXISTING);
 	}
+	
+	public File getReferenceVersion() {
+		return getFile(context.getReferenceVersion());
+	}
+	
+	public File getFaultyVersion() {
+		return getFile(context.getFaultyVersion());
+	}
 
-	public static File getFile(String location) {
+	private File getFile(String location) {
 		File file = new File(location);
 		assert(file.exists());
 		return file;
 	}
 
-	public static void saveModifiedFiles(StringBuilder content, Path path) throws IOException, MavenInvocationException {
+	public void saveModifiedFilesAndCompile(StringBuilder content, Path path) throws IOException, MavenInvocationException {
 		Files.write(path, content.toString().getBytes());
-		
-		Path stagingAreaPath = path;
-		// TODO: get staging area path from context
-		while (!stagingAreaPath.getFileName().endsWith("StagingArea")) {
-			stagingAreaPath = stagingAreaPath.getParent();
-		}
 		
 		// TODO: extract into separate class
 		InvocationRequest request = new DefaultInvocationRequest();
-		request.setPomFile(Paths.get(stagingAreaPath.toString(), "pom.xml").toFile());
+		request.setPomFile(Paths.get(context.getWorkingArea(), "pom.xml").toFile());
 		request.setGoals(Arrays.asList("compile"));
 		request.setThreads("1C");
 		request.setMavenOpts("-XX:+TieredCompilation -XX:TieredStopAtLevel=1");
@@ -68,5 +75,4 @@ public class FileUtils {
 
 		// TODO: run incremental build
 	}
-
 }

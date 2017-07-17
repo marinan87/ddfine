@@ -1,6 +1,5 @@
 package regressionfinder.core;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,13 +14,17 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.manipulation.FileUtils;
+import regressionfinder.manipulation.FileSystemService;
 
 @Component
 public class RegressionFinder {
 
 	@Autowired
 	private EvaluationContext evaluationContext;
+	
+	@Autowired
+	private FileSystemService fileService;
+	
 	
 	public void run() {
 		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
@@ -48,11 +51,8 @@ public class RegressionFinder {
 	}
 
 	public List<SourceCodeChange> extractDistilledChanges() {
-		File left = FileUtils.getFile(evaluationContext.getReferenceVersion());
-		File right = FileUtils.getFile(evaluationContext.getFaultyVersion());
-		
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
-		distiller.extractClassifiedSourceCodeChanges(left, right);
+		distiller.extractClassifiedSourceCodeChanges(fileService.getReferenceVersion(), fileService.getFaultyVersion());
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges());
 	}

@@ -10,9 +10,10 @@ import org.springframework.context.annotation.ComponentScan;
 
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.RegressionFinder;
+import regressionfinder.manipulation.FileSystemService;
 
 @SpringBootApplication
-@ComponentScan(basePackageClasses = RegressionFinder.class)
+@ComponentScan(basePackageClasses = { RegressionFinder.class, FileSystemService.class} )
 public class ApplicationRunner {
 	
 	@Autowired
