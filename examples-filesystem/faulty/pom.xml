@@ -4,9 +4,10 @@
 	<groupId>After</groupId>
 	<artifactId>After</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Version with regression</name>
+	<name>Faulty version</name>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

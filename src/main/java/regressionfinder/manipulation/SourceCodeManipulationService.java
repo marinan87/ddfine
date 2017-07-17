@@ -30,7 +30,7 @@ public class SourceCodeManipulationService {
 	private EvaluationContext context;
 
 	
-	public void copyToWorkingAreaWithModifications(File fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public void applySelectedChanges(File fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
 			SourceCodeManipulator manipulator = new SourceCodeManipulator(fileToCopy);
 			manipulator.applySourceCodeChanges(selectedSourceCodeChangeSet);
@@ -66,7 +66,7 @@ public class SourceCodeManipulationService {
 			}
 
 			context.getWorkingAreaProject().saveModifiedFiles(content, copyOfSource);
-			context.getWorkingAreaProject().triggerCompilation();
+			context.getWorkingAreaProject().triggerSimpleCompilation();
 		}
 
 		private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {

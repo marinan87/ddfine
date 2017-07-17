@@ -41,11 +41,12 @@ public class EvaluationContext extends JUnitTester {
 			// TODO: create temp directory and copy all artifacts from reference version there.
 			// Files.createTempDirectory("deltadebugging")
 			// TODO: remove constant from CommandLineOption
+			// TODO: copy everything to working directory and trigger compilation with tests.
 			workingAreaProject = new MavenProject(arguments.getValue(WORKING_AREA));
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
-			faultyVersionProject.triggerCompilation();
+			faultyVersionProject.triggerCompilationWithTests();
 			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
@@ -69,7 +70,7 @@ public class EvaluationContext extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) set.stream().collect(toList());
-		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersionProject.getJavaFile(), selectedChangeSet);
+		sourceCodeManipulationService.applySelectedChanges(referenceVersionProject.getJavaFile(), selectedChangeSet);
 		
 		return reflectionalInvoker.testSelectedChangeSet(selectedChangeSet); 
 	}

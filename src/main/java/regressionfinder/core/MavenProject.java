@@ -31,6 +31,7 @@ public class MavenProject {
 	
 	private static final String POM_XML = "pom.xml";
 	private static final String PHASE_COMPILE = "compile";
+	private static final String PHASE_TEST_COMPILE = "test-compile";
 	private static final String THREADS_1C = "1C";
 	private static final String MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1";
 	private static final String MAVEN_HOME = System.getenv("MAVEN_HOME");
@@ -60,10 +61,18 @@ public class MavenProject {
 		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate, "Target test-classes directory is missing.");
 	}
 	
-	public void triggerCompilation() {
+	public void triggerCompilationWithTests() {
+		triggerCompilation(PHASE_TEST_COMPILE);
+	}
+	
+	public void triggerSimpleCompilation() {
+		triggerCompilation(PHASE_COMPILE);
+	}
+	
+	private void triggerCompilation(String phase) {
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile(rootPomXml);
-		request.setGoals(Arrays.asList(PHASE_COMPILE));
+		request.setGoals(Arrays.asList(phase));
 		request.setThreads(THREADS_1C);
 		request.setMavenOpts(MAVEN_OPTS);
 

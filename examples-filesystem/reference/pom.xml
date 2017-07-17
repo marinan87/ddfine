@@ -4,9 +4,10 @@
 	<groupId>Before</groupId>
 	<artifactId>Before</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Before regression</name>
+	<name>Reference version</name>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
