@@ -5,10 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.google.common.base.Preconditions;
 
 import regressionfinder.core.EvaluationContext;
 
@@ -24,21 +25,9 @@ public class FileSystemService {
 	
 	@Autowired
 	private EvaluationContext context;
-
-	@Autowired
-	private MavenCompiler mavenCompiler;
 	
 	public String getPathToJavaFile(String versionBasePath, String fileName) {
 		return Paths.get(versionBasePath, PATH_TO_SOURCES, PATH_TO_PACKAGE, fileName).toString();
-	}
-	
-	
-	public Path copyFileToStagingArea(String sourceFile) throws IOException {
-		Path source = Paths.get(sourceFile);
-		Path copy = Paths.get(context.getWorkingArea());
-		return Files.copy(source, 
-				copy.resolve(Paths.get(PATH_TO_SOURCES, PATH_TO_PACKAGE, source.getFileName().toString())), 
-				StandardCopyOption.REPLACE_EXISTING);
 	}
 	
 	public File getReferenceVersion() {
@@ -51,7 +40,7 @@ public class FileSystemService {
 
 	private File getFile(String location) {
 		File file = new File(location);
-		assert(file.exists());
+		Preconditions.checkState(file.isFile());
 		return file;
 	}
 
@@ -61,9 +50,5 @@ public class FileSystemService {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-	
-	public void triggerCompilation() {
-		mavenCompiler.triggerCompilation(Paths.get(context.getWorkingArea(), "pom.xml").toFile());
 	}
 }

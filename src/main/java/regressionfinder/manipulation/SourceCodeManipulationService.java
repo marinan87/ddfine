@@ -15,6 +15,7 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
+import regressionfinder.core.EvaluationContext;
 
 /*
  * Utility class for applying source code change deltas to original file. 
@@ -27,6 +28,9 @@ public class SourceCodeManipulationService {
 
 	@Autowired
 	private FileSystemService fileService;
+	
+	@Autowired
+	private EvaluationContext context;
 
 	
 	public void copyToWorkingAreaWithModifications(String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
@@ -49,7 +53,7 @@ public class SourceCodeManipulationService {
 		private int offset = 0;
 		
 		private SourceCodeManipulator(String source) throws Exception {
-			copyOfSource = fileService.copyFileToStagingArea(source);
+			copyOfSource = context.getWorkingAreaProject().copyHere(source);
 	        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
 		}
 
@@ -69,7 +73,7 @@ public class SourceCodeManipulationService {
 			}
 
 			fileService.saveModifiedFiles(content, copyOfSource);
-			fileService.triggerCompilation();
+			context.getWorkingAreaProject().triggerCompilation();
 		}
 
 		private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {

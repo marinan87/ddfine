@@ -41,7 +41,7 @@ public class ReflectionalTestMethodInvoker {
 	private void gatherClassPathsForIsolatedClassLoader() {	
 		// These paths are required because DeltaDebuggerTestRunner needs to find JUnit test classes inside StagingArea subfolder.
 		// See implementation of DeltaDebuggerTestRunner.runTest().
-		List<URL> urlList = evaluationContext.getWorkingAreaClassPaths();
+		List<URL> urlList = evaluationContext.getWorkingAreaProject().getClassPaths();
 		
 		// This is required because IsolatedURLClassLoader should be able to locate DeltaDebuggerTestRunner and JUnitTestRunner classes.
 		urlList.add(DeltaDebuggerTestRunner.class.getProtectionDomain().getCodeSource().getLocation());		

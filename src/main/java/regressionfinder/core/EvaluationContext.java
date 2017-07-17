@@ -7,10 +7,6 @@ import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 import static regressionfinder.runner.CommandLineOption.WORKING_AREA;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.deltadebugging.ddcore.DeltaSet;
@@ -30,9 +26,10 @@ public class EvaluationContext extends JUnitTester {
 
 	private String referenceVersion;
 	private String faultyVersion;
-	private String workingArea;	
 	private String testClassName;
 	private String testMethodName;
+	private MavenProject workingAreaProject;
+
 	
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
@@ -47,7 +44,11 @@ public class EvaluationContext extends JUnitTester {
 		try {			
 			referenceVersion = fileService.getPathToJavaFile(arguments.getValue(REFERENCE_VERSION), SOURCE_OF_LOCALIZATION);		
 			faultyVersion = fileService.getPathToJavaFile(arguments.getValue(FAULTY_VERSION), SOURCE_OF_LOCALIZATION);
-			workingArea = arguments.getValue(WORKING_AREA);
+			// TODO: create temp directory and copy all artifacts from reference version there.
+			// TODO: evaluation of failing version (obtaining original throwable should be done in the faulty folder). Compile and run test. Correct classpaths.
+			// Files.createTempDirectory("regressionfinder");  automatically
+			// TODO: remove constant from CommandLineOption
+			workingAreaProject = new MavenProject(arguments.getValue(WORKING_AREA));
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
@@ -58,21 +59,6 @@ public class EvaluationContext extends JUnitTester {
 			System.exit(1);
 		}
 	}
-
-	public List<URL> getWorkingAreaClassPaths() {
-		try {
-			List<URL> urls = new ArrayList<>();
-			urls.add(new URL("file:/" + getWorkingAreaClassPath("classes") + "/"));
-			urls.add(new URL("file:/" + getWorkingAreaClassPath("test-classes") + "/"));
-			return urls;
-		} catch (MalformedURLException e) {
-			throw new RuntimeException("Error while initializing working area class paths");
-		}
-	}
-		
-	private String getWorkingAreaClassPath(String targetSubfolder) {
-		return Paths.get(workingArea, "target", targetSubfolder).toString().replace("\\", "/");
-	}
 		
 	public String getReferenceVersion() {
 		return referenceVersion;
@@ -82,8 +68,8 @@ public class EvaluationContext extends JUnitTester {
 		return faultyVersion;
 	}
 	
-	public String getWorkingArea() {
-		return workingArea;
+	public MavenProject getWorkingAreaProject() {
+		return workingAreaProject;
 	}
 	
 	@Override
