@@ -3,7 +3,11 @@ package regressionfinder.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.hamcrest.SelfDescribing;
@@ -22,7 +26,7 @@ import regressionfinder.isolatedrunner.MethodDescriptor;
 public class ReflectionalTestMethodInvoker {
 	
 	private String testClassName, testMethodName;
-	private URL[] classPathUrls;
+	private Supplier<Stream<URL>> libraryClassPaths;
 	private Throwable throwable;
 	
 	@Autowired
@@ -32,33 +36,29 @@ public class ReflectionalTestMethodInvoker {
 		this.testClassName = testClassName;
 		this.testMethodName = testMethodName;
 		
-		gatherClassPathsForIsolatedClassLoader();
+		gatherLibraryClassPathsForIsolatedClassLoader();
 		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
+				Stream.concat(libraryClassPaths.get(), evaluationContext.getFaultyProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("getOriginalException"));
 	}
 	
-	private void gatherClassPathsForIsolatedClassLoader() {	
-		// These paths are required because DeltaDebuggerTestRunner needs to find JUnit test classes inside StagingArea subfolder.
-		// See implementation of DeltaDebuggerTestRunner.runTest().
-		List<URL> urlList = evaluationContext.getWorkingAreaProject().getClassPaths();
-		
-		// This is required because IsolatedURLClassLoader should be able to locate DeltaDebuggerTestRunner and JUnitTestRunner classes.
-		urlList.add(DeltaDebuggerTestRunner.class.getProtectionDomain().getCodeSource().getLocation());		
-		urlList.add(JUnitTester.class.getProtectionDomain().getCodeSource().getLocation());
-		urlList.add(NoTestsRemainException.class.getProtectionDomain().getCodeSource().getLocation());
-		urlList.add(SelfDescribing.class.getProtectionDomain().getCodeSource().getLocation());
-
-		classPathUrls = (URL[]) urlList.toArray(new URL[0]);
+	private void gatherLibraryClassPathsForIsolatedClassLoader() {			
+		libraryClassPaths = () -> Stream.of(DeltaDebuggerTestRunner.class, JUnitTester.class, NoTestsRemainException.class, SelfDescribing.class)
+			.map(Class::getProtectionDomain)
+			.map(ProtectionDomain::getCodeSource)
+			.map(CodeSource::getLocation);
 	}
 
 	public int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
+				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 	}
 
-	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, MethodDescriptor methodDescriptor) {
-		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPathUrls)) {
+	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 
+			URL[] classPaths, MethodDescriptor methodDescriptor) {
+		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPaths)) {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
 			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
 			

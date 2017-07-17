@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -18,7 +18,6 @@ import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 public class MavenProject {
 	// TODO: make more general
@@ -78,8 +77,8 @@ public class MavenProject {
 		// TODO: run incremental build
 	}
 	
-	public List<URL> getClassPaths() {
-		return Lists.newArrayList(pathToURL(targetClassesPath), pathToURL(targetTestClassesPath));
+	public Stream<URL> getClassPaths() {
+		return Stream.of(pathToURL(targetClassesPath), pathToURL(targetTestClassesPath));
 	}
 	
 	private URL pathToURL(Path path) {
@@ -90,10 +89,9 @@ public class MavenProject {
 		}
 	}
 	
-	public Path copyHere(String sourceFile) throws IOException {
-		Path source = Paths.get(sourceFile);
-		return Files.copy(source, 
-				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, source.getFileName().toString())),
+	public Path copyHere(File sourceFile) throws IOException {
+		return Files.copy(sourceFile.toPath(), 
+				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, sourceFile.getName())),
 				StandardCopyOption.REPLACE_EXISTING);
 	}
 	

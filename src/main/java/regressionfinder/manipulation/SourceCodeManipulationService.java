@@ -1,8 +1,8 @@
 package regressionfinder.manipulation;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +30,7 @@ public class SourceCodeManipulationService {
 	private EvaluationContext context;
 
 	
-	public void copyToWorkingAreaWithModifications(String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public void copyToWorkingAreaWithModifications(File fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
 			SourceCodeManipulator manipulator = new SourceCodeManipulator(fileToCopy);
 			manipulator.applySourceCodeChanges(selectedSourceCodeChangeSet);
@@ -39,18 +39,14 @@ public class SourceCodeManipulationService {
 		}
 	}
 
-	public void copyToWorkingAreaWithoutModifications(String fileToCopy) {
-		copyToWorkingAreaWithModifications(fileToCopy, new ArrayList<>());
-	}
-
 	private class SourceCodeManipulator {
 		
 		private final StringBuilder content;
 		private final Path copyOfSource;
 		private int offset = 0;
 		
-		private SourceCodeManipulator(String source) throws Exception {
-			copyOfSource = context.getWorkingAreaProject().copyHere(source);
+		private SourceCodeManipulator(File sourceFile) throws Exception {
+			copyOfSource = context.getWorkingAreaProject().copyHere(sourceFile);
 	        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
 		}
 

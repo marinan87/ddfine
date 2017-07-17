@@ -39,14 +39,13 @@ public class EvaluationContext extends JUnitTester {
 			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
 			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
 			// TODO: create temp directory and copy all artifacts from reference version there.
-			// TODO: evaluation of failing version (obtaining original throwable should be done in the faulty folder). Compile and run test. Correct classpaths.
-			// Files.createTempDirectory("regressionfinder");  automatically
+			// Files.createTempDirectory("deltadebugging")
 			// TODO: remove constant from CommandLineOption
 			workingAreaProject = new MavenProject(arguments.getValue(WORKING_AREA));
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
-			sourceCodeManipulationService.copyToWorkingAreaWithoutModifications(faultyVersionProject.getJavaFile().toString());
+			faultyVersionProject.triggerCompilation();
 			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
@@ -70,7 +69,7 @@ public class EvaluationContext extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) set.stream().collect(toList());
-		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersionProject.getJavaFile().toString(), selectedChangeSet);
+		sourceCodeManipulationService.copyToWorkingAreaWithModifications(referenceVersionProject.getJavaFile(), selectedChangeSet);
 		
 		return reflectionalInvoker.testSelectedChangeSet(selectedChangeSet); 
 	}
