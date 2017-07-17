@@ -1,5 +1,8 @@
 package regressionfinder.core;
 
+import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
+import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -21,6 +24,7 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
+import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class ReflectionalTestMethodInvoker {
@@ -32,12 +36,13 @@ public class ReflectionalTestMethodInvoker {
 	@Autowired
 	private EvaluationContext evaluationContext;
 
-	public void initializeOnce(String testClassName, String testMethodName) {
-		this.testClassName = testClassName;
-		this.testMethodName = testMethodName;
-		
+	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
+		testClassName = arguments.getValue(FAILING_CLASS);
+		testMethodName = arguments.getValue(FAILING_METHOD);
+
 		gatherLibraryClassPathsForIsolatedClassLoader();
 		
+		evaluationContext.getFaultyProject().triggerCompilationWithTests();
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
 				Stream.concat(libraryClassPaths.get(), evaluationContext.getFaultyProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("getOriginalException"));

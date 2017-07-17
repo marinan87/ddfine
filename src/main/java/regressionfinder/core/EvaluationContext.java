@@ -1,8 +1,6 @@
 package regressionfinder.core;
 
 import static java.util.stream.Collectors.toList;
-import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
-import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 import static regressionfinder.runner.CommandLineOption.WORKING_AREA;
@@ -21,20 +19,15 @@ import regressionfinder.runner.CommandLineArgumentsInterpreter;
 @Component
 public class EvaluationContext extends JUnitTester {
 
-	private String testClassName;
-	private String testMethodName;
-	private MavenProject referenceVersionProject;
-	private MavenProject faultyVersionProject;
-	private MavenProject workingAreaProject;
+	private MavenProject referenceVersionProject, faultyVersionProject, workingAreaProject;
 
-	
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
 		
 	@Autowired
 	private SourceCodeManipulationService sourceCodeManipulationService;
 	
-	public void initFromProvidedArguments(CommandLineArgumentsInterpreter arguments) {
+	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
 		try {		
 			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
 			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
@@ -43,11 +36,8 @@ public class EvaluationContext extends JUnitTester {
 			// TODO: remove constant from CommandLineOption
 			// TODO: copy everything to working directory and trigger compilation with tests.
 			workingAreaProject = new MavenProject(arguments.getValue(WORKING_AREA));
-			testClassName = arguments.getValue(FAILING_CLASS);
-			testMethodName = arguments.getValue(FAILING_METHOD);
 			
-			faultyVersionProject.triggerCompilationWithTests();
-			reflectionalInvoker.initializeOnce(testClassName, testMethodName);
+			reflectionalInvoker.initializeOnce(arguments);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			System.exit(1);

@@ -30,7 +30,7 @@ public class ApplicationRunner {
 	public CommandLineRunner commandLineRunner(ApplicationContext context) {
 		return args -> {
 			CommandLineArgumentsInterpreter arguments = new CommandLineArgumentsInterpreter(args);
-			evaluationContext.initFromProvidedArguments(arguments);
+			evaluationContext.initializeOnce(arguments);
 			handler.run();
 		};
 	}
