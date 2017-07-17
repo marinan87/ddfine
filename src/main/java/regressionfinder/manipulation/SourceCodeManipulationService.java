@@ -28,6 +28,7 @@ public class SourceCodeManipulationService {
 	@Autowired
 	private FileSystemService fileService;
 
+	
 	public void copyToWorkingAreaWithModifications(String fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
 			SourceCodeManipulator manipulator = new SourceCodeManipulator(fileToCopy);
@@ -52,7 +53,7 @@ public class SourceCodeManipulationService {
 	        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
 		}
 
-		private void applySourceCodeChanges(List<SourceCodeChange> sourceCodeChanges) throws Exception {
+		private void applySourceCodeChanges(List<SourceCodeChange> sourceCodeChanges) {
 			sourceCodeChanges.sort((o1, o2) -> {
 				int firstStartPosition = o1.getChangedEntity().getStartPosition();
 				int secondStartPosition = o2.getChangedEntity().getStartPosition();
@@ -67,7 +68,8 @@ public class SourceCodeManipulationService {
 				applySourceCodeChange(sourceCodeChange);
 			}
 
-			fileService.saveModifiedFilesAndCompile(content, copyOfSource);
+			fileService.saveModifiedFiles(content, copyOfSource);
+			fileService.triggerCompilation();
 		}
 
 		private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {

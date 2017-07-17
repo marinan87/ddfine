@@ -6,13 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 
-import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.DefaultInvoker;
-import org.apache.maven.shared.invoker.InvocationRequest;
-import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +25,8 @@ public class FileSystemService {
 	@Autowired
 	private EvaluationContext context;
 
+	@Autowired
+	private MavenCompiler mavenCompiler;
 	
 	public String getPathToJavaFile(String versionBasePath, String fileName) {
 		return Paths.get(versionBasePath, PATH_TO_SOURCES, PATH_TO_PACKAGE, fileName).toString();
@@ -59,20 +55,15 @@ public class FileSystemService {
 		return file;
 	}
 
-	public void saveModifiedFilesAndCompile(StringBuilder content, Path path) throws IOException, MavenInvocationException {
-		Files.write(path, content.toString().getBytes());
-		
-		// TODO: extract into separate class
-		InvocationRequest request = new DefaultInvocationRequest();
-		request.setPomFile(Paths.get(context.getWorkingArea(), "pom.xml").toFile());
-		request.setGoals(Arrays.asList("compile"));
-		request.setThreads("1C");
-		request.setMavenOpts("-XX:+TieredCompilation -XX:TieredStopAtLevel=1");
-		
-		Invoker invoker = new DefaultInvoker();
-		invoker.setMavenHome(new File(System.getenv("MAVEN_HOME")));
-		invoker.execute(request); 		
-
-		// TODO: run incremental build
+	public void saveModifiedFiles(StringBuilder content, Path path) {
+		try {
+			Files.write(path, content.toString().getBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void triggerCompilation() {
+		mavenCompiler.triggerCompilation(Paths.get(context.getWorkingArea(), "pom.xml").toFile());
 	}
 }

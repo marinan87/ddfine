@@ -3,6 +3,7 @@ package regressionfinder.runner;
 import org.apache.commons.cli.Option;
 
 public enum CommandLineOption {
+	
 	REFERENCE_VERSION("r", "path to reference version"),
 	FAULTY_VERSION("f", "path to faulty version"),
 	// TODO: staging area - create in temp folder automatically.
