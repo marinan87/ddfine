@@ -16,6 +16,7 @@ import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.codehaus.plexus.util.FileUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -102,6 +103,10 @@ public class MavenProject {
 		return Files.copy(sourceFile.toPath(), 
 				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, sourceFile.getName())),
 				StandardCopyOption.REPLACE_EXISTING);
+	}
+	
+	public void copyEverythingTo(Path targetPath) throws IOException {
+		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
 	
 	public File getJavaFile() {

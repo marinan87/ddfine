@@ -3,8 +3,9 @@ package regressionfinder.core;
 import static java.util.stream.Collectors.toList;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
-import static regressionfinder.runner.CommandLineOption.WORKING_AREA;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.deltadebugging.ddcore.DeltaSet;
@@ -31,11 +32,10 @@ public class EvaluationContext extends JUnitTester {
 		try {		
 			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
 			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
-			// TODO: create temp directory and copy all artifacts from reference version there.
-			// Files.createTempDirectory("deltadebugging")
-			// TODO: remove constant from CommandLineOption
-			// TODO: copy everything to working directory and trigger compilation with tests.
-			workingAreaProject = new MavenProject(arguments.getValue(WORKING_AREA));
+			
+			Path temporaryDirectory = Files.createTempDirectory("deltadebugging");
+			referenceVersionProject.copyEverythingTo(temporaryDirectory);
+			workingAreaProject = new MavenProject(temporaryDirectory.toString());
 			
 			reflectionalInvoker.initializeOnce(arguments);
 		} catch (Exception e) {

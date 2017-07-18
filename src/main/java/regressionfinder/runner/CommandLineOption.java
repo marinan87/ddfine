@@ -6,7 +6,6 @@ public enum CommandLineOption {
 	
 	REFERENCE_VERSION("r", "path to reference version"),
 	FAULTY_VERSION("f", "path to faulty version"),
-	WORKING_AREA("t", "path to working area"),
 	FAILING_CLASS("cn", "fully qualified name of test class which contains failed test"),
 	FAILING_METHOD("mn", "name of failed test method which executes fault");
 
