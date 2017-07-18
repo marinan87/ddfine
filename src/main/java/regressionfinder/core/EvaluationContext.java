@@ -36,6 +36,7 @@ public class EvaluationContext extends JUnitTester {
 			Path temporaryDirectory = Files.createTempDirectory("deltadebugging");
 			referenceVersionProject.copyEverythingTo(temporaryDirectory);
 			workingAreaProject = new MavenProject(temporaryDirectory.toString());
+			workingAreaProject.triggerCompilationWithTests();
 			
 			reflectionalInvoker.initializeOnce(arguments);
 		} catch (Exception e) {

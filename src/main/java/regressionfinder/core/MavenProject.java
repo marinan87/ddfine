@@ -85,6 +85,7 @@ public class MavenProject {
 			throw new RuntimeException(e);
 		}
 		// TODO: run incremental build
+		// TODO: in-memory compilation?
 	}
 	
 	public Stream<URL> getClassPaths() {
