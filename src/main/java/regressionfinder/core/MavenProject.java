@@ -115,12 +115,4 @@ public class MavenProject {
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
-
-	public void saveModifiedFiles(StringBuilder content, Path path) {
-		try {
-			Files.write(path, content.toString().getBytes());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

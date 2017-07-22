@@ -17,6 +17,7 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.manipulation.FileSourceCodeChange;
 
 @Component
 public class RegressionFinder {
@@ -44,25 +45,31 @@ public class RegressionFinder {
 		// folders with same name analyzed recursively. Repeat in each dir. 
 		// git diff?
 		
-		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
-		SourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
+		List<FileSourceCodeChange> filteredChanges = extractDistilledChanges();
+		FileSourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
 		applyFailureInducingChanges(failureInducingChanges);
 //		highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
 //		displayDoneDialog(event, failureInducingChanges);
 	}
 
-	public List<SourceCodeChange> extractDistilledChanges() {
+	public List<FileSourceCodeChange> extractDistilledChanges() {
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
 		
 		Path examplePath = Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION);
+		return extractDistillerChangesForPath(distiller, examplePath);
+	}
+
+	private List<FileSourceCodeChange> extractDistillerChangesForPath(FileDistiller distiller, Path examplePath) {
+		// TODO: move to FileSourceCodeChange?
 		File left = evaluationContext.getReferenceProject().findFile(examplePath);
 		File right = evaluationContext.getFaultyProject().findFile(examplePath);
 		distiller.extractClassifiedSourceCodeChanges(left, right);
-		// - new data structure to hold source code change and file path
-		// - apply source code change to proper file (copy THIS file from reference folder, apply the change)
+		List<SourceCodeChange> filteredChanges = filterOutSafeChanges(distiller.getSourceCodeChanges());		
 		
-		return filterOutSafeChanges(distiller.getSourceCodeChanges());
+		return transformToFileSourceCodeChanges(filteredChanges, examplePath);
 	}
+	
+	
 	
 	private List<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {
 		return allChanges.stream()
@@ -70,16 +77,22 @@ public class RegressionFinder {
 				.collect(Collectors.toList());
 	}
 	
-	public SourceCodeChange[] runDeltaDebugging(List<SourceCodeChange> filteredChanges) {
+	private List<FileSourceCodeChange> transformToFileSourceCodeChanges(List<SourceCodeChange> changes, Path pathToFile) {
+		return changes.stream()
+				.map(change -> new FileSourceCodeChange(change, pathToFile))
+				.collect(Collectors.toList());
+	}
+	
+	public FileSourceCodeChange[] runDeltaDebugging(List<FileSourceCodeChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
 				
 		Object[] resultArray = new DD(evaluationContext).ddMin(completeDeltaSet).toArray();
 		
-		return Arrays.copyOf(resultArray, resultArray.length, SourceCodeChange[].class);
+		return Arrays.copyOf(resultArray, resultArray.length, FileSourceCodeChange[].class);
 	}
 	
-	public void applyFailureInducingChanges(SourceCodeChange[] failureInducingChanges) {
+	public void applyFailureInducingChanges(FileSourceCodeChange[] failureInducingChanges) {
 		System.out.println(Arrays.toString(failureInducingChanges));
 //		SourceCodeManipulator.copyAndModifyLocalizationSource(pathToReferenceVersion, failureInducingChanges);
 	}

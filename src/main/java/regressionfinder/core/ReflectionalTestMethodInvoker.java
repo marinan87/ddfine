@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -18,7 +17,6 @@ import org.junit.runner.manipulation.NoTestsRemainException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
@@ -55,7 +53,7 @@ public class ReflectionalTestMethodInvoker {
 			.map(CodeSource::getLocation);
 	}
 
-	public int testSelectedChangeSet(List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public int testAppliedChangeSet() {
 		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
