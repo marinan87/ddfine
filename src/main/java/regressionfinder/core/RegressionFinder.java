@@ -28,7 +28,6 @@ public class RegressionFinder {
 		
 		// TODO: First implement only a simple case, when tree structure does not change. 
 		// Source code changes detected inside files, encapsulate information about changed file.
-		// - enhance example with more files (1 more with changes, 1 more with same size same content, 1 more with same size different content)
 		// - navigate the source code tree (only inside src)  Tree structure (Guava?) 
 		// - compare the size of java files, if different - run distiller, if same - calculate hash first, then run distiller, if necessary
 		// - new data structure to hold source code change and file path

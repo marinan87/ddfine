@@ -22,54 +22,57 @@ import com.google.common.base.Preconditions;
 
 public class MavenProject {
 	// TODO: make more general, support navigation to subpackages
-	private static final String PATH_TO_PACKAGE = "simple";
+	private static final String PATH_TO_PACKAGE = "package1";
 	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
 
 	private static final String SOURCES_DIR = "src";
 	private static final String TARGET_DIR = "target";
 	private static final String CLASSES_DIR = "classes";
 	private static final String TEST_CLASSES_DIR = "test-classes";
-	
+
 	private static final String POM_XML = "pom.xml";
 	private static final String PHASE_COMPILE = "compile";
 	private static final String PHASE_TEST_COMPILE = "test-compile";
 	private static final String THREADS_1C = "1C";
 	private static final String MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1";
 	private static final String MAVEN_HOME = System.getenv("MAVEN_HOME");
-		
+
 	private final String rootDirectory;
 	private final File rootPomXml;
 	private final File sourcesDirectory;
 	private final Path targetClassesPath, targetTestClassesPath;
-	
+
 	public MavenProject(String rootDirectory) {
 		this.rootDirectory = rootDirectory;
 		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
-		
+
 		this.sourcesDirectory = Paths.get(rootDirectory, SOURCES_DIR).toFile();
 		File targetDirectory = Paths.get(rootDirectory, TARGET_DIR).toFile();
 		this.targetClassesPath = targetDirectory.toPath().resolve(CLASSES_DIR);
 		this.targetTestClassesPath = targetDirectory.toPath().resolve(TEST_CLASSES_DIR);
-		
+
 		checkIsMavenProject();
 	}
-	
+
 	private void checkIsMavenProject() {
-		String errorMessageTemplate = String.format("Folder %s is not a root of Maven project! ", rootDirectory).concat("%s");
+		String errorMessageTemplate = String.format("Folder %s is not a root of Maven project! ", rootDirectory)
+				.concat("%s");
 		Preconditions.checkState(rootPomXml.isFile(), errorMessageTemplate, "Root pom.xml file is missing.");
 		Preconditions.checkState(sourcesDirectory.isDirectory(), errorMessageTemplate, "Sources directory is missing.");
-		Preconditions.checkState(targetClassesPath.toFile().isDirectory(), errorMessageTemplate, "Target classes directory is missing.");
-		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate, "Target test-classes directory is missing.");
+		Preconditions.checkState(targetClassesPath.toFile().isDirectory(), errorMessageTemplate,
+				"Target classes directory is missing.");
+		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate,
+				"Target test-classes directory is missing.");
 	}
-	
+
 	public void triggerCompilationWithTests() {
 		triggerCompilation(PHASE_TEST_COMPILE);
 	}
-	
+
 	public void triggerSimpleCompilation() {
 		triggerCompilation(PHASE_COMPILE);
 	}
-	
+
 	private void triggerCompilation(String phase) {
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile(rootPomXml);
@@ -87,11 +90,11 @@ public class MavenProject {
 		// TODO: run incremental build
 		// TODO: in-memory compilation for speed up?
 	}
-	
+
 	public Stream<URL> getClassPaths() {
 		return Stream.of(pathToURL(targetClassesPath), pathToURL(targetTestClassesPath));
 	}
-	
+
 	private URL pathToURL(Path path) {
 		try {
 			return new URL("file:/".concat(path.toString().replace("\\", "/")).concat("/"));
@@ -99,21 +102,22 @@ public class MavenProject {
 			throw new RuntimeException(String.format("Error while converting path %s to URL", path.toString()));
 		}
 	}
-	
+
 	public Path copyHere(File sourceFile) throws IOException {
-		return Files.copy(sourceFile.toPath(), 
+		return Files.copy(sourceFile.toPath(),
 				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, sourceFile.getName())),
 				StandardCopyOption.REPLACE_EXISTING);
 	}
-	
+
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
-	
+
 	public File getJavaFile() {
-		return sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION).toString()).toFile();
+		return sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION).toString())
+				.toFile();
 	}
-	
+
 	public void saveModifiedFiles(StringBuilder content, Path path) {
 		try {
 			Files.write(path, content.toString().getBytes());
