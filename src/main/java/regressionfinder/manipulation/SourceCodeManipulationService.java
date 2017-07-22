@@ -1,6 +1,5 @@
 package regressionfinder.manipulation;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -30,9 +29,9 @@ public class SourceCodeManipulationService {
 	private EvaluationContext context;
 
 	
-	public void applySelectedChanges(File fileToCopy, List<SourceCodeChange> selectedSourceCodeChangeSet) {
+	public void applySelectedChanges(Path relativePath, List<SourceCodeChange> selectedSourceCodeChangeSet) {
 		try {
-			SourceCodeManipulator manipulator = new SourceCodeManipulator(fileToCopy);
+			SourceCodeManipulator manipulator = new SourceCodeManipulator(relativePath);
 			manipulator.applySourceCodeChanges(selectedSourceCodeChangeSet);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -45,8 +44,8 @@ public class SourceCodeManipulationService {
 		private final Path copyOfSource;
 		private int offset = 0;
 		
-		private SourceCodeManipulator(File sourceFile) throws Exception {
-			copyOfSource = context.getWorkingAreaProject().copyHere(sourceFile);
+		private SourceCodeManipulator(Path relativePath) throws Exception {
+			copyOfSource = context.getWorkingAreaProject().copyFromAnotherProject(context.getReferenceProject(), relativePath);
 	        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
 		}
 

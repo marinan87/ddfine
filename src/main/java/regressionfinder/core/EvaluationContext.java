@@ -6,6 +6,7 @@ import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.deltadebugging.ddcore.DeltaSet;
@@ -62,7 +63,11 @@ public class EvaluationContext extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<SourceCodeChange> selectedChangeSet = (List<SourceCodeChange>) set.stream().collect(toList());
-		sourceCodeManipulationService.applySelectedChanges(referenceVersionProject.getJavaFile(), selectedChangeSet);
+		
+		String PATH_TO_PACKAGE = "package1";
+		String SOURCE_OF_LOCALIZATION = "Example.java";
+		Path examplePath = Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION);
+		sourceCodeManipulationService.applySelectedChanges(examplePath, selectedChangeSet);
 		
 		return reflectionalInvoker.testSelectedChangeSet(selectedChangeSet); 
 	}

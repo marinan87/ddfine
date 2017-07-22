@@ -21,10 +21,6 @@ import org.codehaus.plexus.util.FileUtils;
 import com.google.common.base.Preconditions;
 
 public class MavenProject {
-	// TODO: make more general, support navigation to subpackages
-	private static final String PATH_TO_PACKAGE = "package1";
-	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
-
 	private static final String SOURCES_DIR = "src";
 	private static final String TARGET_DIR = "target";
 	private static final String CLASSES_DIR = "classes";
@@ -39,14 +35,13 @@ public class MavenProject {
 
 	private final String rootDirectory;
 	private final File rootPomXml;
-	private final File sourcesDirectory;
-	private final Path targetClassesPath, targetTestClassesPath;
+	private final Path sourcesDirectoryPath, targetClassesPath, targetTestClassesPath;
 
 	public MavenProject(String rootDirectory) {
 		this.rootDirectory = rootDirectory;
 		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
 
-		this.sourcesDirectory = Paths.get(rootDirectory, SOURCES_DIR).toFile();
+		this.sourcesDirectoryPath = Paths.get(rootDirectory, SOURCES_DIR);
 		File targetDirectory = Paths.get(rootDirectory, TARGET_DIR).toFile();
 		this.targetClassesPath = targetDirectory.toPath().resolve(CLASSES_DIR);
 		this.targetTestClassesPath = targetDirectory.toPath().resolve(TEST_CLASSES_DIR);
@@ -58,7 +53,7 @@ public class MavenProject {
 		String errorMessageTemplate = String.format("Folder %s is not a root of Maven project! ", rootDirectory)
 				.concat("%s");
 		Preconditions.checkState(rootPomXml.isFile(), errorMessageTemplate, "Root pom.xml file is missing.");
-		Preconditions.checkState(sourcesDirectory.isDirectory(), errorMessageTemplate, "Sources directory is missing.");
+		Preconditions.checkState(sourcesDirectoryPath.toFile().isDirectory(), errorMessageTemplate, "Sources directory is missing.");
 		Preconditions.checkState(targetClassesPath.toFile().isDirectory(), errorMessageTemplate,
 				"Target classes directory is missing.");
 		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate,
@@ -103,19 +98,22 @@ public class MavenProject {
 		}
 	}
 
-	public Path copyHere(File sourceFile) throws IOException {
-		return Files.copy(sourceFile.toPath(),
-				sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, sourceFile.getName())),
+	public Path copyFromAnotherProject(MavenProject sourceProject, Path relativePath) throws IOException {
+		return Files.copy(sourceProject.findAbsolutePath(relativePath),
+				findAbsolutePath(relativePath),
 				StandardCopyOption.REPLACE_EXISTING);
+	}
+	
+	public File findFile(Path relativePath) {
+		return findAbsolutePath(relativePath).toFile();
+	}
+	
+	public Path findAbsolutePath(Path relativePath) {
+		return sourcesDirectoryPath.resolve(relativePath);
 	}
 
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
-	}
-
-	public File getJavaFile() {
-		return sourcesDirectory.toPath().resolve(Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION).toString())
-				.toFile();
 	}
 
 	public void saveModifiedFiles(StringBuilder content, Path path) {

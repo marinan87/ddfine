@@ -1,5 +1,8 @@
 package regressionfinder.core;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,22 +20,22 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 
 @Component
 public class RegressionFinder {
+	
+	private static final String PATH_TO_PACKAGE = "package1";
+	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
+	
 
 	@Autowired
 	private EvaluationContext evaluationContext;	
 	
 	public void run() {
-		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
-		SourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
 		
 		
 		// TODO: First implement only a simple case, when tree structure does not change. 
 		// Source code changes detected inside files, encapsulate information about changed file.
 		// - navigate the source code tree (only inside src)  Tree structure (Guava?) 
+		// - take into account only java files.
 		// - compare the size of java files, if different - run distiller, if same - calculate hash first, then run distiller, if necessary
-		// - new data structure to hold source code change and file path
-		// - apply source code change to proper file (copy THIS file from reference folder, apply the change)
-		
 		
 		// TODO: Next round: source code tree changes, fileops + sourcecodeops
 		// added, removed files? fileops
@@ -41,6 +44,8 @@ public class RegressionFinder {
 		// folders with same name analyzed recursively. Repeat in each dir. 
 		// git diff?
 		
+		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
+		SourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
 		applyFailureInducingChanges(failureInducingChanges);
 //		highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
 //		displayDoneDialog(event, failureInducingChanges);
@@ -48,7 +53,13 @@ public class RegressionFinder {
 
 	public List<SourceCodeChange> extractDistilledChanges() {
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
-		distiller.extractClassifiedSourceCodeChanges(evaluationContext.getReferenceProject().getJavaFile(), evaluationContext.getFaultyProject().getJavaFile());
+		
+		Path examplePath = Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION);
+		File left = evaluationContext.getReferenceProject().findFile(examplePath);
+		File right = evaluationContext.getFaultyProject().findFile(examplePath);
+		distiller.extractClassifiedSourceCodeChanges(left, right);
+		// - new data structure to hold source code change and file path
+		// - apply source code change to proper file (copy THIS file from reference folder, apply the change)
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges());
 	}
