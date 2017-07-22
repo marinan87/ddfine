@@ -25,20 +25,22 @@ public class RegressionFinder {
 		List<SourceCodeChange> filteredChanges = extractDistilledChanges();
 		SourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
 		
-		//only inside src folders! expect standard Maven structure
-		//
-		//added, removed files? fileops
-		//modified files - first by size, if equal - then calculate hash, if changed -> Distiller
-		//added, removed dirs? fileops
-		//then folders with same name recursively. Repeat in each dir. 
-		//
-		//Tree structure  (Guava?)
-		//
-		//
-		//0) Diff between two versions - Git mode.
-		//1) Textual diff first, compare only changed files. 
-		//2) Make work with a set of files. Very simple example with only one change (applying operation is supported)
-		//3) Evaluate only changed files via ChangeDistiller.
+		
+		// TODO: First implement only a simple case, when tree structure does not change. 
+		// Source code changes detected inside files, encapsulate information about changed file.
+		// - enhance example with more files (1 more with changes, 1 more with same size same content, 1 more with same size different content)
+		// - navigate the source code tree (only inside src)  Tree structure (Guava?) 
+		// - compare the size of java files, if different - run distiller, if same - calculate hash first, then run distiller, if necessary
+		// - new data structure to hold source code change and file path
+		// - apply source code change to proper file (copy THIS file from reference folder, apply the change)
+		
+		
+		// TODO: Next round: source code tree changes, fileops + sourcecodeops
+		// added, removed files? fileops
+		// modified files - sourcecodeops
+		// added, removed dirs? fileops
+		// folders with same name analyzed recursively. Repeat in each dir. 
+		// git diff?
 		
 		applyFailureInducingChanges(failureInducingChanges);
 //		highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);

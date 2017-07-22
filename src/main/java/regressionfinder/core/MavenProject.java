@@ -21,7 +21,7 @@ import org.codehaus.plexus.util.FileUtils;
 import com.google.common.base.Preconditions;
 
 public class MavenProject {
-	// TODO: make more general
+	// TODO: make more general, support navigation to subpackages
 	private static final String PATH_TO_PACKAGE = "simple";
 	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
 
@@ -85,7 +85,7 @@ public class MavenProject {
 			throw new RuntimeException(e);
 		}
 		// TODO: run incremental build
-		// TODO: in-memory compilation?
+		// TODO: in-memory compilation for speed up?
 	}
 	
 	public Stream<URL> getClassPaths() {
