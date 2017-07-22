@@ -41,6 +41,7 @@ public class EvaluationContext extends JUnitTester {
 			reflectionalInvoker.initializeOnce(arguments);
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}

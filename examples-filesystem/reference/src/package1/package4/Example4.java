@@ -1,4 +1,4 @@
-package package4;
+package package1.package4;
 
 public class Example4 {
 	
