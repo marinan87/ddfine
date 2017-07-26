@@ -1,43 +1,26 @@
 package regressionfinder.core;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ch.uzh.ifi.seal.changedistiller.ChangeDistiller;
-import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
-import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
-import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.manipulation.FileSourceCodeChange;
 
 @Component
 public class RegressionFinder {
-	
-	private static final String PATH_TO_PACKAGE = "package1";
-	private static final String SOURCE_OF_LOCALIZATION = "Example.java";
-	
 
 	@Autowired
 	private EvaluationContext evaluationContext;	
 	
+	@Autowired
+	private SourceTreeDifferencer sourceTreeDifferencer;
+
 	public void run() {
-		
-		
-		// TODO: First implement only a simple case, when tree structure does not change. 
-		// Source code changes detected inside files, encapsulate information about changed file.
-		// - navigate the source code tree (only inside src)  Tree structure (Guava?) 
-		// - take into account only java files.
-		// - compare the size of java files, if different - run distiller, if same - calculate hash first, then run distiller, if necessary
-		
+
 		// TODO: Next round: source code tree changes, fileops + sourcecodeops
 		// added, removed files? fileops
 		// modified files - sourcecodeops
@@ -45,44 +28,13 @@ public class RegressionFinder {
 		// folders with same name analyzed recursively. Repeat in each dir. 
 		// git diff?
 		
-		List<FileSourceCodeChange> filteredChanges = extractDistilledChanges();
+		List<FileSourceCodeChange> filteredChanges = sourceTreeDifferencer.distillChanges();
 		FileSourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
 		applyFailureInducingChanges(failureInducingChanges);
 //		highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
 //		displayDoneDialog(event, failureInducingChanges);
 	}
 
-	public List<FileSourceCodeChange> extractDistilledChanges() {
-		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
-		
-		Path examplePath = Paths.get(PATH_TO_PACKAGE, SOURCE_OF_LOCALIZATION);
-		return extractDistillerChangesForPath(distiller, examplePath);
-	}
-
-	private List<FileSourceCodeChange> extractDistillerChangesForPath(FileDistiller distiller, Path examplePath) {
-		// TODO: move to FileSourceCodeChange?
-		File left = evaluationContext.getReferenceProject().findFile(examplePath);
-		File right = evaluationContext.getFaultyProject().findFile(examplePath);
-		distiller.extractClassifiedSourceCodeChanges(left, right);
-		List<SourceCodeChange> filteredChanges = filterOutSafeChanges(distiller.getSourceCodeChanges());		
-		
-		return transformToFileSourceCodeChanges(filteredChanges, examplePath);
-	}
-	
-	
-	
-	private List<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {
-		return allChanges.stream()
-				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE)
-				.collect(Collectors.toList());
-	}
-	
-	private List<FileSourceCodeChange> transformToFileSourceCodeChanges(List<SourceCodeChange> changes, Path pathToFile) {
-		return changes.stream()
-				.map(change -> new FileSourceCodeChange(change, pathToFile))
-				.collect(Collectors.toList());
-	}
-	
 	public FileSourceCodeChange[] runDeltaDebugging(List<FileSourceCodeChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);

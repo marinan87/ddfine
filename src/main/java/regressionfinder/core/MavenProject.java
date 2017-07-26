@@ -42,9 +42,9 @@ public class MavenProject {
 		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
 
 		this.sourcesDirectoryPath = Paths.get(rootDirectory, SOURCES_DIR);
-		File targetDirectory = Paths.get(rootDirectory, TARGET_DIR).toFile();
-		this.targetClassesPath = targetDirectory.toPath().resolve(CLASSES_DIR);
-		this.targetTestClassesPath = targetDirectory.toPath().resolve(TEST_CLASSES_DIR);
+		Path targetDirectoryPath = Paths.get(rootDirectory, TARGET_DIR);
+		this.targetClassesPath = targetDirectoryPath.resolve(CLASSES_DIR);
+		this.targetTestClassesPath = targetDirectoryPath.resolve(TEST_CLASSES_DIR);
 
 		checkIsMavenProject();
 	}
@@ -114,5 +114,9 @@ public class MavenProject {
 
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
+	}
+
+	public File getSourceDirectory() {
+		return sourcesDirectoryPath.toFile();
 	}
 }

@@ -24,6 +24,6 @@ public class FileSourceCodeChange {
 	
 	@Override
 	public String toString() {
-		return sourceCodeChange.toString();
+		return String.format("File %s: %s", pathToFile, sourceCodeChange.toString());
 	}
 }

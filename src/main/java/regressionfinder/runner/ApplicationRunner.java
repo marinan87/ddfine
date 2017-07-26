@@ -10,10 +10,9 @@ import org.springframework.context.annotation.ComponentScan;
 
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.RegressionFinder;
-import regressionfinder.manipulation.SourceCodeManipulationService;
 
 @SpringBootApplication
-@ComponentScan(basePackageClasses = { RegressionFinder.class, SourceCodeManipulationService.class} )
+@ComponentScan(basePackageClasses = { RegressionFinder.class } )
 public class ApplicationRunner {
 	
 	@Autowired
