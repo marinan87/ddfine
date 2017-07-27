@@ -111,6 +111,10 @@ public class MavenProject {
 	public Path findAbsolutePath(Path relativePath) {
 		return sourcesDirectoryPath.resolve(relativePath);
 	}
+	
+	public Path findRelativeToSourceRoot(Path absolutePath) {
+		return sourcesDirectoryPath.relativize(absolutePath);
+	}
 
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());

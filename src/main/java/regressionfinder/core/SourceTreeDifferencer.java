@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.DigestUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -31,47 +33,63 @@ public class SourceTreeDifferencer {
 	private EvaluationContext evaluationContext;
 
 	public List<FileSourceCodeChange> distillChanges() {
-		return scanForChangedPaths().stream()
+		return scanForChangedPaths(evaluationContext.getReferenceProject().getSourceDirectory())
 				.flatMap(this::distillChangesForPath)
 				.collect(Collectors.toList());
 	}	
-	
-	private List<Path> scanForChangedPaths() {
-		File sourceDirectory = evaluationContext.getReferenceProject().getSourceDirectory();
-		return scanForChangedSourceCodeFiles(sourceDirectory).collect(Collectors.toList());
-	}
 		
-	private Stream<Path> scanForChangedSourceCodeFiles(File directory) {
+	private Stream<Path> scanForChangedPaths(File directory) {
 		Preconditions.checkArgument(directory.isDirectory(), format("%s is not a directory!", directory));
 		
-		File[] javaFiles = directory.listFiles((FileFilter) fileName -> fileName.isFile() && fileName.getName().endsWith(".java"));
+		File[] javaFiles = directory.listFiles(isJavaFile());
 
-		File referenceSourceDirectory = evaluationContext.getReferenceProject().getSourceDirectory();
-		Stream<Path> streamOfRelativePaths = Stream.of(javaFiles)
-				.map(File::toPath)
-				.filter(sizeHasChanged(referenceSourceDirectory))
-				.map(absolutePath -> referenceSourceDirectory.toPath().relativize(absolutePath));				
+		Stream<Path> streamOfRelativePaths = Stream.of(javaFiles).map(File::toPath)
+				.map(evaluationContext.getReferenceProject()::findRelativeToSourceRoot)				
+				.filter(sizeHasChanged().or(checkSumHasChanged()));
 		
 		File[] subDirectories = directory.listFiles((FileFilter) dirName -> dirName.isDirectory());
 		for (File file : subDirectories) {
-			streamOfRelativePaths = Stream.concat(streamOfRelativePaths, scanForChangedSourceCodeFiles(file));
+			streamOfRelativePaths = Stream.concat(streamOfRelativePaths, scanForChangedPaths(file));
 		}
 		
 		return streamOfRelativePaths;
 	}
 
-	private Predicate<? super Path> sizeHasChanged(File referenceSourceDirectory) {
-		return absoluteReferencePath -> {
-			Path relativePath = referenceSourceDirectory.toPath().relativize(absoluteReferencePath);
+	private FileFilter isJavaFile() {
+		return fileName -> fileName.isFile() && fileName.getName().endsWith(".java");
+	}
+
+	private Predicate<Path> sizeHasChanged() {
+		return relativePath -> {
 			try {
-				return Files.size(absoluteReferencePath) != Files.size(evaluationContext.getFaultyProject().findAbsolutePath(relativePath));
-				// TODO: compare the size of java files, if same - compare by hash
+				return Files.size(evaluationContext.getReferenceProject().findAbsolutePath(relativePath)) 
+						!= Files.size(evaluationContext.getFaultyProject().findAbsolutePath(relativePath));
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				return true;
 			}
 		};
 	}
 
+	private Predicate<Path> checkSumHasChanged() {
+		return relativePath -> {
+			File fileInReference = evaluationContext.getReferenceProject().findFile(relativePath);
+			File fileInFaulty = evaluationContext.getFaultyProject().findFile(relativePath);
+			try {
+				FileInputStream fisReference = new FileInputStream(fileInReference);
+				String referenceMd5 = DigestUtils.md5DigestAsHex(fisReference);
+				fisReference.close();
+				
+				fisReference = new FileInputStream(fileInFaulty);
+				String faultyMd5 = DigestUtils.md5DigestAsHex(fisReference);
+				fisReference.close();
+				
+				return !referenceMd5.equals(faultyMd5);
+			} catch (IOException e) {
+				return true;
+			}
+		};
+	}
+	
 	private Stream<FileSourceCodeChange> distillChangesForPath(Path pathToFile) {
 		File left = evaluationContext.getReferenceProject().findFile(pathToFile);
 		File right = evaluationContext.getFaultyProject().findFile(pathToFile);

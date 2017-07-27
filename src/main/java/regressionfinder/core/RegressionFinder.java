@@ -20,7 +20,6 @@ public class RegressionFinder {
 	private SourceTreeDifferencer sourceTreeDifferencer;
 
 	public void run() {
-
 		// TODO: Next round: source code tree changes, fileops + sourcecodeops
 		// added, removed files? fileops
 		// modified files - sourcecodeops
