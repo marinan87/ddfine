@@ -15,6 +15,8 @@ import regressionfinder.core.RegressionFinder;
 @ComponentScan(basePackageClasses = { RegressionFinder.class } )
 public class ApplicationRunner {
 	
+	private static final String SYSTEM_PROPERTY_JAVA_AWT_HEADLESS = "java.awt.headless";
+
 	@Autowired
 	private EvaluationContext evaluationContext;
 	
@@ -22,7 +24,12 @@ public class ApplicationRunner {
 	private RegressionFinder handler;
 
 	public static void main(String[] args) {
+		configureHeadlessProperty();
 		SpringApplication.run(ApplicationRunner.class, args);
+	}
+	
+	private static void configureHeadlessProperty() {
+        System.setProperty(SYSTEM_PROPERTY_JAVA_AWT_HEADLESS, Boolean.toString(false));
 	}
 	
 	@Bean

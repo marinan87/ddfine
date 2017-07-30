@@ -1,13 +1,24 @@
 package regressionfinder.core;
 
+import java.awt.Desktop;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import htmlflow.HtmlView;
+import htmlflow.elements.HtmlTable;
 import regressionfinder.manipulation.FileSourceCodeChange;
 
 @Component
@@ -28,31 +39,57 @@ public class RegressionFinder {
 		// git diff?
 		
 		List<FileSourceCodeChange> filteredChanges = sourceTreeDifferencer.distillChanges();
-		FileSourceCodeChange[] failureInducingChanges = runDeltaDebugging(filteredChanges);
-		applyFailureInducingChanges(failureInducingChanges);
+		Set<Map.Entry<Path, List<SourceCodeChange>>> mapOfFailureInducingChanges = runDeltaDebugging(filteredChanges);
+		showResult(mapOfFailureInducingChanges);
 //		highlightFailureInducingChangesInEditor(regressionCU, failureInducingChanges);
 //		displayDoneDialog(event, failureInducingChanges);
 	}
 
-	public FileSourceCodeChange[] runDeltaDebugging(List<FileSourceCodeChange> filteredChanges) {
+	public Set<Map.Entry<Path, List<SourceCodeChange>>> runDeltaDebugging(List<FileSourceCodeChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
 				
-		Object[] resultArray = new DD(evaluationContext).ddMin(completeDeltaSet).toArray();
+		FileSourceCodeChange[] resultArray = (FileSourceCodeChange[]) new DD(evaluationContext).ddMin(completeDeltaSet).toArray(new FileSourceCodeChange[0]);
 		
-		return Arrays.copyOf(resultArray, resultArray.length, FileSourceCodeChange[].class);
+		return FileSourceCodeChange.getMapOfChanges(Arrays.asList(resultArray)).entrySet();
 	}
 	
-	public void applyFailureInducingChanges(FileSourceCodeChange[] failureInducingChanges) {
-		System.out.println(Arrays.toString(failureInducingChanges));
+	public void showResult(Set<Map.Entry<Path, List<SourceCodeChange>>> failureInducingChanges) {		
+		HtmlView<Set<Map.Entry<Path, List<SourceCodeChange>>>> fileView = fileView();
+		try(PrintStream out = new PrintStream(new FileOutputStream("test.html"))) {
+            fileView.setPrintStream(out).write(failureInducingChanges);
+            Desktop.getDesktop().browse(URI.create("test.html"));
+        } catch (IOException e) {
+        	throw new RuntimeException(e);
+        }
+		
+		// TODO: URI.create in other places, too.
 //		SourceCodeManipulator.copyAndModifyLocalizationSource(pathToReferenceVersion, failureInducingChanges);
 	}
-	
-//	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, SourceCodeChange[] failureInducingChanges) throws Exception {
-//		if (failureInducingChanges == null || failureInducingChanges.length == 0) {
-//			return;
-//		}
-//		
+	    
+    private HtmlView<Set<Map.Entry<Path, List<SourceCodeChange>>>> fileView(){
+        HtmlView<Set<Map.Entry<Path, List<SourceCodeChange>>>> fileView = new HtmlView<>();
+        fileView
+                .head()
+                .title("Failure inducing changes")
+                .linkCss("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css");
+        HtmlTable<Set<Map.Entry<Path, List<SourceCodeChange>>>> outerTable = fileView
+        		.body().classAttr("container")
+        		.heading(1, "Results")
+        		.div()
+                .table().classAttr("table");
+        
+        HtmlTable<List<SourceCodeChange>> nestedTable = new HtmlTable<>();
+        outerTable
+        		.trFromIterable(Map.Entry<Path, List<SourceCodeChange>>::getKey)
+        		.tr().td().addChild(nestedTable);
+        nestedTable    
+                .trFromIterable(Map.Entry<Path, List<SourceCodeChange>>::getValue);
+        return fileView;
+    }
+
+	 
+//	private void highlightFailureInducingChangesInEditor(ICompilationUnit cu, SourceCodeChange[] failureInducingChanges) throws Exception {		
 //		ITextEditor textEditor = JavaModelHelper.openTextEditor(cu);
 //		
 //		// Seems that there is no way to highlight all changes at once in Eclipse. 
