@@ -1,6 +1,7 @@
 package regressionfinder.core;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,6 +18,7 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.FileUtils;
+import org.springframework.util.DigestUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -122,5 +124,16 @@ public class MavenProject {
 
 	public File getSourceDirectory() {
 		return sourcesDirectoryPath.toFile();
+	}
+	
+	public String md5Hash(Path relativePath) throws IOException {
+		File file = findFile(relativePath);
+		try (FileInputStream fis = new FileInputStream(file)) {
+			return DigestUtils.md5DigestAsHex(fis);			
+		}
+	}
+	
+	public long size(Path relativePath) throws IOException {
+		return Files.size(findAbsolutePath(relativePath));
 	}
 }

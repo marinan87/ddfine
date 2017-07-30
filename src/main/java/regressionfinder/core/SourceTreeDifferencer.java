@@ -4,9 +4,7 @@ import static java.lang.String.format;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -15,7 +13,6 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.DigestUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -62,8 +59,7 @@ public class SourceTreeDifferencer {
 	private Predicate<Path> sizeHasChanged() {
 		return relativePath -> {
 			try {
-				return Files.size(evaluationContext.getReferenceProject().findAbsolutePath(relativePath)) 
-						!= Files.size(evaluationContext.getFaultyProject().findAbsolutePath(relativePath));
+				return evaluationContext.getReferenceProject().size(relativePath) != evaluationContext.getFaultyProject().size(relativePath);
 			} catch (IOException e) {
 				return true;
 			}
@@ -72,21 +68,13 @@ public class SourceTreeDifferencer {
 
 	private Predicate<Path> checkSumHasChanged() {
 		return relativePath -> {
-			File fileInReference = evaluationContext.getReferenceProject().findFile(relativePath);
-			File fileInFaulty = evaluationContext.getFaultyProject().findFile(relativePath);
 			try {
-				FileInputStream fisReference = new FileInputStream(fileInReference);
-				String referenceMd5 = DigestUtils.md5DigestAsHex(fisReference);
-				fisReference.close();
-				
-				fisReference = new FileInputStream(fileInFaulty);
-				String faultyMd5 = DigestUtils.md5DigestAsHex(fisReference);
-				fisReference.close();
-				
+				String referenceMd5 = evaluationContext.getReferenceProject().md5Hash(relativePath);
+				String faultyMd5 = evaluationContext.getFaultyProject().md5Hash(relativePath);
 				return !referenceMd5.equals(faultyMd5);
 			} catch (IOException e) {
 				return true;
-			}
+			}			
 		};
 	}
 	
