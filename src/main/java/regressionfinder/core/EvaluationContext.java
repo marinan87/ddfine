@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,8 +13,8 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import regressionfinder.manipulation.FileManipulator;
-import regressionfinder.manipulation.FileSourceCodeChange;
+import regressionfinder.model.FileSourceCodeChange;
+import regressionfinder.model.MavenProject;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
@@ -58,23 +57,7 @@ public class EvaluationContext extends JUnitTester {
 	
 	@Override
 	public int test(DeltaSet set) {
-		List<FileSourceCodeChange> selectedChangeSet = (List<FileSourceCodeChange>) set.stream().collect(toList());
-		
-		applySelectedChanges(selectedChangeSet);
-		return reflectionalInvoker.testAppliedChangeSet(); 
-	}
-	
-	public void applySelectedChanges(List<FileSourceCodeChange> sourceCodeChanges) {
-		FileSourceCodeChange.getMapOfChanges(sourceCodeChanges).entrySet()	
-			.forEach(entry -> {
-				try {
-					Path copyOfSource = workingAreaProject.copyFromAnotherProject(referenceVersionProject, entry.getKey());
-					new FileManipulator(copyOfSource).applyChanges(entry.getValue());
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
-		
-		workingAreaProject.triggerSimpleCompilation();
+		List<FileSourceCodeChange> selectedChangeSet = (List<FileSourceCodeChange>) set.stream().collect(toList());		
+		return reflectionalInvoker.testAppliedChangeSet(selectedChangeSet); 
 	}
 }

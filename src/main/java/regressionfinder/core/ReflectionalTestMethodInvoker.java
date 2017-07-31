@@ -3,11 +3,14 @@ package regressionfinder.core;
 import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
 import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -22,6 +25,9 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
+import regressionfinder.manipulation.FileManipulator;
+import regressionfinder.model.AffectedFile;
+import regressionfinder.model.FileSourceCodeChange;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
@@ -53,7 +59,19 @@ public class ReflectionalTestMethodInvoker {
 			.map(CodeSource::getLocation);
 	}
 
-	public int testAppliedChangeSet() {
+	public int testAppliedChangeSet(List<FileSourceCodeChange> sourceCodeChanges) {
+		AffectedFile.fromUnsortedListOfChanges(sourceCodeChanges).forEach(file -> {
+			try {
+				Path copyOfSource = evaluationContext.getWorkingAreaProject()
+						.copyFromAnotherProject(evaluationContext.getReferenceProject(), file.getPath());
+				new FileManipulator(copyOfSource).applyChanges(file.getChanges());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	
+		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
+		
 		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));

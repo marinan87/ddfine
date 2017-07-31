@@ -21,7 +21,7 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.manipulation.FileSourceCodeChange;
+import regressionfinder.model.FileSourceCodeChange;
 
 @Component
 public class SourceTreeDifferencer {
