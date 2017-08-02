@@ -11,13 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import htmlflow.HtmlView;
+import htmlflow.ModelBinder;
 import regressionfinder.model.AffectedFile;
 
 @Component
 public class ResultViewer {
 	
 	private static final String PAGE_TITLE = "Failure inducing changes";
+	private static final String SYNTAXHIGHLIGHTER_JS = "syntaxhighlighter.js";
 	private static final String BOOTSTRAP_CSS = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css";
+	private static final String THEME_CSS = "theme.css";
 	private static final String RESULT_HTML = "results.html";
 	private static final String RESULTS_HEADER = "Results";
 
@@ -39,21 +42,25 @@ public class ResultViewer {
         fileView
                 .head()
                 .title(PAGE_TITLE)
-                .linkCss(BOOTSTRAP_CSS);
+                .scriptLink(SYNTAXHIGHLIGHTER_JS)
+                .linkCss(BOOTSTRAP_CSS)
+                .linkCss(THEME_CSS);
         fileView
         		.body().classAttr("container")
         		.heading(1, RESULTS_HEADER)
         		.div()
                 .table().classAttr("table")
-                .trFromIterable(AffectedFile::getPath, AffectedFile::getChanges, file -> "<pre>".concat(file.readSourceCode(evaluationContext.getFaultyProject())).concat("</pre>"));
+                .trFromIterable(AffectedFile::getPath, AffectedFile::getChanges, surroundCodeWithPreTag());
         
-        // TODO: syntax highlighter
-        // TODO: line numbers 
         // TODO: highlight failure inducing change
         // TODO: show only affected lines +- 10 lines
         
         return fileView;
     }
+
+	private ModelBinder<AffectedFile, ?> surroundCodeWithPreTag() {
+		return file -> "<pre class=\"brush: java;\">".concat(file.readSourceCode(evaluationContext.getFaultyProject())).concat("</pre>");
+	}
 
 	 
 //	private void highlightFailureInducingChangesInEditor(ICompilationUnit regressionCU, SourceCodeChange[] failureInducingChanges) throws Exception {		
