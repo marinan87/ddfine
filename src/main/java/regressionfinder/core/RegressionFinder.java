@@ -32,16 +32,16 @@ public class RegressionFinder {
 		// git diff?
 		
 		List<FileSourceCodeChange> filteredChanges = sourceTreeDifferencer.distillChanges();
-		List<AffectedFile> failureRelevantFiles = runDeltaDebugging(filteredChanges);
+		List<AffectedFile> failureRelevantFiles = deltaDebug(filteredChanges);
 		resultViewer.showResult(failureRelevantFiles);
 	}
 
-	public List<AffectedFile> runDeltaDebugging(List<FileSourceCodeChange> filteredChanges) {
+	public List<AffectedFile> deltaDebug(List<FileSourceCodeChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
 				
 		FileSourceCodeChange[] resultArray = (FileSourceCodeChange[]) new DD(evaluationContext).ddMin(completeDeltaSet).toArray(new FileSourceCodeChange[0]);
 		
-		return AffectedFile.fromUnsortedListOfChanges(Arrays.asList(resultArray));
+		return AffectedFile.fromListOfChanges(Arrays.asList(resultArray));
 	}
 }

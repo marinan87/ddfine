@@ -31,6 +31,12 @@ public class FileManipulator {
 	}
 
 	public void applyChanges(List<SourceCodeChange> sourceCodeChanges) throws IOException {
+		sortChanges(sourceCodeChanges);
+		sourceCodeChanges.forEach(this::applySourceCodeChange);
+		Files.write(copyOfSource, content.toString().getBytes());
+	}
+	
+	public static void sortChanges(List<SourceCodeChange> sourceCodeChanges) {
 		sourceCodeChanges.sort((o1, o2) -> {
 			int firstStartPosition = o1.getChangedEntity().getStartPosition();
 			int secondStartPosition = o2.getChangedEntity().getStartPosition();
@@ -40,10 +46,6 @@ public class FileManipulator {
 			}
 			return firstStartPosition - secondStartPosition;
 		});
-		
-		sourceCodeChanges.forEach(this::applySourceCodeChange);
-		
-		Files.write(copyOfSource, content.toString().getBytes());
 	}
 	
 	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {
@@ -173,7 +175,7 @@ public class FileManipulator {
 		}
 	}
 
-	private String normalizeEntityValue(String entityValue) {
+	public static String normalizeEntityValue(String entityValue) {
 		String result = entityValue;
 
 		Matcher matcher = INSIDE_PARENTHESES.matcher(result);

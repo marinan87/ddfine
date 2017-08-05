@@ -1,8 +1,5 @@
 package regressionfinder.core;
 
-import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
-import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
-
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -28,21 +25,18 @@ import regressionfinder.isolatedrunner.MethodDescriptor;
 import regressionfinder.manipulation.FileManipulator;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.FileSourceCodeChange;
-import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class ReflectionalTestMethodInvoker {
 	
-	private String testClassName, testMethodName;
 	private Supplier<Stream<URL>> libraryClassPaths;
 	private Throwable throwable;
 	
 	@Autowired
 	private EvaluationContext evaluationContext;
 
-	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
-		testClassName = arguments.getValue(FAILING_CLASS);
-		testMethodName = arguments.getValue(FAILING_METHOD);
+	public void initializeOnce() {
+
 
 		gatherLibraryClassPathsForIsolatedClassLoader();
 		
@@ -60,11 +54,11 @@ public class ReflectionalTestMethodInvoker {
 	}
 
 	public int testAppliedChangeSet(List<FileSourceCodeChange> sourceCodeChanges) {
-		AffectedFile.fromUnsortedListOfChanges(sourceCodeChanges).forEach(file -> {
+		AffectedFile.fromListOfChanges(sourceCodeChanges).forEach(file -> {
 			try {
 				Path copyOfSource = evaluationContext.getWorkingAreaProject()
 						.copyFromAnotherProject(evaluationContext.getReferenceProject(), file.getPath());
-				new FileManipulator(copyOfSource).applyChanges(file.getChanges());
+				new FileManipulator(copyOfSource).applyChanges(file.getFailureInducingChanges());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -83,7 +77,7 @@ public class ReflectionalTestMethodInvoker {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
 			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
 			
-			Object isolatedTestRunner = constructor.newInstance(testClassName, testMethodName);
+			Object isolatedTestRunner = constructor.newInstance(evaluationContext.getTestClassName(), evaluationContext.getTestMethodName());
 		
 			Method method = isolatedTestRunner.getClass().getMethod(methodDescriptor.getMethodName(), methodDescriptor.getParameterTypes());
 			return method.invoke(isolatedTestRunner, methodDescriptor.getArgs());			

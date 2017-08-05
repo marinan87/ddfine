@@ -5,13 +5,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import htmlflow.HtmlView;
-import htmlflow.ModelBinder;
+import htmlflow.elements.HtmlDiv;
+import htmlflow.elements.HtmlTable;
+import htmlflow.elements.HtmlTr;
+import regressionfinder.manipulation.FileManipulator;
 import regressionfinder.model.AffectedFile;
 
 @Component
@@ -23,6 +29,7 @@ public class ResultViewer {
 	private static final String THEME_CSS = "theme.css";
 	private static final String RESULT_HTML = "results.html";
 	private static final String RESULTS_HEADER = "Results";
+	private static final String TEST_HEADER_FORMAT = "%s.%s()";
 
 	@Autowired
 	private EvaluationContext evaluationContext;
@@ -37,7 +44,8 @@ public class ResultViewer {
         }				
 	}
 	    
-    private HtmlView<List<AffectedFile>> fileView(){
+	@SuppressWarnings("unchecked")
+	private HtmlView<List<AffectedFile>> fileView(){
         HtmlView<List<AffectedFile>> fileView = new HtmlView<>();
         fileView
                 .head()
@@ -45,66 +53,65 @@ public class ResultViewer {
                 .scriptLink(SYNTAXHIGHLIGHTER_JS)
                 .linkCss(BOOTSTRAP_CSS)
                 .linkCss(THEME_CSS);
-        fileView
+        HtmlDiv<List<AffectedFile>> div = fileView
         		.body().classAttr("container")
         		.heading(1, RESULTS_HEADER)
-        		.div()
-                .table().classAttr("table")
-                .trFromIterable(AffectedFile::getPath, AffectedFile::getChanges, surroundCodeWithPreTag());
+        		.heading(2, String.format(TEST_HEADER_FORMAT, evaluationContext.getTestClassName(), evaluationContext.getTestMethodName()))
+        		.div();
         
-        // TODO: highlight failure inducing change
+        HtmlTable<List<AffectedFile>> resultsTable = div.table().classAttr("table");
+        HtmlTr<List<AffectedFile>> header = resultsTable.tr();
+        header.th().text("Reference version");
+        header.th().text("Faulty version");	
+        resultsTable
+        		.trFromIterable(this::referenceVersion, this::highlightedFaultyVersion);       
+        
+        div.table().classAttr("table")
+        		.trFromIterable(AffectedFile::toString);
+        
         // TODO: show only affected lines +- 10 lines
         
         return fileView;
     }
-
-	private ModelBinder<AffectedFile, ?> surroundCodeWithPreTag() {
-		return file -> "<pre class=\"brush: java;\">".concat(file.readSourceCode(evaluationContext.getFaultyProject())).concat("</pre>");
+	
+	private String referenceVersion(AffectedFile file) {
+		StringBuilder result = new StringBuilder();
+		result.append("<pre class=\"brush: java;\">");
+		result.append(file.readSourceCode(evaluationContext.getReferenceProject()));
+		result.append("</pre>");
+		return result.toString();
 	}
 
-	 
-//	private void highlightFailureInducingChangesInEditor(ICompilationUnit regressionCU, SourceCodeChange[] failureInducingChanges) throws Exception {		
-//		ITextEditor textEditor = JavaModelHelper.openTextEditor(regressionCU);
-//		
-//		// Seems that there is no way to highlight all changes at once in Eclipse. 
-//		// Currently only highlighting the first change.
-//		SourceCodeChange firstChange = failureInducingChanges[0];
-//		int startPosition = firstChange.getChangedEntity().getStartPosition();
-//		int length = firstChange.getChangedEntity().getEndPosition() - startPosition;
-//		textEditor.setHighlightRange(startPosition, length, false);
-//		textEditor.selectAndReveal(startPosition, length);
-//	}
+	private String highlightedFaultyVersion(AffectedFile file) {
+		StringBuilder result = new StringBuilder();
+		String sourceCode = file.readSourceCode(evaluationContext.getFaultyProject());
+		result.append(String.format("<pre class=\"brush: java; highlight: %s\">", getLineNumbers(file, sourceCode)));
+		result.append(sourceCode);
+		result.append("</pre>");
+		return result.toString();
+	}
 
-//	private String getStringRepresentation(SourceCodeChange[] failureInducingChanges) {
-//		StringBuilder builder = new StringBuilder();
-//		builder.append("Regression is caused by the following changes:\r\n\r\n");
-//				
-//		for (SourceCodeChange change : failureInducingChanges) {
-//			// TODO: specify positions as well
-//			if (change instanceof Insert) {
-//				Insert insert = (Insert) change;
-//				builder.append("Inserted\t");
-//				builder.append(insert.getChangedEntity().getUniqueName());
-//			} else if (change instanceof Update) {
-//				Update update = (Update) change;
-//				builder.append("Updated\t");
-//				builder.append(update.getChangedEntity().getUniqueName());
-//				builder.append(" ===> ");
-//				builder.append(update.getNewEntity().getUniqueName());
-//			} else if (change instanceof Delete) {
-//				Delete delete = (Delete) change;
-//				builder.append("Deleted\t");
-//				builder.append(delete.getChangedEntity().getUniqueName());
-//			} else if (change instanceof Move) {
-//				Move move = (Move) change;
-//				builder.append("Moved\t");
-//				builder.append(String.format("entity %s in parent %s", move.getChangedEntity().getUniqueName(), move.getParentEntity().getUniqueName()));
-//				builder.append(String.format(", now becomes entity %s in parent %s", move.getNewEntity().getUniqueName(), move.getNewParentEntity().getUniqueName()));
-//			}
-//			
-//			builder.append("\r\n");
-//		}
-//		
-//		return builder.toString();
-//	}
+	private List<Integer> getLineNumbers(AffectedFile file, String sourceCode) {
+		List<SourceCodeChange> remainingChanges = new ArrayList<>(file.getFailureInducingChanges());
+		List<Integer> lines = new ArrayList<>();
+		
+		Scanner scanner = new Scanner(sourceCode);
+		int line = 0;
+		while (scanner.hasNextLine()) {
+			line++;
+			String nextLine = scanner.nextLine();
+			
+			for (SourceCodeChange change : remainingChanges) {
+				String changeContent = FileManipulator.normalizeEntityValue(change.getChangedEntity().getContent());
+				if (nextLine.contains(changeContent)) {
+					lines.add(line);
+					remainingChanges.remove(change);
+					break;
+				}	
+			}
+		}
+		scanner.close();
+		
+		return lines;
+	}	
 }

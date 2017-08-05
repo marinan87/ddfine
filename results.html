@@ -11,12 +11,72 @@
 	</head>
 	<body class="container">
 		<h1>Results</h1>
+		<h2>package1.ExampleTest.tenMultipliedByTenIsOneHundred()</h2>
 		<div>
 			<table class="table">
 				<tr>
-					<td>package1\Example.java</td>
-					<td>[Insert: int factor = 12;, Update: (param * 10);]</td>
+					<th>Reference version</th>
+					<th>Faulty version</th>
+				</tr>
+				<tr>
 					<td><pre class="brush: java;">package package1;
+
+public class Example {
+	
+	private double classVariable = 0;
+	
+	int multiplyByEleven(int param) {
+		return param * 11;
+	}
+	
+	int multiplyByTen(int param) {
+		return param * 10;
+	}
+	
+	int multiplyByTwelve(int param) {
+		return param * 12;
+	}
+	
+	void doSomething() {
+		int a = 5;
+		a += 10;
+		a -= 2;
+	}
+	
+	private void increasingAccessibilityReplacePrivateWithPublicExample() {
+		
+	}
+	
+	protected void increasingAccessibilityReplaceProtectedWithPublicExample() {
+		
+	}
+	
+	void increasingAccessibilityInsertProtectedExample() {
+		
+	}
+	
+	void decreasingAccessibilityInsertPrivateExample() {
+		
+	}
+	
+	protected void decreasingAccessibilityReplaceProtectedWithPrivateExample() {
+		
+	}
+	
+	public void decreasingAccessibilityReplacePublicWithPrivateExample() {
+		
+	}
+	
+	void parameterAddingExample(int param) {
+		
+	}
+	
+	public void methodToCheckParameterRenaming(Object aRenamePara) {}
+	
+	public void methodToCheckParameterTypeChange(Object first, int typeChange) {}
+}
+</pre></td>
+					<td><pre class="brush: java; highlight: [16, 17]">package package1;
 
 import java.io.Serializable;
 
@@ -85,6 +145,11 @@ public final class Example {
 	public void methodToCheckParameterTypeChange(Object first, String typeChange) {}
 }
 </pre></td>
+				</tr>
+			</table>
+			<table class="table">
+				<tr>
+					<td>package1\Example.java: [Insert: int factor = 12;, Update: (param * 10);]</td>
 				</tr>
 			</table>
 		</div>

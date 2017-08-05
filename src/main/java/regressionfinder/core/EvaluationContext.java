@@ -1,6 +1,8 @@
 package regressionfinder.core;
 
 import static java.util.stream.Collectors.toList;
+import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
+import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 
@@ -21,6 +23,7 @@ import regressionfinder.runner.CommandLineArgumentsInterpreter;
 public class EvaluationContext extends JUnitTester {
 
 	private MavenProject referenceVersionProject, faultyVersionProject, workingAreaProject;
+	private String testClassName, testMethodName;
 
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
@@ -35,7 +38,10 @@ public class EvaluationContext extends JUnitTester {
 			workingAreaProject = new MavenProject(temporaryDirectory.toString());
 			workingAreaProject.triggerCompilationWithTests();
 			
-			reflectionalInvoker.initializeOnce(arguments);
+			testClassName = arguments.getValue(FAILING_CLASS);
+			testMethodName = arguments.getValue(FAILING_METHOD);
+			
+			reflectionalInvoker.initializeOnce();
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			e.printStackTrace();
@@ -55,8 +61,17 @@ public class EvaluationContext extends JUnitTester {
 		return workingAreaProject;
 	}
 	
+	public String getTestClassName() {
+		return testClassName;
+	}
+
+	public String getTestMethodName() {
+		return testMethodName;
+	}
+	
 	@Override
 	public int test(DeltaSet set) {
+		@SuppressWarnings("unchecked")
 		List<FileSourceCodeChange> selectedChangeSet = (List<FileSourceCodeChange>) set.stream().collect(toList());		
 		return reflectionalInvoker.testAppliedChangeSet(selectedChangeSet); 
 	}

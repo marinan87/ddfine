@@ -12,38 +12,40 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.manipulation.FileManipulator;
 
 public class AffectedFile {
 
 	private final Path path;
-	private final List<SourceCodeChange> changes;
+	private final List<SourceCodeChange> failureInducingChanges;
 	
 	private AffectedFile(Path path, List<SourceCodeChange> changes) {
 		this.path = path;
-		this.changes = changes;
+		FileManipulator.sortChanges(changes);
+		this.failureInducingChanges = changes;
 	}
 	
-	public static List<AffectedFile> fromUnsortedListOfChanges(List<FileSourceCodeChange> sourceCodeChanges) {
+	public static List<AffectedFile> fromListOfChanges(List<FileSourceCodeChange> sourceCodeChanges) {
 		return sourceCodeChanges.stream()
-				.collect(
-					toMap(
-						FileSourceCodeChange::getPathToFile, 
-						change -> newArrayList(change.getSourceCodeChange()),
-						(a, b) -> { 
-							a.addAll(b);
-							return a;
-						}))
-				.entrySet().stream()
-				.map(entry -> new AffectedFile(entry.getKey(), entry.getValue()))
-				.collect(toList());
+			.collect(
+				toMap(
+					FileSourceCodeChange::getPathToFile, 
+					change -> newArrayList(change.getSourceCodeChange()),
+					(a, b) -> { 
+						a.addAll(b);
+						return a;
+					}))
+			.entrySet().stream()
+			.map(entry -> new AffectedFile(entry.getKey(), entry.getValue()))
+			.collect(toList());
 	}
 
 	public Path getPath() {
 		return path;
 	}
 
-	public List<SourceCodeChange> getChanges() {
-		return changes;
+	public List<SourceCodeChange> getFailureInducingChanges() {
+		return failureInducingChanges;
 	}
 	
 	public String readSourceCode(MavenProject project) {
@@ -52,5 +54,10 @@ public class AffectedFile {
 		} catch (IOException ioe) {
 			return StringUtils.EMPTY;
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s: %s", path, failureInducingChanges);
 	}
 }
