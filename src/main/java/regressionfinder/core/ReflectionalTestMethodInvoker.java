@@ -36,8 +36,6 @@ public class ReflectionalTestMethodInvoker {
 	private EvaluationContext evaluationContext;
 
 	public void initializeOnce() {
-
-
 		gatherLibraryClassPathsForIsolatedClassLoader();
 		
 		evaluationContext.getFaultyProject().triggerCompilationWithTests();

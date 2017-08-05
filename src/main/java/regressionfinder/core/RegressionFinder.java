@@ -30,6 +30,7 @@ public class RegressionFinder {
 		// added, removed dirs? fileops
 		// folders with same name analyzed recursively. Repeat in each dir. 
 		// git diff?
+		// TODO: execute with real example
 		
 		List<FileSourceCodeChange> filteredChanges = sourceTreeDifferencer.distillChanges();
 		List<AffectedFile> failureRelevantFiles = deltaDebug(filteredChanges);
