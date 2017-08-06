@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.core.renderer;
 
 import java.awt.Desktop;
 import java.io.FileOutputStream;
@@ -14,6 +14,7 @@ import htmlflow.HtmlView;
 import htmlflow.elements.HtmlDiv;
 import htmlflow.elements.HtmlTable;
 import htmlflow.elements.HtmlTr;
+import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 
 @Component

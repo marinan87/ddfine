@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.core.renderer;
 
 import regressionfinder.model.AffectedFile;
 

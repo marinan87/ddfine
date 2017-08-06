@@ -6,19 +6,19 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 
 public class FileSourceCodeChange {
 	
-	private final SourceCodeChange sourceCodeChange;
 	private final Path pathToFile;
+	private final SourceCodeChange sourceCodeChange;
 	
-	public FileSourceCodeChange(SourceCodeChange sourceCodeChange, Path pathToFile) {
-		this.sourceCodeChange = sourceCodeChange;
+	public FileSourceCodeChange(Path pathToFile, SourceCodeChange sourceCodeChange) {
 		this.pathToFile = pathToFile;
-	}
-	
-	public SourceCodeChange getSourceCodeChange() {
-		return sourceCodeChange;
+		this.sourceCodeChange = sourceCodeChange;
 	}
 
 	public Path getPathToFile() {
 		return pathToFile;
+	}
+	
+	public SourceCodeChange getSourceCodeChange() {
+		return sourceCodeChange;
 	}
 }

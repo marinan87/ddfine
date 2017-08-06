@@ -1,8 +1,9 @@
-package regressionfinder.core;
+package regressionfinder.core.renderer;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 
 @Component

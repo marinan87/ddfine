@@ -12,7 +12,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.core.RenderingVisitor;
+import regressionfinder.core.renderer.RenderingVisitor;
 import regressionfinder.manipulation.FileManipulator;
 
 public class AffectedFile {

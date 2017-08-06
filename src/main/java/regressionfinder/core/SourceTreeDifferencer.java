@@ -35,16 +35,16 @@ public class SourceTreeDifferencer {
 				.collect(Collectors.toList());
 	}	
 		
-	private Stream<Path> scanForChangedPaths(File directory) {
-		Preconditions.checkArgument(directory.isDirectory(), format("%s is not a directory!", directory));
+	private Stream<Path> scanForChangedPaths(File directoryInReferenceProject) {
+		Preconditions.checkArgument(directoryInReferenceProject.isDirectory(), format("%s is not a directory!", directoryInReferenceProject));
 		
-		File[] javaFiles = directory.listFiles(isJavaFile());
+		File[] javaFiles = directoryInReferenceProject.listFiles(isJavaFile());
 
 		Stream<Path> streamOfRelativePaths = Stream.of(javaFiles).map(File::toPath)
 				.map(evaluationContext.getReferenceProject()::findRelativeToSourceRoot)				
 				.filter(sizeHasChanged().or(checkSumHasChanged()));
 		
-		File[] subDirectories = directory.listFiles((FileFilter) dirName -> dirName.isDirectory());
+		File[] subDirectories = directoryInReferenceProject.listFiles(File::isDirectory);
 		for (File file : subDirectories) {
 			streamOfRelativePaths = Stream.concat(streamOfRelativePaths, scanForChangedPaths(file));
 		}
@@ -86,7 +86,7 @@ public class SourceTreeDifferencer {
 		distiller.extractClassifiedSourceCodeChanges(left, right);
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges())
-			.map(change -> new FileSourceCodeChange(change, pathToFile));
+			.map(change -> new FileSourceCodeChange(pathToFile, change));
 	}
 	
 	private Stream<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {

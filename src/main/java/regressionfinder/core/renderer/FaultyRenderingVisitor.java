@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.core.renderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.EvaluationContext;
 import regressionfinder.manipulation.FileManipulator;
 import regressionfinder.model.AffectedFile;
 

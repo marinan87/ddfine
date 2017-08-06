@@ -8,6 +8,7 @@ import org.deltadebugging.ddcore.DeltaSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import regressionfinder.core.renderer.ResultViewer;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.FileSourceCodeChange;
 
