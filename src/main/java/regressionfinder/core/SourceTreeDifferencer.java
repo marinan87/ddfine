@@ -11,9 +11,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.google.common.base.Preconditions;
 
 import ch.uzh.ifi.seal.changedistiller.ChangeDistiller;
@@ -22,15 +19,23 @@ import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.model.FileSourceCodeChange;
+import regressionfinder.model.MavenProject;
+import regressionfinder.model.SourceTreeComparisonResults;
 
-@Component
 public class SourceTreeDifferencer {
 
-	@Autowired
-	private EvaluationContext evaluationContext;
+	private final MavenProject referenceProject, faultyProject;
+	private final SourceTreeComparisonResults comparisonResults;
+
+	
+	public SourceTreeDifferencer(MavenProject referenceProject, MavenProject faultyProject) {
+		this.referenceProject = referenceProject;
+		this.faultyProject = faultyProject;
+		this.comparisonResults = new SourceTreeComparisonResults();
+	}
 
 	public List<FileSourceCodeChange> distillChanges() {
-		return scanForChangedPaths(evaluationContext.getReferenceProject().getSourceDirectory())
+		return scanForChangedPaths(referenceProject.getSourceDirectory())
 				.flatMap(this::distillChangesForPath)
 				.collect(Collectors.toList());
 	}	
@@ -41,7 +46,7 @@ public class SourceTreeDifferencer {
 		File[] javaFiles = directoryInReferenceProject.listFiles(isJavaFile());
 
 		Stream<Path> streamOfRelativePaths = Stream.of(javaFiles).map(File::toPath)
-				.map(evaluationContext.getReferenceProject()::findRelativeToSourceRoot)				
+				.map(referenceProject::findRelativeToSourceRoot)				
 				.filter(sizeHasChanged().or(checkSumHasChanged()));
 		
 		File[] subDirectories = directoryInReferenceProject.listFiles(File::isDirectory);
@@ -59,7 +64,7 @@ public class SourceTreeDifferencer {
 	private Predicate<Path> sizeHasChanged() {
 		return relativePath -> {
 			try {
-				return evaluationContext.getReferenceProject().size(relativePath) != evaluationContext.getFaultyProject().size(relativePath);
+				return referenceProject.size(relativePath) != faultyProject.size(relativePath);
 			} catch (IOException e) {
 				return true;
 			}
@@ -69,8 +74,8 @@ public class SourceTreeDifferencer {
 	private Predicate<Path> checkSumHasChanged() {
 		return relativePath -> {
 			try {
-				String referenceMd5 = evaluationContext.getReferenceProject().md5Hash(relativePath);
-				String faultyMd5 = evaluationContext.getFaultyProject().md5Hash(relativePath);
+				String referenceMd5 = referenceProject.md5Hash(relativePath);
+				String faultyMd5 = faultyProject.md5Hash(relativePath);
 				return !referenceMd5.equals(faultyMd5);
 			} catch (IOException e) {
 				return true;
@@ -79,8 +84,8 @@ public class SourceTreeDifferencer {
 	}
 	
 	private Stream<FileSourceCodeChange> distillChangesForPath(Path pathToFile) {
-		File left = evaluationContext.getReferenceProject().findFile(pathToFile);
-		File right = evaluationContext.getFaultyProject().findFile(pathToFile);
+		File left = referenceProject.findFile(pathToFile);
+		File right = faultyProject.findFile(pathToFile);
 		
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
 		distiller.extractClassifiedSourceCodeChanges(left, right);

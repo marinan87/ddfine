@@ -17,10 +17,7 @@ public class RegressionFinder {
 
 	@Autowired
 	private EvaluationContext evaluationContext;	
-	
-	@Autowired
-	private SourceTreeDifferencer sourceTreeDifferencer;
-	
+		
 	@Autowired
 	private ResultViewer resultViewer;
 
@@ -33,7 +30,8 @@ public class RegressionFinder {
 		// git diff?
 		// TODO: execute with real example
 		
-		List<FileSourceCodeChange> filteredChanges = sourceTreeDifferencer.distillChanges();
+		SourceTreeDifferencer treeDifferencer = new SourceTreeDifferencer(evaluationContext.getReferenceProject(), evaluationContext.getFaultyProject());
+		List<FileSourceCodeChange> filteredChanges = treeDifferencer.distillChanges();
 		List<AffectedFile> failureRelevantFiles = deltaDebug(filteredChanges);
 		resultViewer.showResult(failureRelevantFiles);
 	}
