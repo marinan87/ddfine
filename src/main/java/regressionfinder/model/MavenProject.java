@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
@@ -85,7 +87,8 @@ public class MavenProject {
 			throw new RuntimeException(e);
 		}
 		// TODO: run incremental build
-		// TODO: in-memory compilation for speed up?
+		// TODO: in-memory compilation for speed up? RAM disk?
+		// TODO: compile with dependent projects (mvn option) 
 	}
 
 	public Stream<URL> getClassPaths() {
@@ -116,6 +119,17 @@ public class MavenProject {
 	
 	public Path findRelativeToSourceRoot(Path absolutePath) {
 		return sourcesDirectoryPath.relativize(absolutePath);
+	}
+	
+	public List<Path> javaPathsInDirectory(File directory) {
+		return Stream.of(directory.listFiles(this::isJavaFile))
+			.map(File::toPath)
+			.map(this::findRelativeToSourceRoot)
+			.collect(Collectors.toList());
+	}
+	
+	private boolean isJavaFile(File fileName) {
+		return fileName.isFile() && fileName.getName().endsWith(".java");
 	}
 
 	public void copyEverythingTo(Path targetPath) throws IOException {
