@@ -35,26 +35,36 @@ public class SourceTreeDifferencer {
 	}
 
 	public List<FileSourceCodeChange> distillChanges() {
-		return scanForChangedPaths(referenceProject.getSourceDirectory())
+		scanForChangedPaths(referenceProject.getSourceDirectory());
+		
+		return comparisonResults.getModifiedFiles().stream()
 				.flatMap(this::distillChangesForPath)
 				.collect(Collectors.toList());
 	}	
 		
-	private Stream<Path> scanForChangedPaths(File directoryInReferenceProject) {
+	private void scanForChangedPaths(File directoryInReferenceProject) {
 		Preconditions.checkArgument(directoryInReferenceProject.isDirectory(), format("%s is not a directory!", directoryInReferenceProject));
+		
+		// TODO:
+		/*DetectedChange
+		StructuralChange
+
+		added, removed files? fileops
+		modified files - first by size, if equal - then calculate hash, if changed -> Distiller
+		added, removed dirs? fileops
+		*/
 		
 		File[] javaFiles = directoryInReferenceProject.listFiles(isJavaFile());
 
-		Stream<Path> streamOfRelativePaths = Stream.of(javaFiles).map(File::toPath)
+		Stream.of(javaFiles).map(File::toPath)
 				.map(referenceProject::findRelativeToSourceRoot)				
-				.filter(sizeHasChanged().or(checkSumHasChanged()));
+				.filter(sizeHasChanged().or(checkSumHasChanged()))
+				.forEach(comparisonResults::addModifiedFile);
 		
 		File[] subDirectories = directoryInReferenceProject.listFiles(File::isDirectory);
-		for (File file : subDirectories) {
-			streamOfRelativePaths = Stream.concat(streamOfRelativePaths, scanForChangedPaths(file));
-		}
-		
-		return streamOfRelativePaths;
+		for (File subDirectory : subDirectories) {
+			scanForChangedPaths(subDirectory);
+		}		
 	}
 
 	private FileFilter isJavaFile() {

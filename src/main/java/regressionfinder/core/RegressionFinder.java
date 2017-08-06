@@ -22,13 +22,7 @@ public class RegressionFinder {
 	private ResultViewer resultViewer;
 
 	public void run() {
-		// TODO: Next round: source code tree changes, fileops + sourcecodeops
-		// added, removed files? fileops
-		// modified files - sourcecodeops
-		// added, removed dirs? fileops
-		// folders with same name analyzed recursively. Repeat in each dir. 
-		// git diff?
-		// TODO: execute with real example
+		// TODO: execute with first real example
 		
 		SourceTreeDifferencer treeDifferencer = new SourceTreeDifferencer(evaluationContext.getReferenceProject(), evaluationContext.getFaultyProject());
 		List<FileSourceCodeChange> filteredChanges = treeDifferencer.distillChanges();
