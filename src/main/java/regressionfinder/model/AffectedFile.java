@@ -12,6 +12,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.RenderingVisitor;
 import regressionfinder.manipulation.FileManipulator;
 
 public class AffectedFile {
@@ -59,5 +60,9 @@ public class AffectedFile {
 	@Override
 	public String toString() {
 		return String.format("%s: %s", path, failureInducingChanges);
+	}
+	
+	public String render(RenderingVisitor renderingVisitor) { 
+		return renderingVisitor.visit(this);
 	}
 }
