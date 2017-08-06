@@ -5,10 +5,13 @@ import static java.lang.String.format;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
@@ -25,6 +28,8 @@ import regressionfinder.model.SourceTreeComparisonResults;
 
 public class SourceTreeDifferencer {
 
+	private static final Path ROOT_PATH = Paths.get(StringUtils.EMPTY);
+	
 	private final MavenProject referenceProject, faultyProject;
 	private final SourceTreeComparisonResults comparisonResults;
 
@@ -36,36 +41,31 @@ public class SourceTreeDifferencer {
 	}
 
 	public List<FileSourceCodeChange> distillChanges() {
-		scanForChangedPaths(referenceProject.getSourceDirectory());
+		scanForChangedPaths(ROOT_PATH);
+		// TODO: implement fileops for delta debugging (add/remove file, add/remove package)  - DetectedChange, StructuralChange
 		
 		return comparisonResults.getModifiedFiles().stream()
 				.flatMap(this::distillChangesForPath)
 				.collect(Collectors.toList());
 	}	
 		
-	private void scanForChangedPaths(File directoryInReferenceProject) {
-		Path directoryRelativePath = referenceProject.findRelativeToSourceRoot(directoryInReferenceProject.toPath());
-		File directoryInFaultyProject = faultyProject.findFile(directoryRelativePath);
+	private void scanForChangedPaths(Path relativeToSourceRoot) {
+		File directoryInReferenceProject = referenceProject.findFile(relativeToSourceRoot);
+		File directoryInFaultyProject = faultyProject.findFile(relativeToSourceRoot);
 
 		Preconditions.checkArgument(directoryInReferenceProject.isDirectory(), 
-				format("%s is not a directory!", directoryInReferenceProject));
+				format("%s is not a directory!", relativeToSourceRoot));
 		Preconditions.checkArgument(directoryInFaultyProject.exists() && directoryInFaultyProject.isDirectory(), 
 				format("Directory %s does not exist in faulty project!", directoryInFaultyProject));
 		
-		// TODO: implement detection of all types of changes
-		/*DetectedChange
-		StructuralChange
-
-		added, removed files? fileops
-		modified files - first by size, if equal - then calculate hash, if changed -> Distiller
-		added, removed dirs? fileops
-		*/
-		
-		// TODO: implement fileops for delta debugging
+		scanForChangedJavaPaths(relativeToSourceRoot);
+		scanForChangedDirs(relativeToSourceRoot);	
 		// TODO: support of file renaming/moving?
-		
-		List<Path> javaPathsInReference = referenceProject.javaPathsInDirectory(directoryInReferenceProject);
-		List<Path> javaPathsInFaulty = faultyProject.javaPathsInDirectory(directoryInFaultyProject);
+	}
+
+	private void scanForChangedJavaPaths(Path relativeToSourceRoot) {
+		List<Path> javaPathsInReference = referenceProject.javaPathsInDirectory(relativeToSourceRoot);
+		List<Path> javaPathsInFaulty = faultyProject.javaPathsInDirectory(relativeToSourceRoot);
 		
 		Collections2.filter(javaPathsInReference, Predicates.not(Predicates.in(javaPathsInFaulty))).forEach(comparisonResults::addRemovedFile);
 		Collections2.filter(javaPathsInFaulty, Predicates.not(Predicates.in(javaPathsInReference))).forEach(comparisonResults::addAddedFile);
@@ -73,11 +73,6 @@ public class SourceTreeDifferencer {
 		Collections2.filter(javaPathsInReference, Predicates.in(javaPathsInFaulty)).stream()				
 				.filter(sizeHasChanged().or(checkSumHasChanged()))
 				.forEach(comparisonResults::addModifiedFile);
-		
-		File[] subDirectories = directoryInReferenceProject.listFiles(File::isDirectory);
-		for (File subDirectory : subDirectories) {
-			scanForChangedPaths(subDirectory);
-		}		
 	}
 
 	private Predicate<Path> sizeHasChanged() {
@@ -100,6 +95,16 @@ public class SourceTreeDifferencer {
 				return true;
 			}			
 		};
+	}
+
+	private void scanForChangedDirs(Path relativeToSourceRoot) {
+		List<Path> subDirectoriesInReference = referenceProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
+		List<Path> subDirectoriesInFaulty = faultyProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
+		
+		Collections2.filter(subDirectoriesInReference, Predicates.not(Predicates.in(subDirectoriesInFaulty))).forEach(comparisonResults::addRemovedPackage);
+		Collections2.filter(subDirectoriesInFaulty, Predicates.not(Predicates.in(subDirectoriesInReference))).forEach(comparisonResults::addAddedPackage);
+
+		Collections2.filter(subDirectoriesInReference, Predicates.in(subDirectoriesInFaulty)).forEach(this::scanForChangedPaths);
 	}
 	
 	private Stream<FileSourceCodeChange> distillChangesForPath(Path pathToFile) {

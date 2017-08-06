@@ -121,8 +121,15 @@ public class MavenProject {
 		return sourcesDirectoryPath.relativize(absolutePath);
 	}
 	
-	public List<Path> javaPathsInDirectory(File directory) {
-		return Stream.of(directory.listFiles(this::isJavaFile))
+	public List<Path> javaPathsInDirectory(Path relativeToSourceRoot) {
+		return Stream.of(findFile(relativeToSourceRoot).listFiles(this::isJavaFile))
+			.map(File::toPath)
+			.map(this::findRelativeToSourceRoot)
+			.collect(Collectors.toList());
+	}
+	
+	public List<Path> subDirectoryPathsInDirectory(Path relativeToSourceRoot) {
+		return Stream.of(findFile(relativeToSourceRoot).listFiles(File::isDirectory))
 			.map(File::toPath)
 			.map(this::findRelativeToSourceRoot)
 			.collect(Collectors.toList());
