@@ -10,6 +10,7 @@ import java.util.List;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.renderer.RenderingVisitor;
+import regressionfinder.manipulation.WorkingAreaManipulationVisitor;
 
 public class AffectedFile {
 
@@ -64,5 +65,9 @@ public class AffectedFile {
 	
 	public String render(RenderingVisitor renderingVisitor) { 
 		return renderingVisitor.visit(this);
+	}
+	
+	public void manipulate(WorkingAreaManipulationVisitor manipulationVisitor) {
+		manipulationVisitor.visit(this);
 	}
 }

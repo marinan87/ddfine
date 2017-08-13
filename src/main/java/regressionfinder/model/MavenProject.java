@@ -108,11 +108,11 @@ public class MavenProject {
 		return findAbsolutePath(relativePath).toFile();
 	}
 	
-	public Path findAbsolutePath(Path relativePath) {
+	private Path findAbsolutePath(Path relativePath) {
 		return sourcesDirectoryPath.resolve(relativePath);
 	}
 	
-	public Path findRelativeToSourceRoot(Path absolutePath) {
+	private Path findRelativeToSourceRoot(Path absolutePath) {
 		return sourcesDirectoryPath.relativize(absolutePath);
 	}
 	
@@ -123,15 +123,15 @@ public class MavenProject {
 			.collect(Collectors.toList());
 	}
 	
+	private boolean isJavaFile(File fileName) {
+		return fileName.isFile() && fileName.getName().endsWith(".java");
+	}
+	
 	public List<Path> subDirectoryPathsInDirectory(Path relativeToSourceRoot) {
 		return Stream.of(findFile(relativeToSourceRoot).listFiles(File::isDirectory))
 			.map(File::toPath)
 			.map(this::findRelativeToSourceRoot)
 			.collect(Collectors.toList());
-	}
-	
-	private boolean isJavaFile(File fileName) {
-		return fileName.isFile() && fileName.getName().endsWith(".java");
 	}
 
 	public void copyEverythingTo(Path targetPath) throws IOException {
@@ -142,10 +142,6 @@ public class MavenProject {
 		Files.copy(findAbsolutePath(relativePath),
 				targetProject.findAbsolutePath(relativePath),
 				StandardCopyOption.REPLACE_EXISTING);
-	}
-
-	public File getSourceDirectory() {
-		return sourcesDirectoryPath.toFile();
 	}
 	
 	public String md5Hash(Path relativePath) throws IOException {

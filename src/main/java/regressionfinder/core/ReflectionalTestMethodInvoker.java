@@ -1,6 +1,5 @@
 package regressionfinder.core;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -22,7 +21,8 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
-import regressionfinder.manipulation.FileManipulator;
+import regressionfinder.manipulation.PrepareWorkingAreaVisitor;
+import regressionfinder.manipulation.RestoreWorkingAreaVisitor;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
@@ -36,6 +36,13 @@ public class ReflectionalTestMethodInvoker {
 	@Autowired
 	private EvaluationContext evaluationContext;
 
+	@Autowired
+	private PrepareWorkingAreaVisitor prepareWorkingAreaVisitor;
+	
+	@Autowired
+	private RestoreWorkingAreaVisitor restoreWorkingAreaVisitor;
+
+	
 	public void initializeOnce() {
 		gatherLibraryClassPathsForIsolatedClassLoader();
 		
@@ -71,25 +78,12 @@ public class ReflectionalTestMethodInvoker {
 	}
 
 	private void prepareWorkingAreaForNextTrial(List<AffectedFile> affectedFiles) {
-		affectedFiles.forEach(file -> {
-			try {
-				new FileManipulator(file, evaluationContext.getWorkingAreaProject()).applyChanges();				
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
-	
+		affectedFiles.forEach(file -> file.manipulate(prepareWorkingAreaVisitor));	
 		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
 	}
 
 	private void restoreWorkingArea(List<AffectedFile> affectedFiles) {
-		affectedFiles.forEach(file -> {
-			try {
-				evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), file.getPath());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		affectedFiles.forEach(file -> file.manipulate(restoreWorkingAreaVisitor));
 	}
 	
 	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 

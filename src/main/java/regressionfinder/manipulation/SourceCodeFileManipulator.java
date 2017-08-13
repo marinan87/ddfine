@@ -16,7 +16,7 @@ import regressionfinder.model.MavenProject;
  * Utility class for applying source code change deltas to original file. 
  * A trivial mock implementation working only for a few hard-coded cases, with no proper exception handling etc. 
  */
-public class FileManipulator {
+public class SourceCodeFileManipulator {
 	
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
 
@@ -25,7 +25,7 @@ public class FileManipulator {
 	private final StringBuilder content;
 	private int offset = 0;
 	
-	public FileManipulator(AffectedFile file, MavenProject workingAreaProject) throws IOException {
+	public SourceCodeFileManipulator(AffectedFile file, MavenProject workingAreaProject) throws IOException {
 		this.file = file;
 		this.workingAreaProject = workingAreaProject;
 		
