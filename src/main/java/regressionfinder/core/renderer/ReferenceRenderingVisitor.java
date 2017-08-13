@@ -1,5 +1,8 @@
 package regressionfinder.core.renderer;
 
+import java.nio.file.Path;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +27,19 @@ public class ReferenceRenderingVisitor implements RenderingVisitor {
 
 	@Override
 	public String visit(AffectedStructuralEntity entity) {
-		// TODO Auto-generated method stub
-		return null;
+		String result = StringUtils.EMPTY;
+		Path pathToEntity = entity.getPath();
+		
+		switch (entity.getStructuralChangeType()) {
+		case FILE_REMOVED:
+		case PACKAGE_REMOVED:
+			result = pathToEntity.toString();
+			break;
+		default:
+			result = StringUtils.EMPTY;
+			break;
+		}
+		
+		return result;
 	}
 }
