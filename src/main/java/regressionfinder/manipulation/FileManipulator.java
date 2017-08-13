@@ -25,16 +25,16 @@ public class FileManipulator {
 	private final StringBuilder content;
 	private int offset = 0;
 	
-	public FileManipulator(AffectedFile file, MavenProject workingAreaProject) {
+	public FileManipulator(AffectedFile file, MavenProject workingAreaProject) throws IOException {
 		this.file = file;
 		this.workingAreaProject = workingAreaProject;
 		
-        content = new StringBuilder(file.readSourceCode(workingAreaProject));
+        content = new StringBuilder(workingAreaProject.readSourceCode(file.getPath()));
 	}
 
 	public void applyChanges() throws IOException {
 		file.getChangesInFile().forEach(this::applySourceCodeChange);
-		file.writeSourceCode(workingAreaProject, content.toString());
+		workingAreaProject.writeSourceCode(file.getPath(), content.toString());
 	}
 	
 	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {

@@ -4,12 +4,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
@@ -59,18 +55,6 @@ public class AffectedFile {
 
 	public List<SourceCodeChange> getChangesInFile() {
 		return sortedChangesInFile;
-	}
-	
-	public String readSourceCode(MavenProject project) {
-		try {
-			return new String(Files.readAllBytes(project.findAbsolutePath(path)));
-		} catch (IOException ioe) {
-			return StringUtils.EMPTY;
-		}
-	}
-	
-	public void writeSourceCode(MavenProject project, String sourceCode) throws IOException {
-		Files.write(project.findAbsolutePath(path), sourceCode.getBytes());
 	}
 	
 	@Override

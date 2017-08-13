@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -103,12 +104,6 @@ public class MavenProject {
 		}
 	}
 
-	public Path copyFromAnotherProject(MavenProject sourceProject, Path relativePath) throws IOException {
-		return Files.copy(sourceProject.findAbsolutePath(relativePath),
-				findAbsolutePath(relativePath),
-				StandardCopyOption.REPLACE_EXISTING);
-	}
-	
 	public File findFile(Path relativePath) {
 		return findAbsolutePath(relativePath).toFile();
 	}
@@ -142,6 +137,12 @@ public class MavenProject {
 	public void copyEverythingTo(Path targetPath) throws IOException {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
+	
+	public void copyToAnotherProject(MavenProject targetProject, Path relativePath) throws IOException {
+		Files.copy(findAbsolutePath(relativePath),
+				targetProject.findAbsolutePath(relativePath),
+				StandardCopyOption.REPLACE_EXISTING);
+	}
 
 	public File getSourceDirectory() {
 		return sourcesDirectoryPath.toFile();
@@ -156,5 +157,21 @@ public class MavenProject {
 	
 	public long size(Path relativePath) throws IOException {
 		return Files.size(findAbsolutePath(relativePath));
+	}
+	
+	public String readSourceCode(Path relativePath) throws IOException {
+		return new String(Files.readAllBytes(findAbsolutePath(relativePath)));
+	}
+	
+	public String tryReadSourceCode(Path relativePath) {
+		try {
+			return readSourceCode(relativePath);
+		} catch (IOException ioe) {
+			return StringUtils.EMPTY;
+		}
+	}
+	
+	public void writeSourceCode(Path relativePath, String sourceCode) throws IOException {
+		Files.write(findAbsolutePath(relativePath), sourceCode.getBytes());
 	}
 }

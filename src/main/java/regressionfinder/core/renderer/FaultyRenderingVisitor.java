@@ -21,10 +21,12 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	@Override
 	public String visit(AffectedFile entity) {
 		StringBuilder result = new StringBuilder();
-		String sourceCode = entity.readSourceCode(evaluationContext.getFaultyProject());
+		
+		String sourceCode = evaluationContext.getFaultyProject().tryReadSourceCode(entity.getPath());
 		result.append(String.format("<pre class=\"brush: java; highlight: %s\">", getLineNumbers(entity, sourceCode)));
 		result.append(sourceCode);
 		result.append("</pre>");
+		
 		return result.toString();
 	}
 	

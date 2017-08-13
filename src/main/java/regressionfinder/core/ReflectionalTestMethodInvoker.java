@@ -87,8 +87,7 @@ public class ReflectionalTestMethodInvoker {
 				.collect(Collectors.toList());
 		AffectedFile.fromListOfChanges(changesInFile).forEach(file -> {
 			try {
-				evaluationContext.getWorkingAreaProject()
-						.copyFromAnotherProject(evaluationContext.getReferenceProject(), file.getPath());
+				evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), file.getPath());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

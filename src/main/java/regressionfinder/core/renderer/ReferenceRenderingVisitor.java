@@ -16,7 +16,7 @@ public class ReferenceRenderingVisitor implements RenderingVisitor {
 	public String visit(AffectedFile entity) {
 		StringBuilder result = new StringBuilder();
 		result.append("<pre class=\"brush: java;\">");
-		result.append(entity.readSourceCode(evaluationContext.getReferenceProject()));
+		result.append(evaluationContext.getReferenceProject().tryReadSourceCode(entity.getPath()));
 		result.append("</pre>");
 		return result.toString();
 	}
