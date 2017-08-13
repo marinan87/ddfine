@@ -1,24 +1,19 @@
 package regressionfinder.model;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-
 import java.nio.file.Path;
 import java.util.List;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
-import regressionfinder.manipulation.WorkingAreaManipulationVisitor;
 
-public class AffectedFile {
+public class AffectedFile extends AffectedEntity {
 
-	private final Path path;
 	private final List<SourceCodeChange> sortedChangesInFile;
 	
-	private AffectedFile(Path path, List<SourceCodeChange> changes) {
-		this.path = path;
+	public AffectedFile(Path path, List<SourceCodeChange> changes) {
+		super(path);
 		sortChanges(changes);
 		this.sortedChangesInFile = changes;
 	}
@@ -33,25 +28,6 @@ public class AffectedFile {
 			}
 			return firstStartPosition - secondStartPosition;
 		});
-	}
-	
-	public static List<AffectedFile> fromListOfMinimalChanges(List<MinimalChangeInFile> sourceCodeChanges) {
-		return sourceCodeChanges.stream()
-			.collect(
-				toMap(
-					MinimalChangeInFile::getPathToFile, 
-					change -> newArrayList(change.getSourceCodeChange()),
-					(a, b) -> { 
-						a.addAll(b);
-						return a;
-					}))
-			.entrySet().stream()
-			.map(entry -> new AffectedFile(entry.getKey(), entry.getValue()))
-			.collect(toList());
-	}
-
-	public Path getPath() {
-		return path;
 	}
 
 	public List<SourceCodeChange> getChangesInFile() {

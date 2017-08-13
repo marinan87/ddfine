@@ -7,7 +7,6 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.deltadebugging.ddcore.tester.JUnitTester;
@@ -16,16 +15,15 @@ import org.junit.runner.manipulation.NoTestsRemainException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
+import regressionfinder.core.manipulation.RestoreWorkingAreaVisitor;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
-import regressionfinder.manipulation.PrepareWorkingAreaVisitor;
-import regressionfinder.manipulation.RestoreWorkingAreaVisitor;
-import regressionfinder.model.AffectedFile;
+import regressionfinder.model.AffectedEntity;
 import regressionfinder.model.MinimalApplicableChange;
-import regressionfinder.model.MinimalChangeInFile;
 
 @Component
 public class ReflectionalTestMethodInvoker {
@@ -60,11 +58,7 @@ public class ReflectionalTestMethodInvoker {
 	}
 
 	public int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
-		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
-				.filter(change -> change instanceof MinimalChangeInFile)
-				.map(change -> (MinimalChangeInFile) change)
-				.collect(Collectors.toList());
-		List<AffectedFile> affectedFiles = AffectedFile.fromListOfMinimalChanges(changesInFile);
+		List<AffectedEntity> affectedFiles = AffectedEntity.fromListOfMinimalChanges(sourceCodeChanges);
 		
 		prepareWorkingAreaForNextTrial(affectedFiles);
 		
@@ -77,12 +71,12 @@ public class ReflectionalTestMethodInvoker {
 		return testOutcome;
 	}
 
-	private void prepareWorkingAreaForNextTrial(List<AffectedFile> affectedFiles) {
+	private void prepareWorkingAreaForNextTrial(List<AffectedEntity> affectedFiles) {
 		affectedFiles.forEach(file -> file.manipulate(prepareWorkingAreaVisitor));	
 		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
 	}
 
-	private void restoreWorkingArea(List<AffectedFile> affectedFiles) {
+	private void restoreWorkingArea(List<AffectedEntity> affectedFiles) {
 		affectedFiles.forEach(file -> file.manipulate(restoreWorkingAreaVisitor));
 	}
 	

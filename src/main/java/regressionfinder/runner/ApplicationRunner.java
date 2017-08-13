@@ -10,10 +10,9 @@ import org.springframework.context.annotation.ComponentScan;
 
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.RegressionFinder;
-import regressionfinder.manipulation.PrepareWorkingAreaVisitor;
 
 @SpringBootApplication
-@ComponentScan(basePackageClasses = { RegressionFinder.class, PrepareWorkingAreaVisitor.class } )
+@ComponentScan(basePackageClasses = { RegressionFinder.class } )
 public class ApplicationRunner {
 	
 	private static final String SYSTEM_PROPERTY_JAVA_AWT_HEADLESS = "java.awt.headless";

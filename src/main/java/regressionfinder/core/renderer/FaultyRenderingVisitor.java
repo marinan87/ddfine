@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.EvaluationContext;
-import regressionfinder.manipulation.SourceCodeFileManipulator;
+import regressionfinder.core.manipulation.SourceCodeFileManipulator;
 import regressionfinder.model.AffectedFile;
+import regressionfinder.model.AffectedStructuralEntity;
 
 @Component
 public class FaultyRenderingVisitor implements RenderingVisitor {
@@ -52,5 +53,11 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 		scanner.close();
 		
 		return lines;
+	}
+
+	@Override
+	public String visit(AffectedStructuralEntity entity) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

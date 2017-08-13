@@ -1,4 +1,4 @@
-package regressionfinder.manipulation;
+package regressionfinder.core.manipulation;
 
 import java.io.IOException;
 
@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
+import regressionfinder.model.AffectedStructuralEntity;
 
 @Component
 public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor {
@@ -21,5 +22,11 @@ public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public void visit(AffectedStructuralEntity entity) {
+		// TODO Auto-generated method stub
+		
 	}
 }

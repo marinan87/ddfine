@@ -1,4 +1,4 @@
-package regressionfinder.manipulation;
+package regressionfinder.core.manipulation;
 
 import java.io.IOException;
 import java.util.regex.Matcher;

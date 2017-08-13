@@ -11,4 +11,7 @@ public class MinimalStructuralChange extends MinimalApplicableChange {
 		this.structuralChange = structuralChange;
 	}
 
+	public StructuralChangeType getStructuralChange() {
+		return structuralChange;
+	}
 }
