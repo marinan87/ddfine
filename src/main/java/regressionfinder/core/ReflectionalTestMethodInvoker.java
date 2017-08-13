@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Path;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.deltadebugging.ddcore.tester.JUnitTester;
@@ -24,7 +24,8 @@ import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
 import regressionfinder.manipulation.FileManipulator;
 import regressionfinder.model.AffectedFile;
-import regressionfinder.model.FileSourceCodeChange;
+import regressionfinder.model.MinimalApplicableChange;
+import regressionfinder.model.MinimalChangeInFile;
 
 @Component
 public class ReflectionalTestMethodInvoker {
@@ -51,24 +52,49 @@ public class ReflectionalTestMethodInvoker {
 			.map(CodeSource::getLocation);
 	}
 
-	public int testAppliedChangeSet(List<FileSourceCodeChange> sourceCodeChanges) {
-		AffectedFile.fromListOfChanges(sourceCodeChanges).forEach(file -> {
+	public int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
+		prepareWorkingAreaForNextTrial(sourceCodeChanges);
+		
+		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
+				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
+				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
+		
+		restoreWorkingArea(sourceCodeChanges);
+		
+		return testOutcome;
+	}
+
+	private void prepareWorkingAreaForNextTrial(List<MinimalApplicableChange> sourceCodeChanges) {
+		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
+				.filter(change -> change instanceof MinimalChangeInFile)
+				.map(change -> (MinimalChangeInFile) change)
+				.collect(Collectors.toList());
+		AffectedFile.fromListOfChanges(changesInFile).forEach(file -> {
 			try {
-				Path copyOfSource = evaluationContext.getWorkingAreaProject()
-						.copyFromAnotherProject(evaluationContext.getReferenceProject(), file.getPath());
-				new FileManipulator(copyOfSource).applyChanges(file.getFailureInducingChanges());
+				new FileManipulator(file, evaluationContext.getWorkingAreaProject()).applyChanges();				
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		});
 	
 		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
-		
-		return (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
-				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
-				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 	}
 
+	private void restoreWorkingArea(List<MinimalApplicableChange> sourceCodeChanges) {
+		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
+				.filter(change -> change instanceof MinimalChangeInFile)
+				.map(change -> (MinimalChangeInFile) change)
+				.collect(Collectors.toList());
+		AffectedFile.fromListOfChanges(changesInFile).forEach(file -> {
+			try {
+				evaluationContext.getWorkingAreaProject()
+						.copyFromAnotherProject(evaluationContext.getReferenceProject(), file.getPath());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+	
 	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 
 			URL[] classPaths, MethodDescriptor methodDescriptor) {
 		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPaths)) {

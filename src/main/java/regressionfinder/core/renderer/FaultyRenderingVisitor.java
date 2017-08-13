@@ -29,7 +29,7 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	}
 	
 	private List<Integer> getLineNumbers(AffectedFile file, String sourceCode) {
-		List<SourceCodeChange> remainingChanges = new ArrayList<>(file.getFailureInducingChanges());
+		List<SourceCodeChange> remainingChanges = new ArrayList<>(file.getChangesInFile());
 		List<Integer> lines = new ArrayList<>();
 		
 		Scanner scanner = new Scanner(sourceCode);

@@ -15,8 +15,8 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import regressionfinder.model.FileSourceCodeChange;
 import regressionfinder.model.MavenProject;
+import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
@@ -24,6 +24,7 @@ public class EvaluationContext extends JUnitTester {
 
 	private MavenProject referenceVersionProject, faultyVersionProject, workingAreaProject;
 	private String testClassName, testMethodName;
+	private int trials;
 
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
@@ -33,9 +34,9 @@ public class EvaluationContext extends JUnitTester {
 			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
 			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
 			
-			Path temporaryDirectory = Files.createTempDirectory("deltadebugging");
-			referenceVersionProject.copyEverythingTo(temporaryDirectory);
-			workingAreaProject = new MavenProject(temporaryDirectory.toString());
+			Path workingDirectory = Files.createTempDirectory("deltadebugging");
+			referenceVersionProject.copyEverythingTo(workingDirectory);
+			workingAreaProject = new MavenProject(workingDirectory.toString());
 			workingAreaProject.triggerCompilationWithTests();
 			
 			testClassName = arguments.getValue(FAILING_CLASS);
@@ -69,10 +70,16 @@ public class EvaluationContext extends JUnitTester {
 		return testMethodName;
 	}
 	
+	public int getNumberOfTrials() {
+		return trials;
+	}
+	
 	@Override
 	public int test(DeltaSet set) {
+		trials++;
+		
 		@SuppressWarnings("unchecked")
-		List<FileSourceCodeChange> selectedChangeSet = (List<FileSourceCodeChange>) set.stream().collect(toList());		
+		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());		
 		return reflectionalInvoker.testAppliedChangeSet(selectedChangeSet); 
 	}
 }

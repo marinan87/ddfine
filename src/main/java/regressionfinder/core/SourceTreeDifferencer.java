@@ -22,9 +22,12 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.model.FileSourceCodeChange;
 import regressionfinder.model.MavenProject;
+import regressionfinder.model.MinimalApplicableChange;
+import regressionfinder.model.MinimalChangeInFile;
+import regressionfinder.model.MinimalStructuralChange;
 import regressionfinder.model.SourceTreeComparisonResults;
+import regressionfinder.model.StructuralChangeType;
 
 public class SourceTreeDifferencer {
 
@@ -40,13 +43,22 @@ public class SourceTreeDifferencer {
 		this.comparisonResults = new SourceTreeComparisonResults();
 	}
 
-	public List<FileSourceCodeChange> distillChanges() {
+	public List<MinimalApplicableChange> distillChanges() {
 		scanForChangedPaths(ROOT_PATH);
-		// TODO: implement fileops for delta debugging (add/remove file, add/remove package)  - DetectedChange, StructuralChange
 		
-		return comparisonResults.getModifiedFiles().stream()
-				.flatMap(this::distillChangesForPath)
-				.collect(Collectors.toList());
+		Stream<MinimalApplicableChange> changesStream = Stream.empty();
+		changesStream = Stream.concat(changesStream, 
+				comparisonResults.getModifiedFiles().stream().flatMap(this::distillChangesForPath));
+		changesStream = Stream.concat(changesStream,
+				comparisonResults.getRemovedFiles().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.FILE_REMOVED)));
+		changesStream = Stream.concat(changesStream,
+				comparisonResults.getAddedFiles().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.FILE_ADDED)));
+		changesStream = Stream.concat(changesStream,
+				comparisonResults.getRemovedPackages().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_REMOVED)));
+		changesStream = Stream.concat(changesStream,
+				comparisonResults.getAddedPackages().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_ADDED)));
+		
+		return changesStream.collect(Collectors.toList());
 	}	
 		
 	private void scanForChangedPaths(Path relativeToSourceRoot) {
@@ -107,7 +119,7 @@ public class SourceTreeDifferencer {
 		Collections2.filter(subDirectoriesInReference, Predicates.in(subDirectoriesInFaulty)).forEach(this::scanForChangedPaths);
 	}
 	
-	private Stream<FileSourceCodeChange> distillChangesForPath(Path pathToFile) {
+	private Stream<MinimalChangeInFile> distillChangesForPath(Path pathToFile) {
 		File left = referenceProject.findFile(pathToFile);
 		File right = faultyProject.findFile(pathToFile);
 		
@@ -115,7 +127,7 @@ public class SourceTreeDifferencer {
 		distiller.extractClassifiedSourceCodeChanges(left, right);
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges())
-			.map(change -> new FileSourceCodeChange(pathToFile, change));
+			.map(change -> new MinimalChangeInFile(pathToFile, change));
 	}
 	
 	private Stream<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {

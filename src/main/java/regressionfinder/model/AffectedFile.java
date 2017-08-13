@@ -11,26 +11,38 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.renderer.RenderingVisitor;
-import regressionfinder.manipulation.FileManipulator;
 
 public class AffectedFile {
 
 	private final Path path;
-	private final List<SourceCodeChange> failureInducingChanges;
+	private final List<SourceCodeChange> sortedChangesInFile;
 	
 	private AffectedFile(Path path, List<SourceCodeChange> changes) {
 		this.path = path;
-		FileManipulator.sortChanges(changes);
-		this.failureInducingChanges = changes;
+		sortChanges(changes);
+		this.sortedChangesInFile = changes;
 	}
 	
-	public static List<AffectedFile> fromListOfChanges(List<FileSourceCodeChange> sourceCodeChanges) {
+	private void sortChanges(List<SourceCodeChange> sourceCodeChanges) {
+		sourceCodeChanges.sort((o1, o2) -> {
+			int firstStartPosition = o1.getChangedEntity().getStartPosition();
+			int secondStartPosition = o2.getChangedEntity().getStartPosition();
+
+			if (firstStartPosition == secondStartPosition && o1 instanceof Insert && o2 instanceof Insert) {
+				return ((Insert) o1).getPosition() - ((Insert) o2).getPosition();
+			}
+			return firstStartPosition - secondStartPosition;
+		});
+	}
+	
+	public static List<AffectedFile> fromListOfChanges(List<MinimalChangeInFile> sourceCodeChanges) {
 		return sourceCodeChanges.stream()
 			.collect(
 				toMap(
-					FileSourceCodeChange::getPathToFile, 
+					MinimalChangeInFile::getPathToFile, 
 					change -> newArrayList(change.getSourceCodeChange()),
 					(a, b) -> { 
 						a.addAll(b);
@@ -45,8 +57,8 @@ public class AffectedFile {
 		return path;
 	}
 
-	public List<SourceCodeChange> getFailureInducingChanges() {
-		return failureInducingChanges;
+	public List<SourceCodeChange> getChangesInFile() {
+		return sortedChangesInFile;
 	}
 	
 	public String readSourceCode(MavenProject project) {
@@ -57,9 +69,13 @@ public class AffectedFile {
 		}
 	}
 	
+	public void writeSourceCode(MavenProject project, String sourceCode) throws IOException {
+		Files.write(project.findAbsolutePath(path), sourceCode.getBytes());
+	}
+	
 	@Override
 	public String toString() {
-		return String.format("%s: %s", path, failureInducingChanges);
+		return String.format("%s: %s", path, sortedChangesInFile);
 	}
 	
 	public String render(RenderingVisitor renderingVisitor) { 

@@ -1,9 +1,6 @@
 package regressionfinder.manipulation;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +9,8 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
+import regressionfinder.model.AffectedFile;
+import regressionfinder.model.MavenProject;
 
 /*
  * Utility class for applying source code change deltas to original file. 
@@ -21,31 +20,21 @@ public class FileManipulator {
 	
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
 
+	private final AffectedFile file;
+	private final MavenProject workingAreaProject;
 	private final StringBuilder content;
-	private final Path copyOfSource;
 	private int offset = 0;
 	
-	public FileManipulator(Path pathToCopy) throws IOException {
-		copyOfSource = pathToCopy;
-        content = new StringBuilder(new String(Files.readAllBytes(copyOfSource)));
+	public FileManipulator(AffectedFile file, MavenProject workingAreaProject) {
+		this.file = file;
+		this.workingAreaProject = workingAreaProject;
+		
+        content = new StringBuilder(file.readSourceCode(workingAreaProject));
 	}
 
-	public void applyChanges(List<SourceCodeChange> sourceCodeChanges) throws IOException {
-		sortChanges(sourceCodeChanges);
-		sourceCodeChanges.forEach(this::applySourceCodeChange);
-		Files.write(copyOfSource, content.toString().getBytes());
-	}
-	
-	public static void sortChanges(List<SourceCodeChange> sourceCodeChanges) {
-		sourceCodeChanges.sort((o1, o2) -> {
-			int firstStartPosition = o1.getChangedEntity().getStartPosition();
-			int secondStartPosition = o2.getChangedEntity().getStartPosition();
-
-			if (firstStartPosition == secondStartPosition && o1 instanceof Insert && o2 instanceof Insert) {
-				return ((Insert) o1).getPosition() - ((Insert) o2).getPosition();
-			}
-			return firstStartPosition - secondStartPosition;
-		});
+	public void applyChanges() throws IOException {
+		file.getChangesInFile().forEach(this::applySourceCodeChange);
+		file.writeSourceCode(workingAreaProject, content.toString());
 	}
 	
 	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {
