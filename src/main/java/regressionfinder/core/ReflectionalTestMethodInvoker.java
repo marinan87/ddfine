@@ -53,23 +53,25 @@ public class ReflectionalTestMethodInvoker {
 	}
 
 	public int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
-		prepareWorkingAreaForNextTrial(sourceCodeChanges);
+		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
+				.filter(change -> change instanceof MinimalChangeInFile)
+				.map(change -> (MinimalChangeInFile) change)
+				.collect(Collectors.toList());
+		List<AffectedFile> affectedFiles = AffectedFile.fromListOfMinimalChanges(changesInFile);
+		
+		prepareWorkingAreaForNextTrial(affectedFiles);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 		
-		restoreWorkingArea(sourceCodeChanges);
+		restoreWorkingArea(affectedFiles);
 		
 		return testOutcome;
 	}
 
-	private void prepareWorkingAreaForNextTrial(List<MinimalApplicableChange> sourceCodeChanges) {
-		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
-				.filter(change -> change instanceof MinimalChangeInFile)
-				.map(change -> (MinimalChangeInFile) change)
-				.collect(Collectors.toList());
-		AffectedFile.fromListOfChanges(changesInFile).forEach(file -> {
+	private void prepareWorkingAreaForNextTrial(List<AffectedFile> affectedFiles) {
+		affectedFiles.forEach(file -> {
 			try {
 				new FileManipulator(file, evaluationContext.getWorkingAreaProject()).applyChanges();				
 			} catch (IOException e) {
@@ -80,12 +82,8 @@ public class ReflectionalTestMethodInvoker {
 		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
 	}
 
-	private void restoreWorkingArea(List<MinimalApplicableChange> sourceCodeChanges) {
-		List<MinimalChangeInFile> changesInFile = sourceCodeChanges.stream()
-				.filter(change -> change instanceof MinimalChangeInFile)
-				.map(change -> (MinimalChangeInFile) change)
-				.collect(Collectors.toList());
-		AffectedFile.fromListOfChanges(changesInFile).forEach(file -> {
+	private void restoreWorkingArea(List<AffectedFile> affectedFiles) {
+		affectedFiles.forEach(file -> {
 			try {
 				evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), file.getPath());
 			} catch (IOException e) {

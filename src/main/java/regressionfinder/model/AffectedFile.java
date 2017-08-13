@@ -34,7 +34,7 @@ public class AffectedFile {
 		});
 	}
 	
-	public static List<AffectedFile> fromListOfChanges(List<MinimalChangeInFile> sourceCodeChanges) {
+	public static List<AffectedFile> fromListOfMinimalChanges(List<MinimalChangeInFile> sourceCodeChanges) {
 		return sourceCodeChanges.stream()
 			.collect(
 				toMap(

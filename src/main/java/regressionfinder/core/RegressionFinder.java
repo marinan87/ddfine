@@ -43,6 +43,6 @@ public class RegressionFinder {
 				.filter(change -> change instanceof MinimalChangeInFile)
 				.map(change -> (MinimalChangeInFile) change)
 				.collect(Collectors.toList());
-		return AffectedFile.fromListOfChanges(changesInFile);
+		return AffectedFile.fromListOfMinimalChanges(changesInFile);
 	}
 }
