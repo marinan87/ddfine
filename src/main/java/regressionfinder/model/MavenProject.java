@@ -144,6 +144,10 @@ public class MavenProject {
 				StandardCopyOption.REPLACE_EXISTING);
 	}
 	
+	public void copyDirectoryToAnotherProject(MavenProject targetProject, Path relativePath) throws IOException {
+		FileUtils.copyDirectoryStructure(findFile(relativePath), targetProject.findFile(relativePath));
+	}
+	
 	public String md5Hash(Path relativePath) throws IOException {
 		File file = findFile(relativePath);
 		try (FileInputStream fis = new FileInputStream(file)) {

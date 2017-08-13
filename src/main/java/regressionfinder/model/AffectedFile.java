@@ -1,5 +1,6 @@
 package regressionfinder.model;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -44,6 +45,10 @@ public class AffectedFile extends AffectedEntity {
 	}
 	
 	public void manipulate(WorkingAreaManipulationVisitor manipulationVisitor) {
-		manipulationVisitor.visit(this);
+		try {
+			manipulationVisitor.visit(this);
+		} catch (IOException ioe) {
+			throw new RuntimeException(ioe);
+		}
 	}
 }

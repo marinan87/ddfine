@@ -1,5 +1,6 @@
 package regressionfinder.model;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
@@ -14,6 +15,10 @@ public class AffectedStructuralEntity extends AffectedEntity {
 		this.structuralChangeType = structuralChangeType;
 	}
 
+	public StructuralChangeType getStructuralChangeType() {
+		return structuralChangeType;
+	}
+
 	@Override
 	public String render(RenderingVisitor renderingVisitor) {
 		return renderingVisitor.visit(this);
@@ -21,10 +26,10 @@ public class AffectedStructuralEntity extends AffectedEntity {
 
 	@Override
 	public void manipulate(WorkingAreaManipulationVisitor manipulationVisitor) {
-		manipulationVisitor.visit(this);
-	}
-	
-	public StructuralChangeType getStructuralChangeType() {
-		return structuralChangeType;
+		try {
+			manipulationVisitor.visit(this);
+		} catch (IOException ioe) {
+			throw new RuntimeException(ioe);
+		}
 	}
 }
