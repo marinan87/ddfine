@@ -26,7 +26,7 @@ import org.springframework.util.DigestUtils;
 import com.google.common.base.Preconditions;
 
 public class MavenProject {
-	private static final String SOURCES_DIR = "src";
+	private static final String SOURCES_DIR = "src/main/java";
 	private static final String TARGET_DIR = "target";
 	private static final String CLASSES_DIR = "classes";
 	private static final String TEST_CLASSES_DIR = "test-classes";
