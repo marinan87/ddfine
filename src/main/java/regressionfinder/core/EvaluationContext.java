@@ -8,6 +8,8 @@ import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.deltadebugging.ddcore.DeltaSet;
@@ -15,14 +17,15 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import regressionfinder.model.MavenProject;
+import regressionfinder.model.MavenJavaProject;
 import regressionfinder.model.MinimalApplicableChange;
+import regressionfinder.model.ProjectSourceTreeScanner;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class EvaluationContext extends JUnitTester {
 
-	private MavenProject referenceVersionProject, faultyVersionProject, workingAreaProject;
+	private MavenJavaProject referenceVersionProject, faultyVersionProject, workingAreaProject;
 	private String testClassName, testMethodName;
 	private int trials;
 
@@ -31,12 +34,15 @@ public class EvaluationContext extends JUnitTester {
 			
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
 		try {		
-			referenceVersionProject = new MavenProject(arguments.getValue(REFERENCE_VERSION));
-			faultyVersionProject = new MavenProject(arguments.getValue(FAULTY_VERSION));
+			List<MavenJavaProject> mavenProjects = new ArrayList<>();
+			ProjectSourceTreeScanner.scanSourceTreeForMavenProjects(Paths.get(arguments.getValue(REFERENCE_VERSION)), mavenProjects);
+			
+			referenceVersionProject = MavenJavaProject.tryCreateMavenProject(arguments.getValue(REFERENCE_VERSION));
+			faultyVersionProject = MavenJavaProject.tryCreateMavenProject(arguments.getValue(FAULTY_VERSION));
 			
 			Path workingDirectory = Files.createTempDirectory("deltadebugging");
 			referenceVersionProject.copyEverythingTo(workingDirectory);
-			workingAreaProject = new MavenProject(workingDirectory.toString());
+			workingAreaProject = MavenJavaProject.tryCreateMavenProject(workingDirectory.toString());
 			workingAreaProject.triggerCompilationWithTests();
 			
 			testClassName = arguments.getValue(FAILING_CLASS);
@@ -50,15 +56,15 @@ public class EvaluationContext extends JUnitTester {
 		}
 	}
 	
-	public MavenProject getReferenceProject() {
+	public MavenJavaProject getReferenceProject() {
 		return referenceVersionProject;
 	}
 	
-	public MavenProject getFaultyProject() {
+	public MavenJavaProject getFaultyProject() {
 		return faultyVersionProject;
 	}
 	
-	public MavenProject getWorkingAreaProject() {
+	public MavenJavaProject getWorkingAreaProject() {
 		return workingAreaProject;
 	}
 	

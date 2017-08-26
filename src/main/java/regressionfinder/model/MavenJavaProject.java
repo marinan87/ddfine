@@ -1,5 +1,7 @@
 package regressionfinder.model;
 
+import static java.lang.String.format;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
@@ -23,9 +26,7 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.FileUtils;
 import org.springframework.util.DigestUtils;
 
-import com.google.common.base.Preconditions;
-
-public class MavenProject {
+public class MavenJavaProject {
 	private static final String SOURCES_DIR = "src/main/java";
 	private static final String TARGET_DIR = "target";
 	private static final String CLASSES_DIR = "classes";
@@ -42,7 +43,18 @@ public class MavenProject {
 	private final File rootPomXml;
 	private final Path sourcesDirectoryPath, targetClassesPath, targetTestClassesPath;
 
-	public MavenProject(String rootDirectory) {
+	
+	public static MavenJavaProject tryCreateMavenProject(String rootDirectory) {
+		MavenJavaProject project = createMavenProject(rootDirectory);
+		project.assertIsMavenProject();
+		return project;
+	}
+	
+	public static MavenJavaProject createMavenProject(String rootDirectory) {
+		return new MavenJavaProject(rootDirectory);
+	}
+	
+	private MavenJavaProject(String rootDirectory) {
 		this.rootDirectory = rootDirectory;
 		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
 
@@ -50,19 +62,36 @@ public class MavenProject {
 		Path targetDirectoryPath = Paths.get(rootDirectory, TARGET_DIR);
 		this.targetClassesPath = targetDirectoryPath.resolve(CLASSES_DIR);
 		this.targetTestClassesPath = targetDirectoryPath.resolve(TEST_CLASSES_DIR);
-
-		checkIsMavenProject();
 	}
-
-	private void checkIsMavenProject() {
-		String errorMessageTemplate = String.format("Folder %s is not a root of Maven project! ", rootDirectory)
-				.concat("%s");
-		Preconditions.checkState(rootPomXml.isFile(), errorMessageTemplate, "Root pom.xml file is missing.");
-		Preconditions.checkState(sourcesDirectoryPath.toFile().isDirectory(), errorMessageTemplate, "Sources directory is missing.");
-		Preconditions.checkState(targetClassesPath.toFile().isDirectory(), errorMessageTemplate,
-				"Target classes directory is missing.");
-		Preconditions.checkState(targetTestClassesPath.toFile().isDirectory(), errorMessageTemplate,
-				"Target test-classes directory is missing.");
+	
+	private void assertIsMavenProject() {
+		String errorMessageTemplate = format("Folder %s is not a root of Maven project! ", rootDirectory).concat("%s");
+		
+		String reason;
+		if (!(reason = whyIsNotMavenProject()).isEmpty()) {
+			throw new IllegalStateException(format(errorMessageTemplate, reason));
+		}
+	}
+		
+	private String whyIsNotMavenProject() {		
+		if (!rootPomXml.isFile()) {
+			return "Root pom.xml file is missing.";
+		}
+		
+		File sourcesDirectory = sourcesDirectoryPath.toFile();
+		if (!sourcesDirectory.isDirectory() || sourcesDirectory.list().length == 0) {
+			return "Sources directory is missing or empty.";
+		}
+		
+		if (!targetClassesPath.toFile().isDirectory()) {
+			return "Target classes directory is missing.";
+		}
+		
+		return StringUtils.EMPTY;
+	}
+	
+	public boolean isMavenProject() {
+		return whyIsNotMavenProject().isEmpty();
 	}
 
 	public void triggerCompilationWithTests() {
@@ -87,13 +116,19 @@ public class MavenProject {
 		} catch (MavenInvocationException e) {
 			throw new RuntimeException(e);
 		}
+		// TODO: compile with dependent projects (mvn option)
 		// TODO: run incremental build
 		// TODO: in-memory compilation for speed up? RAM disk?
-		// TODO: compile with dependent projects (mvn option) 
 	}
 
 	public Stream<URL> getClassPaths() {
-		return Stream.of(pathToURL(targetClassesPath), pathToURL(targetTestClassesPath));
+		Builder<URL> stream = Stream.<URL>builder().add(pathToURL(targetClassesPath));
+		
+		if (targetTestClassesPath.toFile().isDirectory()) {
+			stream.add(pathToURL(targetTestClassesPath));
+		}
+		
+		return stream.build();
 	}
 
 	private URL pathToURL(Path path) {
@@ -138,13 +173,13 @@ public class MavenProject {
 		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
 	
-	public void copyToAnotherProject(MavenProject targetProject, Path relativePath) throws IOException {
+	public void copyToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {
 		Files.copy(findAbsolutePath(relativePath),
 				targetProject.findAbsolutePath(relativePath),
 				StandardCopyOption.REPLACE_EXISTING);
 	}
 	
-	public void copyDirectoryToAnotherProject(MavenProject targetProject, Path relativePath) throws IOException {
+	public void copyDirectoryToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {
 		FileUtils.copyDirectoryStructure(findFile(relativePath), targetProject.findFile(relativePath));
 	}
 	

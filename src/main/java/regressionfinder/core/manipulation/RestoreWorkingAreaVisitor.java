@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
-import regressionfinder.model.MavenProject;
+import regressionfinder.model.MavenJavaProject;
 
 @Component
 public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor {
@@ -25,8 +25,8 @@ public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 
 	@Override
 	public void visit(AffectedStructuralEntity entity) throws IOException {
-		MavenProject workingProject = evaluationContext.getWorkingAreaProject();
-		MavenProject referenceProject = evaluationContext.getReferenceProject();
+		MavenJavaProject workingProject = evaluationContext.getWorkingAreaProject();
+		MavenJavaProject referenceProject = evaluationContext.getReferenceProject();
 		Path entityPath = entity.getPath();
 
 		switch (entity.getStructuralChangeType()) {

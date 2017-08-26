@@ -22,7 +22,7 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.model.MavenProject;
+import regressionfinder.model.MavenJavaProject;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.MinimalStructuralChange;
@@ -33,11 +33,11 @@ public class SourceTreeDifferencer {
 
 	private static final Path ROOT_PATH = Paths.get(StringUtils.EMPTY);
 	
-	private final MavenProject referenceProject, faultyProject;
+	private final MavenJavaProject referenceProject, faultyProject;
 	private final SourceTreeComparisonResults comparisonResults;
 
 	
-	public SourceTreeDifferencer(MavenProject referenceProject, MavenProject faultyProject) {
+	public SourceTreeDifferencer(MavenJavaProject referenceProject, MavenJavaProject faultyProject) {
 		this.referenceProject = referenceProject;
 		this.faultyProject = faultyProject;
 		this.comparisonResults = new SourceTreeComparisonResults();
