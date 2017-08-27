@@ -38,6 +38,7 @@ public class ApplicationRunner {
 			CommandLineArgumentsInterpreter arguments = new CommandLineArgumentsInterpreter(args);
 			evaluationContext.initializeOnce(arguments);
 			handler.run();
+			evaluationContext.cleanUp();
 		};
 	}
 }

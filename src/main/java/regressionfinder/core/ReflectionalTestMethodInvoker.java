@@ -6,7 +6,10 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.deltadebugging.ddcore.tester.JUnitTester;
@@ -28,7 +31,8 @@ import regressionfinder.model.MinimalApplicableChange;
 @Component
 public class ReflectionalTestMethodInvoker {
 	
-	private Supplier<Stream<URL>> libraryClassPaths;
+	private Supplier<Stream<URL>> testRunnerClassPaths;
+	private Stream<URL> mavenDependenciesClassPaths;
 	private Throwable throwable;
 	
 	@Autowired
@@ -42,19 +46,22 @@ public class ReflectionalTestMethodInvoker {
 
 	
 	public void initializeOnce() {
-		gatherLibraryClassPathsForIsolatedClassLoader();
+		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
-		evaluationContext.getFaultyProject().triggerCompilationWithTests();
+//		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses();
+		mavenDependenciesClassPaths = evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
-				Stream.concat(libraryClassPaths.get(), evaluationContext.getFaultyProject().getClassPaths()).toArray(URL[]::new),
+				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths, evaluationContext.getFaultyProject().collectClassPaths())
+					.flatMap(Function.identity())
+					.collect(Collectors.toSet()),
 				new MethodDescriptor("getOriginalException"));
 	}
 	
-	private void gatherLibraryClassPathsForIsolatedClassLoader() {			
-		libraryClassPaths = () -> Stream.of(DeltaDebuggerTestRunner.class, JUnitTester.class, NoTestsRemainException.class, SelfDescribing.class)
-			.map(Class::getProtectionDomain)
-			.map(ProtectionDomain::getCodeSource)
-			.map(CodeSource::getLocation);
+	private void gatherTestRunnerClassPathsForIsolatedClassLoader() {			
+		testRunnerClassPaths = () -> Stream.of(DeltaDebuggerTestRunner.class, JUnitTester.class, NoTestsRemainException.class, SelfDescribing.class)
+				.map(Class::getProtectionDomain)
+				.map(ProtectionDomain::getCodeSource)
+				.map(CodeSource::getLocation);
 	}
 
 	public int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
@@ -63,7 +70,9 @@ public class ReflectionalTestMethodInvoker {
 		prepareWorkingAreaForNextTrial(affectedFiles);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
-				Stream.concat(libraryClassPaths.get(), evaluationContext.getWorkingAreaProject().getClassPaths()).toArray(URL[]::new),
+				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths, evaluationContext.getWorkingAreaProject().collectClassPaths())
+					.flatMap(Function.identity())
+					.collect(Collectors.toSet()),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 		
 		restoreWorkingArea(affectedFiles);
@@ -81,8 +90,9 @@ public class ReflectionalTestMethodInvoker {
 	}
 	
 	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 
-			URL[] classPaths, MethodDescriptor methodDescriptor) {
-		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPaths)) {
+			Set<URL> classPaths, MethodDescriptor methodDescriptor) {
+		URL[] classPathURLs = classPaths.toArray(new URL[0]);
+		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPathURLs)) {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
 			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
 			

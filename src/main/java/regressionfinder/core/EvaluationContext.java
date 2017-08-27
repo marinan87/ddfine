@@ -6,26 +6,25 @@ import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
 import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
+import org.codehaus.plexus.util.FileUtils;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import regressionfinder.model.MavenJavaProject;
 import regressionfinder.model.MinimalApplicableChange;
-import regressionfinder.model.ProjectSourceTreeScanner;
+import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class EvaluationContext extends JUnitTester {
 
-	private MavenJavaProject referenceVersionProject, faultyVersionProject, workingAreaProject;
+	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
 	private int trials;
 
@@ -33,17 +32,14 @@ public class EvaluationContext extends JUnitTester {
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
 			
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
-		try {		
-			List<MavenJavaProject> mavenProjects = new ArrayList<>();
-			ProjectSourceTreeScanner.scanSourceTreeForMavenProjects(Paths.get(arguments.getValue(REFERENCE_VERSION)), mavenProjects);
-			
-			referenceVersionProject = MavenJavaProject.tryCreateMavenProject(arguments.getValue(REFERENCE_VERSION));
-			faultyVersionProject = MavenJavaProject.tryCreateMavenProject(arguments.getValue(FAULTY_VERSION));
+		try {			
+			referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
+			faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
 			
 			Path workingDirectory = Files.createTempDirectory("deltadebugging");
-			referenceVersionProject.copyEverythingTo(workingDirectory);
-			workingAreaProject = MavenJavaProject.tryCreateMavenProject(workingDirectory.toString());
-			workingAreaProject.triggerCompilationWithTests();
+			workingAreaProject = new MultiModuleMavenJavaProject("C:\\Users\\X\\AppData\\Local\\Temp\\deltadebugging284123461779155460");
+//			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
+//			workingAreaProject.triggerCompilationWithTestClasses();
 			
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
@@ -56,15 +52,15 @@ public class EvaluationContext extends JUnitTester {
 		}
 	}
 	
-	public MavenJavaProject getReferenceProject() {
-		return referenceVersionProject;
+	public MultiModuleMavenJavaProject getReferenceProject() {
+		return referenceProject;
 	}
 	
-	public MavenJavaProject getFaultyProject() {
-		return faultyVersionProject;
+	public MultiModuleMavenJavaProject getFaultyProject() {
+		return faultyProject;
 	}
 	
-	public MavenJavaProject getWorkingAreaProject() {
+	public MultiModuleMavenJavaProject getWorkingAreaProject() {
 		return workingAreaProject;
 	}
 	
@@ -87,5 +83,9 @@ public class EvaluationContext extends JUnitTester {
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());		
 		return reflectionalInvoker.testAppliedChangeSet(selectedChangeSet); 
+	}
+	
+	public void cleanUp() throws IOException {
+		FileUtils.deleteDirectory(workingAreaProject.getRootDirectory().toFile());
 	}
 }

@@ -20,13 +20,13 @@ public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 	
 	@Override
 	public void visit(AffectedFile entity) throws IOException {
-		evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), entity.getPath());
+//		evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), entity.getPath());
 	}
 
 	@Override
 	public void visit(AffectedStructuralEntity entity) throws IOException {
-		MavenJavaProject workingProject = evaluationContext.getWorkingAreaProject();
-		MavenJavaProject referenceProject = evaluationContext.getReferenceProject();
+		MavenJavaProject workingProject = null; //evaluationContext.getWorkingAreaProject();
+		MavenJavaProject referenceProject = null; //evaluationContext.getReferenceProject();
 		Path entityPath = entity.getPath();
 
 		switch (entity.getStructuralChangeType()) {

@@ -25,7 +25,7 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	public String visit(AffectedFile entity) {
 		StringBuilder result = new StringBuilder();
 		
-		String sourceCode = evaluationContext.getFaultyProject().tryReadSourceCode(entity.getPath());
+		String sourceCode = null; // evaluationContext.getFaultyProject().tryReadSourceCode(entity.getPath());
 		result.append(String.format("<pre class=\"brush: java; highlight: %s\">", getLineNumbers(entity, sourceCode)));
 		result.append(sourceCode);
 		result.append("</pre>");

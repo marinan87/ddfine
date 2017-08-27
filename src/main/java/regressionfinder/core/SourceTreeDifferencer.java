@@ -26,6 +26,7 @@ import regressionfinder.model.MavenJavaProject;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.MinimalStructuralChange;
+import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.model.SourceTreeComparisonResults;
 import regressionfinder.model.StructuralChangeType;
 
@@ -37,9 +38,9 @@ public class SourceTreeDifferencer {
 	private final SourceTreeComparisonResults comparisonResults;
 
 	
-	public SourceTreeDifferencer(MavenJavaProject referenceProject, MavenJavaProject faultyProject) {
-		this.referenceProject = referenceProject;
-		this.faultyProject = faultyProject;
+	public SourceTreeDifferencer(MultiModuleMavenJavaProject referenceProject, MultiModuleMavenJavaProject faultyProject) {
+		this.referenceProject = null; // referenceProject;
+		this.faultyProject = null; // faultyProject;
 		this.comparisonResults = new SourceTreeComparisonResults();
 	}
 

@@ -34,6 +34,11 @@ public class JUnitTestRunner extends IsolatedClassLoaderAwareJUnitTestRunner {
 			throw new IllegalArgumentException("Problem not suitable for delta debugging");
 		}
 		
-		return allProblems.get(0).thrownException();
+		Throwable throwable = allProblems.get(0).thrownException();
+		if (throwable.getCause() instanceof ClassNotFoundException) {
+			throw new IllegalArgumentException("Initialization error occurred, not all required dependencies are in classpath");
+		}
+		
+		return throwable;
 	}
 }

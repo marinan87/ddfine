@@ -5,63 +5,46 @@ import static java.lang.String.format;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.Stream.Builder;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.DefaultInvoker;
-import org.apache.maven.shared.invoker.InvocationRequest;
-import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.FileUtils;
 import org.springframework.util.DigestUtils;
 
-public class MavenJavaProject {
+public class MavenJavaProject extends MavenProject {
+	
 	private static final String SOURCES_DIR = "src/main/java";
 	private static final String TARGET_DIR = "target";
 	private static final String CLASSES_DIR = "classes";
 	private static final String TEST_CLASSES_DIR = "test-classes";
 
-	private static final String POM_XML = "pom.xml";
-	private static final String PHASE_COMPILE = "compile";
-	private static final String PHASE_TEST_COMPILE = "test-compile";
-	private static final String THREADS_1C = "1C";
-	private static final String MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1";
-	private static final String MAVEN_HOME = System.getenv("MAVEN_HOME");
-
-	private final String rootDirectory;
-	private final File rootPomXml;
 	private final Path sourcesDirectoryPath, targetClassesPath, targetTestClassesPath;
-
 	
-	public static MavenJavaProject tryCreateMavenProject(String rootDirectory) {
+	
+	public static MavenJavaProject tryCreateMavenProject(Path rootDirectory) {
 		MavenJavaProject project = createMavenProject(rootDirectory);
 		project.assertIsMavenProject();
 		return project;
 	}
 	
-	public static MavenJavaProject createMavenProject(String rootDirectory) {
+	public static MavenJavaProject createMavenProject(Path rootDirectory) {
 		return new MavenJavaProject(rootDirectory);
 	}
 	
-	private MavenJavaProject(String rootDirectory) {
-		this.rootDirectory = rootDirectory;
-		this.rootPomXml = Paths.get(rootDirectory, POM_XML).toFile();
+	private MavenJavaProject(Path rootDirectory) {
+		super(rootDirectory);
 
-		this.sourcesDirectoryPath = Paths.get(rootDirectory, SOURCES_DIR);
-		Path targetDirectoryPath = Paths.get(rootDirectory, TARGET_DIR);
+		this.sourcesDirectoryPath = rootDirectory.resolve(SOURCES_DIR);
+		Path targetDirectoryPath = rootDirectory.resolve(TARGET_DIR);
 		this.targetClassesPath = targetDirectoryPath.resolve(CLASSES_DIR);
-		this.targetTestClassesPath = targetDirectoryPath.resolve(TEST_CLASSES_DIR);
+		this.targetTestClassesPath = targetDirectoryPath.resolve(TEST_CLASSES_DIR);		
 	}
 	
 	private void assertIsMavenProject() {
@@ -94,49 +77,18 @@ public class MavenJavaProject {
 		return whyIsNotMavenProject().isEmpty();
 	}
 
-	public void triggerCompilationWithTests() {
-		triggerCompilation(PHASE_TEST_COMPILE);
-	}
-
-	public void triggerSimpleCompilation() {
-		triggerCompilation(PHASE_COMPILE);
-	}
-
-	private void triggerCompilation(String phase) {
-		InvocationRequest request = new DefaultInvocationRequest();
-		request.setPomFile(rootPomXml);
-		request.setGoals(Arrays.asList(phase));
-		request.setThreads(THREADS_1C);
-		request.setMavenOpts(MAVEN_OPTS);
-
-		Invoker invoker = new DefaultInvoker();
-		invoker.setMavenHome(new File(MAVEN_HOME));
-		try {
-			invoker.execute(request);
-		} catch (MavenInvocationException e) {
-			throw new RuntimeException(e);
-		}
-		// TODO: compile with dependent projects (mvn option)
-		// TODO: run incremental build
-		// TODO: in-memory compilation for speed up? RAM disk?
-	}
-
 	public Stream<URL> getClassPaths() {
-		Builder<URL> stream = Stream.<URL>builder().add(pathToURL(targetClassesPath));
+		Builder<URL> stream = Stream.<URL>builder().add(directoryPathToURL(targetClassesPath));
 		
 		if (targetTestClassesPath.toFile().isDirectory()) {
-			stream.add(pathToURL(targetTestClassesPath));
+			stream.add(directoryPathToURL(targetTestClassesPath));
 		}
 		
 		return stream.build();
 	}
-
-	private URL pathToURL(Path path) {
-		try {
-			return new URL("file:/".concat(path.toString().replace("\\", "/")).concat("/"));
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(String.format("Error while converting path %s to URL", path.toString()));
-		}
+	
+	private URL directoryPathToURL(Path path) {
+		return stringToURL(path.toString(), true);
 	}
 
 	public File findFile(Path relativePath) {
@@ -167,10 +119,6 @@ public class MavenJavaProject {
 			.map(File::toPath)
 			.map(this::findRelativeToSourceRoot)
 			.collect(Collectors.toList());
-	}
-
-	public void copyEverythingTo(Path targetPath) throws IOException {
-		FileUtils.copyDirectoryStructure(Paths.get(rootDirectory).toFile(), targetPath.toFile());
 	}
 	
 	public void copyToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {

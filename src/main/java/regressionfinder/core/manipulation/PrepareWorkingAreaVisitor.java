@@ -20,13 +20,13 @@ public class PrepareWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 	
 	@Override
 	public void visit(AffectedFile entity) throws IOException {
-		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject()).applyChanges();
+//		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject()).applyChanges();
 	}
 
 	@Override
 	public void visit(AffectedStructuralEntity entity) throws IOException {
-		MavenJavaProject workingProject = evaluationContext.getWorkingAreaProject();
-		MavenJavaProject faultyProject = evaluationContext.getFaultyProject();
+		MavenJavaProject workingProject = null; //evaluationContext.getWorkingAreaProject();
+		MavenJavaProject faultyProject = null; // evaluationContext.getFaultyProject();
 		Path entityPath = entity.getPath();
 		
 		switch (entity.getStructuralChangeType()) {
