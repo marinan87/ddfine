@@ -5,20 +5,22 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.codehaus.plexus.util.FileUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class MultiModuleMavenJavaProject extends MavenProject {
 	
 	private static final List<String> IGNORED_DIRS = ImmutableList.of("src", ".settings", ".svn", ".metadata", "archetype", "ci");	
 	
-	private List<MavenJavaProject> mavenProjects = new ArrayList<>();
+	private Map<Path, MavenJavaProject> mavenProjects = new HashMap<>();
 	
 	
 	public MultiModuleMavenJavaProject(String aggregatorRoot) {
@@ -32,7 +34,7 @@ public class MultiModuleMavenJavaProject extends MavenProject {
 		
 		MavenJavaProject javaProject = MavenJavaProject.createMavenProject(projectRoot);
 		if (javaProject.isMavenProject()) {
-			mavenProjects.add(javaProject);
+			mavenProjects.put(rootDirectory.relativize(projectRoot), javaProject);
 		} else {
 			File[] subDirectories = currentDirectory.listFiles(this::isProjectDirectory);
 			for (File subDirectory : subDirectories) {
@@ -58,10 +60,46 @@ public class MultiModuleMavenJavaProject extends MavenProject {
 	}
 	
 	public Stream<URL> collectClassPaths() {
-		return mavenProjects.stream().flatMap(MavenJavaProject::getClassPaths);
+		return mavenProjects.values().stream().flatMap(MavenJavaProject::getClassPaths);
 	}
 	
 	public Stream<URL> collectLocalMavenDependencies() {
-		return mavenProjects.stream().flatMap(MavenProject::getLocalMavenDependencies);
+		return mavenProjects.values().stream().flatMap(MavenProject::getLocalMavenDependencies);
+	}
+	
+	public Map<Path, MavenJavaProject> getMavenProjects() {
+		return ImmutableMap.copyOf(mavenProjects);
+	}
+	
+	public MavenJavaProject getMavenProject(Path pathToProject) {
+		return mavenProjects.get(pathToProject);
+	}
+	
+	private MavenJavaProject getMavenProject(CombinedPath path) {
+		return getMavenProject(path.getPathToModule());
+	}
+	
+	public File findFile(CombinedPath path) {
+		return getMavenProject(path).findFile(path.getPathToResource());
+	}
+	
+	public String readSourceCode(CombinedPath path) throws IOException {
+		return getMavenProject(path).readSourceCode(path.getPathToResource());
+	}
+	
+	public String tryReadSourceCode(CombinedPath path) { 
+		return getMavenProject(path).tryReadSourceCode(path.getPathToResource());
+	}
+	
+	public void writeSourceCode(CombinedPath path, String sourceCode) throws IOException {
+		getMavenProject(path).writeSourceCode(path.getPathToResource(), sourceCode);		
+	}
+	
+	public void copyFileToAnotherProject(MultiModuleMavenJavaProject targetProject, CombinedPath path) throws IOException {
+		getMavenProject(path).copyFileToAnotherProject(targetProject.getMavenProject(path), path.getPathToResource());
+	}
+	
+	public void copyDirectoryToAnotherProject(MultiModuleMavenJavaProject targetProject, CombinedPath path) throws IOException {
+		getMavenProject(path).copyDirectoryToAnotherProject(targetProject.getMavenProject(path), path.getPathToResource());
 	}
 }

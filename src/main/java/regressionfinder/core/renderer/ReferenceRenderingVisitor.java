@@ -1,7 +1,5 @@
 package regressionfinder.core.renderer;
 
-import java.nio.file.Path;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,6 +7,7 @@ import org.springframework.stereotype.Component;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
+import regressionfinder.model.CombinedPath;
 
 @Component
 public class ReferenceRenderingVisitor implements RenderingVisitor {
@@ -20,7 +19,7 @@ public class ReferenceRenderingVisitor implements RenderingVisitor {
 	public String visit(AffectedFile entity) {
 		StringBuilder result = new StringBuilder();
 		result.append("<pre class=\"brush: java;\">");
-		result.append((String) null /*evaluationContext.getReferenceProject().tryReadSourceCode(entity.getPath())*/);
+		result.append(evaluationContext.getReferenceProject().tryReadSourceCode(entity.getPath()));
 		result.append("</pre>");
 		return result.toString();
 	}
@@ -28,12 +27,12 @@ public class ReferenceRenderingVisitor implements RenderingVisitor {
 	@Override
 	public String visit(AffectedStructuralEntity entity) {
 		String result = StringUtils.EMPTY;
-		Path pathToEntity = entity.getPath();
+		CombinedPath path = entity.getPath();
 		
 		switch (entity.getStructuralChangeType()) {
 		case FILE_REMOVED:
 		case PACKAGE_REMOVED:
-			result = pathToEntity.toString();
+			result = path.toString();
 			break;
 		default:
 			result = StringUtils.EMPTY;

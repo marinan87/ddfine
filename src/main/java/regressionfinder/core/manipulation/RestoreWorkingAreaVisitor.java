@@ -1,7 +1,6 @@
 package regressionfinder.core.manipulation;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 import org.codehaus.plexus.util.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,8 @@ import org.springframework.stereotype.Component;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
-import regressionfinder.model.MavenJavaProject;
+import regressionfinder.model.CombinedPath;
+import regressionfinder.model.MultiModuleMavenJavaProject;
 
 @Component
 public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor {
@@ -25,13 +25,14 @@ public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 
 	@Override
 	public void visit(AffectedStructuralEntity entity) throws IOException {
-		MavenJavaProject workingProject = null; //evaluationContext.getWorkingAreaProject();
-		MavenJavaProject referenceProject = null; //evaluationContext.getReferenceProject();
-		Path entityPath = entity.getPath();
+		MultiModuleMavenJavaProject 
+			workingProject = evaluationContext.getWorkingAreaProject(),
+			referenceProject = evaluationContext.getReferenceProject();
+		CombinedPath entityPath = entity.getPath();
 
 		switch (entity.getStructuralChangeType()) {
 		case FILE_REMOVED:
-			referenceProject.copyToAnotherProject(workingProject, entityPath);
+			referenceProject.copyFileToAnotherProject(workingProject, entityPath);
 			break;
 		case FILE_ADDED:
 			workingProject.findFile(entityPath).delete();

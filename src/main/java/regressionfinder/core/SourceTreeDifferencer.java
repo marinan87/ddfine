@@ -22,6 +22,7 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.model.CombinedPath;
 import regressionfinder.model.MavenJavaProject;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
@@ -34,18 +35,25 @@ public class SourceTreeDifferencer {
 
 	private static final Path ROOT_PATH = Paths.get(StringUtils.EMPTY);
 	
-	private final MavenJavaProject referenceProject, faultyProject;
+	private final MultiModuleMavenJavaProject referenceProject, faultyProject;
 	private final SourceTreeComparisonResults comparisonResults;
+	private MavenJavaProject currentReferenceProject, currentFaultyProject;
 
 	
 	public SourceTreeDifferencer(MultiModuleMavenJavaProject referenceProject, MultiModuleMavenJavaProject faultyProject) {
-		this.referenceProject = null; // referenceProject;
-		this.faultyProject = null; // faultyProject;
+		this.referenceProject = referenceProject;
+		this.faultyProject = faultyProject;
 		this.comparisonResults = new SourceTreeComparisonResults();
 	}
 
 	public List<MinimalApplicableChange> distillChanges() {
-		scanForChangedPaths(ROOT_PATH);
+		referenceProject.getMavenProjects().entrySet().forEach(entry -> {
+			comparisonResults.setCurrentProjectRelativePath(entry.getKey());
+			currentReferenceProject = entry.getValue();
+			currentFaultyProject = faultyProject.getMavenProject(entry.getKey());
+			
+			scanForChangedPaths(ROOT_PATH);
+		});	
 		
 		Stream<MinimalApplicableChange> changesStream = Stream.empty();
 		changesStream = Stream.concat(changesStream, 
@@ -63,8 +71,8 @@ public class SourceTreeDifferencer {
 	}	
 		
 	private void scanForChangedPaths(Path relativeToSourceRoot) {
-		File directoryInReferenceProject = referenceProject.findFile(relativeToSourceRoot);
-		File directoryInFaultyProject = faultyProject.findFile(relativeToSourceRoot);
+		File directoryInReferenceProject = currentReferenceProject.findFile(relativeToSourceRoot);
+		File directoryInFaultyProject = currentFaultyProject.findFile(relativeToSourceRoot);
 
 		Preconditions.checkArgument(directoryInReferenceProject.isDirectory(), 
 				format("%s is not a directory!", relativeToSourceRoot));
@@ -77,8 +85,8 @@ public class SourceTreeDifferencer {
 	}
 
 	private void scanForChangedJavaPaths(Path relativeToSourceRoot) {
-		List<Path> javaPathsInReference = referenceProject.javaPathsInDirectory(relativeToSourceRoot);
-		List<Path> javaPathsInFaulty = faultyProject.javaPathsInDirectory(relativeToSourceRoot);
+		List<Path> javaPathsInReference = currentReferenceProject.javaPathsInDirectory(relativeToSourceRoot);
+		List<Path> javaPathsInFaulty = currentFaultyProject.javaPathsInDirectory(relativeToSourceRoot);
 		
 		Collections2.filter(javaPathsInReference, Predicates.not(Predicates.in(javaPathsInFaulty))).forEach(comparisonResults::addRemovedFile);
 		Collections2.filter(javaPathsInFaulty, Predicates.not(Predicates.in(javaPathsInReference))).forEach(comparisonResults::addAddedFile);
@@ -91,7 +99,7 @@ public class SourceTreeDifferencer {
 	private Predicate<Path> sizeHasChanged() {
 		return relativePath -> {
 			try {
-				return referenceProject.size(relativePath) != faultyProject.size(relativePath);
+				return currentReferenceProject.size(relativePath) != currentFaultyProject.size(relativePath);
 			} catch (IOException e) {
 				return true;
 			}
@@ -101,8 +109,8 @@ public class SourceTreeDifferencer {
 	private Predicate<Path> checkSumHasChanged() {
 		return relativePath -> {
 			try {
-				String referenceMd5 = referenceProject.md5Hash(relativePath);
-				String faultyMd5 = faultyProject.md5Hash(relativePath);
+				String referenceMd5 = currentReferenceProject.md5Hash(relativePath);
+				String faultyMd5 = currentFaultyProject.md5Hash(relativePath);
 				return !referenceMd5.equals(faultyMd5);
 			} catch (IOException e) {
 				return true;
@@ -111,8 +119,8 @@ public class SourceTreeDifferencer {
 	}
 
 	private void scanForChangedDirs(Path relativeToSourceRoot) {
-		List<Path> subDirectoriesInReference = referenceProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
-		List<Path> subDirectoriesInFaulty = faultyProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
+		List<Path> subDirectoriesInReference = currentReferenceProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
+		List<Path> subDirectoriesInFaulty = currentFaultyProject.subDirectoryPathsInDirectory(relativeToSourceRoot);
 		
 		Collections2.filter(subDirectoriesInReference, Predicates.not(Predicates.in(subDirectoriesInFaulty))).forEach(comparisonResults::addRemovedPackage);
 		Collections2.filter(subDirectoriesInFaulty, Predicates.not(Predicates.in(subDirectoriesInReference))).forEach(comparisonResults::addAddedPackage);
@@ -120,15 +128,15 @@ public class SourceTreeDifferencer {
 		Collections2.filter(subDirectoriesInReference, Predicates.in(subDirectoriesInFaulty)).forEach(this::scanForChangedPaths);
 	}
 	
-	private Stream<MinimalChangeInFile> distillChangesForPath(Path pathToFile) {
-		File left = referenceProject.findFile(pathToFile);
-		File right = faultyProject.findFile(pathToFile);
+	private Stream<MinimalChangeInFile> distillChangesForPath(CombinedPath path) {
+		File left = referenceProject.findFile(path);
+		File right = faultyProject.findFile(path);
 		
 		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
 		distiller.extractClassifiedSourceCodeChanges(left, right);
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges())
-			.map(change -> new MinimalChangeInFile(pathToFile, change));
+			.map(change -> new MinimalChangeInFile(path, change));
 	}
 	
 	private Stream<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {

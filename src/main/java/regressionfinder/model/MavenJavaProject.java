@@ -121,7 +121,7 @@ public class MavenJavaProject extends MavenProject {
 			.collect(Collectors.toList());
 	}
 	
-	public void copyToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {
+	public void copyFileToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {
 		Files.copy(findAbsolutePath(relativePath),
 				targetProject.findAbsolutePath(relativePath),
 				StandardCopyOption.REPLACE_EXISTING);

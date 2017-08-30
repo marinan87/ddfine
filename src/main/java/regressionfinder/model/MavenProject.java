@@ -73,6 +73,7 @@ public abstract class MavenProject {
 		request.setPomFile(rootPomXml);
 		request.setGoals(Arrays.asList(GOAL_BUILD_CLASSPATH));
 		request.setOffline(true);
+		request.setThreads(THREADS_1C);
 		request.setGlobalSettingsFile(new File(SETTINGS_FILE));
 		request.setOutputHandler(line -> {
 			if (notInformationalLine(line)) {

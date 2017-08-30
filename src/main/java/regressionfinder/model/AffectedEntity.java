@@ -4,7 +4,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -13,9 +12,9 @@ import regressionfinder.core.renderer.RenderingVisitor;
 
 public abstract class AffectedEntity {
 
-	protected final Path path;
+	protected final CombinedPath path;
 	
-	protected AffectedEntity(Path path) {
+	protected AffectedEntity(CombinedPath path) {
 		this.path = path;
 	}
 
@@ -49,7 +48,7 @@ public abstract class AffectedEntity {
 			.map(change -> new AffectedStructuralEntity(change.getPathToFile(), change.getStructuralChange()));
 	}
 	
-	public Path getPath() {
+	public CombinedPath getPath() {
 		return path;
 	}
 	

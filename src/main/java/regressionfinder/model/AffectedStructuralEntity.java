@@ -1,7 +1,6 @@
 package regressionfinder.model;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
@@ -10,7 +9,7 @@ public class AffectedStructuralEntity extends AffectedEntity {
 
 	private final StructuralChangeType structuralChangeType;
 	
-	public AffectedStructuralEntity(Path path, StructuralChangeType structuralChangeType) {
+	public AffectedStructuralEntity(CombinedPath path, StructuralChangeType structuralChangeType) {
 		super(path);
 		this.structuralChangeType = structuralChangeType;
 	}

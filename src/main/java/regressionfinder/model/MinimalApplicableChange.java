@@ -1,16 +1,14 @@
 package regressionfinder.model;
 
-import java.nio.file.Path;
-
 public abstract class MinimalApplicableChange {
 
-	private final Path pathToFile;
+	private final CombinedPath pathToFile;
 
-	public MinimalApplicableChange(Path pathToFile) {
+	public MinimalApplicableChange(CombinedPath pathToFile) {
 		this.pathToFile = pathToFile;
 	}
 	
-	public Path getPathToFile() {
+	public CombinedPath getPathToFile() {
 		return pathToFile;
 	}
 }

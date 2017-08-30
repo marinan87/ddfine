@@ -1,6 +1,5 @@
 package regressionfinder.core.renderer;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -14,6 +13,7 @@ import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.manipulation.SourceCodeFileManipulator;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
+import regressionfinder.model.CombinedPath;
 
 @Component
 public class FaultyRenderingVisitor implements RenderingVisitor {
@@ -25,7 +25,7 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	public String visit(AffectedFile entity) {
 		StringBuilder result = new StringBuilder();
 		
-		String sourceCode = null; // evaluationContext.getFaultyProject().tryReadSourceCode(entity.getPath());
+		String sourceCode = evaluationContext.getFaultyProject().tryReadSourceCode(entity.getPath());
 		result.append(String.format("<pre class=\"brush: java; highlight: %s\">", getLineNumbers(entity, sourceCode)));
 		result.append(sourceCode);
 		result.append("</pre>");
@@ -60,12 +60,12 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	@Override
 	public String visit(AffectedStructuralEntity entity) {
 		String result = StringUtils.EMPTY;
-		Path pathToEntity = entity.getPath();
+		CombinedPath path = entity.getPath();
 		
 		switch (entity.getStructuralChangeType()) {
 		case FILE_ADDED:
 		case PACKAGE_ADDED:
-			result = pathToEntity.toString();
+			result = path.toString();
 			break;
 		default:
 			result = StringUtils.EMPTY;

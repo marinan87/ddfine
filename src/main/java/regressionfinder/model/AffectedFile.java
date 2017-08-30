@@ -1,7 +1,6 @@
 package regressionfinder.model;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
@@ -13,7 +12,7 @@ public class AffectedFile extends AffectedEntity {
 
 	private final List<SourceCodeChange> sortedChangesInFile;
 	
-	public AffectedFile(Path path, List<SourceCodeChange> changes) {
+	public AffectedFile(CombinedPath path, List<SourceCodeChange> changes) {
 		super(path);
 		sortChanges(changes);
 		this.sortedChangesInFile = changes;

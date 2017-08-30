@@ -31,9 +31,7 @@ public class RegressionFinder {
 		- assert contains only supported changes (changedistiller)
 		- assert both versions compile
 		*/
-		
-		// TODO: implement support of multimodule Maven projects
-		
+				
 		SourceTreeDifferencer treeDifferencer = new SourceTreeDifferencer(evaluationContext.getReferenceProject(), evaluationContext.getFaultyProject());
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
 		List<AffectedEntity> failureRelevantFiles = deltaDebug(filteredChanges);

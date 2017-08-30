@@ -1,5 +1,7 @@
 package regressionfinder.core;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -48,8 +50,18 @@ public class ReflectionalTestMethodInvoker {
 	public void initializeOnce() {
 		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
-//		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses();
-		mavenDependenciesClassPaths = evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();		
+//		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses(); TODO: uncomment this line
+//		mavenDependenciesClassPaths = evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();
+		
+		// TODO: remove this temporary workaround
+		try (	FileInputStream in = new FileInputStream("dependencies.out");
+				ObjectInputStream ois = new ObjectInputStream(in);
+			) {
+				mavenDependenciesClassPaths = ((Set<URL>) ois.readObject()).stream();
+		    } catch (Exception e) {
+		      System.out.println("Problem deserializing: " + e);
+		    }
+		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
 				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths, evaluationContext.getFaultyProject().collectClassPaths())
 					.flatMap(Function.identity())

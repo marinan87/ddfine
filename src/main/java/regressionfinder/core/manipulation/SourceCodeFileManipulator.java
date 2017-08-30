@@ -10,7 +10,7 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Update;
 import regressionfinder.model.AffectedFile;
-import regressionfinder.model.MavenJavaProject;
+import regressionfinder.model.MultiModuleMavenJavaProject;
 
 /*
  * Utility class for applying source code change deltas to original file. 
@@ -21,11 +21,11 @@ public class SourceCodeFileManipulator {
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
 
 	private final AffectedFile file;
-	private final MavenJavaProject workingAreaProject;
+	private final MultiModuleMavenJavaProject workingAreaProject;
 	private final StringBuilder content;
 	private int offset = 0;
 	
-	public SourceCodeFileManipulator(AffectedFile file, MavenJavaProject workingAreaProject) throws IOException {
+	public SourceCodeFileManipulator(AffectedFile file, MultiModuleMavenJavaProject workingAreaProject) throws IOException {
 		this.file = file;
 		this.workingAreaProject = workingAreaProject;
 		
