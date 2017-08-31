@@ -23,6 +23,6 @@ public class CombinedPath {
 	
 	@Override
 	public String toString() {
-		return format("Module: %s, path: %s", pathToModule, pathToResource);
+		return format("%s ==> %s", pathToModule, pathToResource);
 	}
 }

@@ -1,7 +1,5 @@
 package regressionfinder.core;
 
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -34,7 +32,7 @@ import regressionfinder.model.MinimalApplicableChange;
 public class ReflectionalTestMethodInvoker {
 	
 	private Supplier<Stream<URL>> testRunnerClassPaths;
-	private Stream<URL> mavenDependenciesClassPaths;
+	private Supplier<Stream<URL>> mavenDependenciesClassPaths;
 	private Throwable throwable;
 	
 	@Autowired
@@ -50,20 +48,22 @@ public class ReflectionalTestMethodInvoker {
 	public void initializeOnce() {
 		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
-//		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses(); TODO: uncomment this line
-//		mavenDependenciesClassPaths = evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();
+		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses(); 
+		mavenDependenciesClassPaths = () -> Stream.empty(); // evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();
 		
-		// TODO: remove this temporary workaround
-		try (	FileInputStream in = new FileInputStream("dependencies.out");
-				ObjectInputStream ois = new ObjectInputStream(in);
-			) {
-				mavenDependenciesClassPaths = ((Set<URL>) ois.readObject()).stream();
-		    } catch (Exception e) {
-		      System.out.println("Problem deserializing: " + e);
-		    }
+//		mavenDependenciesClassPaths = () -> {		
+//			try (	FileInputStream in = new FileInputStream("dependencies.out");
+//					ObjectInputStream ois = new ObjectInputStream(in);
+//				) {
+//					 return ((Set<URL>) ois.readObject()).stream();
+//			    } catch (Exception e) {
+//			      System.out.println("Problem deserializing: " + e);
+//			    }
+//			return null;
+//		};
 		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
-				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths, evaluationContext.getFaultyProject().collectClassPaths())
+				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths.get(), evaluationContext.getFaultyProject().collectClassPaths())
 					.flatMap(Function.identity())
 					.collect(Collectors.toSet()),
 				new MethodDescriptor("getOriginalException"));
@@ -82,7 +82,7 @@ public class ReflectionalTestMethodInvoker {
 		prepareWorkingAreaForNextTrial(affectedFiles);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
-				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths, evaluationContext.getWorkingAreaProject().collectClassPaths())
+				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths.get(), evaluationContext.getWorkingAreaProject().collectClassPaths())
 					.flatMap(Function.identity())
 					.collect(Collectors.toSet()),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));

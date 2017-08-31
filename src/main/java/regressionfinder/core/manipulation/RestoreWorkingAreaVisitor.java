@@ -20,7 +20,7 @@ public class RestoreWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 	
 	@Override
 	public void visit(AffectedFile entity) throws IOException {
-//		evaluationContext.getReferenceProject().copyToAnotherProject(evaluationContext.getWorkingAreaProject(), entity.getPath());
+		evaluationContext.getReferenceProject().copyFileToAnotherProject(evaluationContext.getWorkingAreaProject(), entity.getPath());
 	}
 
 	@Override

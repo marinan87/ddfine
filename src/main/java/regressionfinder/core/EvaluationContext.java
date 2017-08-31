@@ -38,8 +38,8 @@ public class EvaluationContext extends JUnitTester {
 			
 			Path workingDirectory = Files.createTempDirectory("deltadebugging");
 			workingAreaProject = new MultiModuleMavenJavaProject("C:\\Users\\X\\AppData\\Local\\Temp\\deltadebugging284123461779155460");
-//			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
-//			workingAreaProject.triggerCompilationWithTestClasses();
+			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
+			workingAreaProject.triggerCompilationWithTestClasses();
 			
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
