@@ -22,8 +22,6 @@ public class RegressionFinder {
 	private ResultViewer resultViewer;
 
 	public void run() {
-		// TODO: execute with first real example
-		
 		/*
 		 * TODO: Multiple asserts to check that evaluation context is proper for running delta debugger
 		- assert test exists in both version

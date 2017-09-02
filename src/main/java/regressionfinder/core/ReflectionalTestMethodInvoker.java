@@ -43,13 +43,17 @@ public class ReflectionalTestMethodInvoker {
 	
 	@Autowired
 	private RestoreWorkingAreaVisitor restoreWorkingAreaVisitor;
+	
+	@Autowired
+	private MavenCompiler mavenCompiler;
 
 	
 	public void initializeOnce() {
 		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
-		evaluationContext.getFaultyProject().triggerCompilationWithTestClasses(); 
-		mavenDependenciesClassPaths = () -> Stream.empty(); // evaluationContext.getWorkingAreaProject().collectLocalMavenDependencies();
+		mavenCompiler.triggerCompilationWithTestClasses(evaluationContext.getFaultyProject());
+		mavenDependenciesClassPaths = () -> Stream.empty();
+//			evaluationContext.getWorkingAreaProject().getMavenProjects().values().stream().flatMap(mavenCompiler::getLocalMavenDependencies);
 		
 //		mavenDependenciesClassPaths = () -> {		
 //			try (	FileInputStream in = new FileInputStream("dependencies.out");
@@ -94,7 +98,7 @@ public class ReflectionalTestMethodInvoker {
 
 	private void prepareWorkingAreaForNextTrial(List<AffectedEntity> affectedFiles) {
 		affectedFiles.forEach(file -> file.manipulate(prepareWorkingAreaVisitor));	
-		evaluationContext.getWorkingAreaProject().triggerSimpleCompilation();
+		mavenCompiler.triggerSimpleCompilation(evaluationContext.getWorkingAreaProject());
 	}
 
 	private void restoreWorkingArea(List<AffectedEntity> affectedFiles) {

@@ -63,10 +63,6 @@ public class MultiModuleMavenJavaProject extends MavenProject {
 		return mavenProjects.values().stream().flatMap(MavenJavaProject::getClassPaths);
 	}
 	
-	public Stream<URL> collectLocalMavenDependencies() {
-		return mavenProjects.values().stream().flatMap(MavenProject::getLocalMavenDependencies);
-	}
-	
 	public Map<Path, MavenJavaProject> getMavenProjects() {
 		return ImmutableMap.copyOf(mavenProjects);
 	}

@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,9 +89,13 @@ public class MavenJavaProject extends MavenProject {
 	}
 	
 	private URL directoryPathToURL(Path path) {
-		return stringToURL(path.toString(), true);
+		try {
+			return new URL("file:/".concat(path.toString().replace("\\", "/")).concat("/"));
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(String.format("Error while converting path %s to URL", path.toString()));
+		}		
 	}
-
+	
 	public File findFile(Path relativePath) {
 		return findAbsolutePath(relativePath).toFile();
 	}

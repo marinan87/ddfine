@@ -5,3 +5,5 @@ target/*
 *.project
 /examples-filesystem/reference/.settings
 /examples-filesystem/faulty/.settings
+/dependencies.out
+/ApplicationRunner - Real example.launch

@@ -11,10 +11,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import regressionfinder.model.MinimalApplicableChange;
@@ -27,19 +29,29 @@ public class EvaluationContext extends JUnitTester {
 	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
 	private int trials;
+	
+	@Value("${working.directory}")
+	private String preparedWorkingDirectory;
 
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
+	
+	@Autowired
+	private MavenCompiler mavenCompiler;
+	
 			
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
 		try {			
 			referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
 			faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
 			
-			Path workingDirectory = Files.createTempDirectory("deltadebugging");
-//			workingAreaProject = new MultiModuleMavenJavaProject("C:\\Users\\X\\AppData\\Local\\Temp\\deltadebugging284123461779155460");
-			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
-			workingAreaProject.triggerCompilationWithTestClasses();
+			if (StringUtils.isNotBlank(preparedWorkingDirectory)) {
+				workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
+			} else {
+				Path workingDirectory = Files.createTempDirectory("deltadebugging");
+				workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
+				mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
+			}
 			
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
