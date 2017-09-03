@@ -1,5 +1,9 @@
 package regressionfinder.core;
 
+import static java.util.stream.Collectors.toSet;
+
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -48,23 +52,29 @@ public class ReflectionalTestMethodInvoker {
 	private MavenCompiler mavenCompiler;
 
 	
+	@SuppressWarnings("unchecked")
 	public void initializeOnce() {
 		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
-		mavenCompiler.triggerCompilationWithTestClasses(evaluationContext.getFaultyProject());
-		mavenDependenciesClassPaths = () -> Stream.empty();
-//			evaluationContext.getWorkingAreaProject().getMavenProjects().values().stream().flatMap(mavenCompiler::getLocalMavenDependencies);
+		if (!evaluationContext.isDevelopmentMode()) {
+			mavenCompiler.triggerCompilationWithTestClasses(evaluationContext.getFaultyProject());
+		}
 		
-//		mavenDependenciesClassPaths = () -> {		
-//			try (	FileInputStream in = new FileInputStream("dependencies.out");
-//					ObjectInputStream ois = new ObjectInputStream(in);
-//				) {
-//					 return ((Set<URL>) ois.readObject()).stream();
-//			    } catch (Exception e) {
-//			      System.out.println("Problem deserializing: " + e);
-//			    }
-//			return null;
-//		};
+		final Set<URL> mavenDependencies;
+		if (evaluationContext.isDevelopmentMode())  {
+			try (	FileInputStream in = new FileInputStream("dependencies.out");
+					ObjectInputStream ois = new ObjectInputStream(in);				) {
+				mavenDependencies = ((Set<URL>) ois.readObject());
+		    } catch (Exception e) {
+		    	System.out.println("Problem with deserializing prepared dependencies file.");
+		    	throw new RuntimeException(e);
+		    }
+		} else {
+			mavenDependencies = evaluationContext.getWorkingAreaProject().getMavenProjects().values().stream()
+					.flatMap(mavenCompiler::getLocalMavenDependencies)
+					.collect(toSet());
+		}
+		mavenDependenciesClassPaths = () -> mavenDependencies.stream();
 		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
 				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths.get(), evaluationContext.getFaultyProject().collectClassPaths())

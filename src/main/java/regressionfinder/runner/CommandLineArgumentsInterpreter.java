@@ -30,4 +30,8 @@ public class CommandLineArgumentsInterpreter {
 	public String getValue(CommandLineOption option) {
 		return commandLine.getOptionValue(option.getOption().getArgName());
 	}
+	
+	public boolean isPresent(CommandLineOption option) {
+		return commandLine.hasOption(option.getOption().getArgName());
+	}
 }

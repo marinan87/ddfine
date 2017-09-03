@@ -1,6 +1,7 @@
 package regressionfinder.core;
 
 import static java.util.stream.Collectors.toList;
+import static regressionfinder.runner.CommandLineOption.DEVELOPMENT_MODE;
 import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
 import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
@@ -11,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
@@ -28,6 +28,7 @@ public class EvaluationContext extends JUnitTester {
 
 	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
+	private boolean developmentMode;
 	private int trials;
 	
 	@Value("${working.directory}")
@@ -44,8 +45,9 @@ public class EvaluationContext extends JUnitTester {
 		try {			
 			referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
 			faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
+			developmentMode = arguments.isPresent(DEVELOPMENT_MODE);
 			
-			if (StringUtils.isNotBlank(preparedWorkingDirectory)) {
+			if (developmentMode) {
 				workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
 			} else {
 				Path workingDirectory = Files.createTempDirectory("deltadebugging");
@@ -84,6 +86,10 @@ public class EvaluationContext extends JUnitTester {
 		return testMethodName;
 	}
 	
+	public boolean isDevelopmentMode() {
+		return developmentMode;
+	}
+	
 	public int getNumberOfTrials() {
 		return trials;
 	}
@@ -98,6 +104,8 @@ public class EvaluationContext extends JUnitTester {
 	}
 	
 	public void cleanUp() throws IOException {
-		FileUtils.deleteDirectory(workingAreaProject.getRootDirectory().toFile());
+		if (!developmentMode) {
+			FileUtils.deleteDirectory(workingAreaProject.getRootDirectory().toFile());
+		}
 	}
 }
