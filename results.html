@@ -74,6 +74,10 @@ public class Example {
 	public void methodToCheckParameterRenaming(Object aRenamePara) {}
 	
 	public void methodToCheckParameterTypeChange(Object first, int typeChange) {}
+	
+	public void methodToCheckMethodRenaming(String first, String second) {
+		System.out.println("Renamed method");
+	}
 }
 </pre></td>
 					<td><pre class="brush: java; highlight: [16, 17]">package package1;
@@ -143,6 +147,10 @@ public final class Example {
 	public void methodToCheckParameterRenaming(Object aRenameParam) {}
 	
 	public void methodToCheckParameterTypeChange(Object first, String typeChange) {}
+	
+	public void methodToCheckMethodRenaming2(String first, String second) {
+		System.out.println("Renamed method");
+	}
 }
 </pre></td>
 				</tr>

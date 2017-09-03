@@ -14,4 +14,9 @@ public class MinimalChangeInFile extends MinimalApplicableChange {
 	public SourceCodeChange getSourceCodeChange() {
 		return sourceCodeChange;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("Change of type %s in path %s\r\n", sourceCodeChange.getChangeType(), pathToFile);
+	}
 }

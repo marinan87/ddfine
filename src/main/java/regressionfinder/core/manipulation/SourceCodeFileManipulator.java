@@ -91,8 +91,7 @@ public class SourceCodeFileManipulator {
 			return;
 		}
 
-		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getContent(), inline,
-				commaDelimiter);
+		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter);
 		int startPosition = insert.getChangedEntity().getStartPosition();
 
 		content.replace(startPosition + offset, startPosition + offset, textToInsert.toString());
@@ -122,6 +121,7 @@ public class SourceCodeFileManipulator {
 		case DECREASING_ACCESSIBILITY_CHANGE:
 		case PARAMETER_RENAMING:
 		case PARAMETER_TYPE_CHANGE:
+		case METHOD_RENAMING:
 			break;
 		default:
 			throw new UnsupportedOperationException();

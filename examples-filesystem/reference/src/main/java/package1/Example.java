@@ -53,4 +53,8 @@ public class Example {
 	public void methodToCheckParameterRenaming(Object aRenamePara) {}
 	
 	public void methodToCheckParameterTypeChange(Object first, int typeChange) {}
+	
+	public void methodToCheckMethodRenaming(String first, String second) {
+		System.out.println("Renamed method");
+	}
 }
