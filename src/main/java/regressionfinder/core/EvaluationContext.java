@@ -45,24 +45,37 @@ public class EvaluationContext extends JUnitTester {
 		try {			
 			referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
 			faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
-			developmentMode = arguments.isPresent(DEVELOPMENT_MODE);
-			
-			if (developmentMode) {
-				workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
-			} else {
-				Path workingDirectory = Files.createTempDirectory("deltadebugging");
-				workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
-				mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
-			}
-			
 			testClassName = arguments.getValue(FAILING_CLASS);
 			testMethodName = arguments.getValue(FAILING_METHOD);
 			
+			/*
+			  TODO: Multiple asserts to check that evaluation context is suitable for running delta debugger:
+			- assert test exists in both version
+			- assert test OK in reference version?
+			- assert test itself unchanged - otherwise do not continue
+			- assert both versions compile
+			- assert no changes in modules structure for multi-module maven projects
+			- assert no changes in dependencies (to save time needed to collect them)
+			*/
+			
+			prepareWorkingArea(arguments);
+						
 			reflectionalInvoker.initializeOnce();
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			e.printStackTrace();
 			System.exit(1);
+		}
+	}
+
+	private void prepareWorkingArea(CommandLineArgumentsInterpreter arguments) throws IOException {
+		developmentMode = arguments.isPresent(DEVELOPMENT_MODE);
+		if (developmentMode) {
+			workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
+		} else {
+			Path workingDirectory = Files.createTempDirectory("deltadebugging");
+			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
+			mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
 		}
 	}
 	

@@ -31,7 +31,7 @@ public class JUnitTestRunner extends IsolatedClassLoaderAwareJUnitTestRunner {
 		}
 		
 		if (allProblems.size() != 1) {
-			throw new IllegalArgumentException("Problem not suitable for delta debugging");
+			throw new IllegalArgumentException("Problem not suitable for delta debugging. No single failure executing test is available.");
 		}
 		
 		Throwable throwable = allProblems.get(0).thrownException();

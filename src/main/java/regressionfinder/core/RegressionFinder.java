@@ -25,16 +25,7 @@ public class RegressionFinder {
 	@Autowired
 	private ResultViewer resultViewer;
 
-	public void run() {
-		/*
-		  TODO: Multiple asserts to check that evaluation context is suitable for running delta debugger:
-		- assert test exists in both version
-		- assert test itself unchanged - otherwise not supported
-		- assert both versions compile
-		- assert no changes in modules structure for multi-module projects
-		- assert no changes in dependencies
-		*/
-				
+	public void run() {				
 		SourceTreeDifferencer treeDifferencer = new SourceTreeDifferencer(evaluationContext.getReferenceProject(), evaluationContext.getFaultyProject());
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
 		assertContainsOnlySupportedChanges(filteredChanges);

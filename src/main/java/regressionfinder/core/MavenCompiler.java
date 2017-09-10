@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,15 +35,15 @@ public class MavenCompiler {
 	private File mavenSettings;
 	
 	
-	public void triggerCompilationWithTestClasses(MavenProject project) {
-		triggerCompilation(project, PHASE_TEST_COMPILE);
+	public int triggerCompilationWithTestClasses(MavenProject project) {
+		return triggerCompilation(project, PHASE_TEST_COMPILE);
 	}
 
-	public void triggerSimpleCompilation(MavenProject project) {
-		triggerCompilation(project, PHASE_COMPILE);
+	public int triggerSimpleCompilation(MavenProject project) {
+		return triggerCompilation(project, PHASE_COMPILE);
 	}
 
-	private void triggerCompilation(MavenProject project, String phase) {
+	private int triggerCompilation(MavenProject project, String phase) {
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile(project.getRootPomXml());
 		request.setGoals(Arrays.asList(phase));
@@ -53,11 +54,14 @@ public class MavenCompiler {
 
 		Invoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File(MAVEN_HOME));
+		InvocationResult invocationResult;
 		try {
-			invoker.execute(request);
+			invocationResult = invoker.execute(request);
 		} catch (MavenInvocationException e) {
 			throw new RuntimeException(e);
 		}
+		
+		return invocationResult.getExitCode();
 		// TODO: in-memory compilation for speed up? RAM disk?
 	}
 
