@@ -58,8 +58,6 @@ public class MavenCompiler {
 		} catch (MavenInvocationException e) {
 			throw new RuntimeException(e);
 		}
-		// TODO: compile with dependent projects (mvn option alsomake)
-		// TODO: run incremental build
 		// TODO: in-memory compilation for speed up? RAM disk?
 	}
 

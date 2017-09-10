@@ -1,7 +1,5 @@
 package regressionfinder.core;
 
-import static java.util.stream.Collectors.toSet;
-
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
@@ -61,7 +59,7 @@ public class ReflectionalTestMethodInvoker {
 		}
 		
 		final Set<URL> mavenDependencies;
-		if (evaluationContext.isDevelopmentMode())  {
+//		if (evaluationContext.isDevelopmentMode())  {
 			try (	FileInputStream in = new FileInputStream("dependencies.out");
 					ObjectInputStream ois = new ObjectInputStream(in);				) {
 				mavenDependencies = ((Set<URL>) ois.readObject());
@@ -69,15 +67,15 @@ public class ReflectionalTestMethodInvoker {
 		    	System.out.println("Problem with deserializing prepared dependencies file.");
 		    	throw new RuntimeException(e);
 		    }
-		} else {
+/*		} else {
 			mavenDependencies = evaluationContext.getWorkingAreaProject().getMavenProjects().values().stream()
 					.flatMap(mavenCompiler::getLocalMavenDependencies)
 					.collect(toSet());
-		}
+		}*/
 		mavenDependenciesClassPaths = () -> mavenDependencies.stream();
 		
 		throwable = (Throwable) runMethodInIsolatedTestRunner(JUnitTestRunner.class, 
-				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths.get(), evaluationContext.getFaultyProject().collectClassPaths())
+				Stream.of(testRunnerClassPaths.get(), evaluationContext.getFaultyProject().collectClassPaths(), mavenDependenciesClassPaths.get())
 					.flatMap(Function.identity())
 					.collect(Collectors.toSet()),
 				new MethodDescriptor("getOriginalException"));
@@ -96,7 +94,7 @@ public class ReflectionalTestMethodInvoker {
 		prepareWorkingAreaForNextTrial(affectedFiles);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
-				Stream.of(testRunnerClassPaths.get(), mavenDependenciesClassPaths.get(), evaluationContext.getWorkingAreaProject().collectClassPaths())
+				Stream.of(testRunnerClassPaths.get(), evaluationContext.getWorkingAreaProject().collectClassPaths(), mavenDependenciesClassPaths.get())
 					.flatMap(Function.identity())
 					.collect(Collectors.toSet()),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.codehaus.plexus.util.FileUtils;
+import org.apache.commons.io.FileUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -18,7 +18,8 @@ import com.google.common.collect.ImmutableMap;
 
 public class MultiModuleMavenJavaProject extends MavenProject {
 	
-	private static final List<String> IGNORED_DIRS = ImmutableList.of("src", ".settings", ".svn", ".metadata", "archetype", "ci");	
+	private static final List<String> IGNORED_DIRS_FOR_SCAN = ImmutableList.of("src", ".settings", ".svn", ".metadata", "archetype", "ci");	
+	private static final List<String> IGNORED_DIRS_FOR_COPY = ImmutableList.of(".settings", ".svn", ".metadata");
 	
 	private Map<Path, MavenJavaProject> mavenProjects = new HashMap<>();
 	
@@ -45,13 +46,11 @@ public class MultiModuleMavenJavaProject extends MavenProject {
 	}
 
 	private boolean isProjectDirectory(File file) {
-		return file.isDirectory() && !IGNORED_DIRS.contains(file.getName());
+		return file.isDirectory() && !IGNORED_DIRS_FOR_SCAN.contains(file.getName());
 	}
 	
 	public MultiModuleMavenJavaProject cloneToWorkingDirectory(Path workingDirectory) throws IOException {
-		// TODO: ignore .svn and .settings folders
-		// TODO: copy with original timestamps
-		FileUtils.copyDirectoryStructure(rootDirectory.toFile(), workingDirectory.toFile());
+		FileUtils.copyDirectory(rootDirectory.toFile(), workingDirectory.toFile(), file -> !IGNORED_DIRS_FOR_COPY.contains(file.getName()), true);
 		return new MultiModuleMavenJavaProject(workingDirectory.toString());
 	}
 	
