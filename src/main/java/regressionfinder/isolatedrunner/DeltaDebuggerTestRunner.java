@@ -1,12 +1,10 @@
 package regressionfinder.isolatedrunner;
 
 import org.deltadebugging.ddcore.tester.JUnitTester;
-import org.junit.runner.manipulation.NoTestsRemainException;
 
 public class DeltaDebuggerTestRunner extends IsolatedClassLoaderAwareJUnitTestRunner {
 	
-	public DeltaDebuggerTestRunner(String testClassName, String testMethodName) 
-			throws ClassNotFoundException, NoTestsRemainException {		
+	public DeltaDebuggerTestRunner(String testClassName, String testMethodName) {		
 		super(testClassName, testMethodName);
 	}
 

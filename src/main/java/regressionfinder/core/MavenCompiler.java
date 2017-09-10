@@ -19,10 +19,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import regressionfinder.model.MavenProject;
+import regressionfinder.model.MultiModuleMavenJavaProject;
 
 @Service
 public class MavenCompiler {
-
+	
+	private static final int SUCCESSFUL_COMPILATION_CODE = 0;
 	private static final String PHASE_COMPILE = "compile";
 	private static final String PHASE_TEST_COMPILE = "test-compile";
 	private static final String GOAL_BUILD_CLASSPATH = "dependency:build-classpath";
@@ -35,12 +37,15 @@ public class MavenCompiler {
 	private File mavenSettings;
 	
 	
-	public int triggerCompilationWithTestClasses(MavenProject project) {
-		return triggerCompilation(project, PHASE_TEST_COMPILE);
+	public void triggerCompilationWithTestClasses(MultiModuleMavenJavaProject project) {
+		int compilationResult = triggerCompilation(project, PHASE_TEST_COMPILE);
+		if (compilationResult != SUCCESSFUL_COMPILATION_CODE) {
+			throw new RuntimeException(String.format("Cannot continue. Project %s is not compilable.", project.getRootDirectory()));
+		}
 	}
 
-	public int triggerSimpleCompilation(MavenProject project) {
-		return triggerCompilation(project, PHASE_COMPILE);
+	public void triggerSimpleCompilation(MultiModuleMavenJavaProject project) {
+		triggerCompilation(project, PHASE_COMPILE);
 	}
 
 	private int triggerCompilation(MavenProject project, String phase) {

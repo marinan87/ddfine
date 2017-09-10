@@ -4,15 +4,12 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-import org.junit.runner.manipulation.NoTestsRemainException;
-
 import junit.framework.TestFailure;
 import junit.framework.TestResult;
 
 public class JUnitTestRunner extends IsolatedClassLoaderAwareJUnitTestRunner {
 
-	public JUnitTestRunner(String testClassName, String testMethodName)
-			throws ClassNotFoundException, NoTestsRemainException {
+	public JUnitTestRunner(String testClassName, String testMethodName) {
 		super(testClassName, testMethodName);
 	}
 
@@ -31,12 +28,12 @@ public class JUnitTestRunner extends IsolatedClassLoaderAwareJUnitTestRunner {
 		}
 		
 		if (allProblems.size() != 1) {
-			throw new IllegalArgumentException("Problem not suitable for delta debugging. No single failure executing test is available.");
+			throw new IllegalArgumentException("Problem not suitable for delta debugging. Input test does not fail or fails for multiple reasons (has to be exact one).");
 		}
 		
 		Throwable throwable = allProblems.get(0).thrownException();
 		if (throwable.getCause() instanceof ClassNotFoundException) {
-			throw new IllegalArgumentException("Initialization error occurred, not all required dependencies are in classpath");
+			throw new IllegalArgumentException("Initialization error occurred, not all required dependencies are in classpath", throwable);
 		}
 		
 		return throwable;

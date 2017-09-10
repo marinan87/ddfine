@@ -18,6 +18,7 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.hamcrest.SelfDescribing;
 import org.junit.runner.manipulation.NoTestsRemainException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
@@ -33,9 +34,11 @@ import regressionfinder.model.MinimalApplicableChange;
 @Component
 public class ReflectionalTestMethodInvoker {
 	
-	private Supplier<Stream<URL>> testRunnerClassPaths;
-	private Supplier<Stream<URL>> mavenDependenciesClassPaths;
+	private Supplier<Stream<URL>> testRunnerClassPaths, mavenDependenciesClassPaths;
 	private Throwable throwable;
+	
+	@Value("${dependencies.file}")
+	private String preparedDependenciesFile;
 	
 	@Autowired
 	private EvaluationContext evaluationContext;
@@ -60,7 +63,7 @@ public class ReflectionalTestMethodInvoker {
 		
 		final Set<URL> mavenDependencies;
 //		if (evaluationContext.isDevelopmentMode())  {
-			try (	FileInputStream in = new FileInputStream("dependencies.out");
+			try (	FileInputStream in = new FileInputStream(preparedDependenciesFile);
 					ObjectInputStream ois = new ObjectInputStream(in);				) {
 				mavenDependencies = ((Set<URL>) ois.readObject());
 		    } catch (Exception e) {

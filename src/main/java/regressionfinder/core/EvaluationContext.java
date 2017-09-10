@@ -50,10 +50,8 @@ public class EvaluationContext extends JUnitTester {
 			
 			/*
 			  TODO: Multiple asserts to check that evaluation context is suitable for running delta debugger:
-			- assert test exists in both version
 			- assert test OK in reference version?
 			- assert test itself unchanged - otherwise do not continue
-			- assert both versions compile
 			- assert no changes in modules structure for multi-module maven projects
 			- assert no changes in dependencies (to save time needed to collect them)
 			*/
@@ -68,17 +66,29 @@ public class EvaluationContext extends JUnitTester {
 		}
 	}
 
-	private void prepareWorkingArea(CommandLineArgumentsInterpreter arguments) throws IOException {
+	private void prepareWorkingArea(CommandLineArgumentsInterpreter arguments) {
 		developmentMode = arguments.isPresent(DEVELOPMENT_MODE);
 		if (developmentMode) {
 			workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
 		} else {
-			Path workingDirectory = Files.createTempDirectory("deltadebugging");
-			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
-			mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
+			prepareWorkingAreaInEvaluationMode();
 		}
 	}
+
+	private void prepareWorkingAreaInEvaluationMode() {
+		tryCopyReferenceProjectToWorkingArea();
+		mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
+	}
 	
+	private void tryCopyReferenceProjectToWorkingArea() {
+		try {
+			Path workingDirectory = Files.createTempDirectory("deltadebugging");
+			workingAreaProject = referenceProject.cloneToWorkingDirectory(workingDirectory);
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't perform required I/O operations", e);
+		}
+	}
+
 	public MultiModuleMavenJavaProject getReferenceProject() {
 		return referenceProject;
 	}

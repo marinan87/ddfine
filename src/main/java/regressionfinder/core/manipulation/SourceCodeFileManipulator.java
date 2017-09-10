@@ -45,8 +45,7 @@ public class SourceCodeFileManipulator {
 		} else if (sourceCodeChange instanceof Delete) {
 			applySourceCodeChange((Delete) sourceCodeChange);
 		} else {
-			throw new UnsupportedOperationException(); // TODO: Move
-														// operation?
+			throw new UnsupportedOperationException(); // TODO: Move operation?
 		}
 	}
 
