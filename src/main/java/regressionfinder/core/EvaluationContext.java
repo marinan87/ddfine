@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.google.common.base.Preconditions;
+
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
@@ -42,28 +44,36 @@ public class EvaluationContext extends JUnitTester {
 	
 			
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
-		try {			
-			referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
-			faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
-			testClassName = arguments.getValue(FAILING_CLASS);
-			testMethodName = arguments.getValue(FAILING_METHOD);
-			
+		try {		
 			/*
 			  TODO: Multiple asserts to check that evaluation context is suitable for running delta debugger:
 			- assert test OK in reference version?
 			- assert test itself unchanged - otherwise do not continue
-			- assert no changes in modules structure for multi-module maven projects
 			- assert no changes in dependencies (to save time needed to collect them)
 			*/
 			
-			prepareWorkingArea(arguments);
-						
+			initializeProjects(arguments);
+			initializeTest(arguments);
+			prepareWorkingArea(arguments);			
 			reflectionalInvoker.initializeOnce();
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+
+	private void initializeProjects(CommandLineArgumentsInterpreter arguments) {
+		referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
+		faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
+		
+		boolean mavenModulesNotChanged = referenceProject.getMavenProjects().keySet().equals(faultyProject.getMavenProjects().keySet());
+		Preconditions.checkState(mavenModulesNotChanged, "There are changes detected in the structure of project. Cannot continue.");
+	}
+	
+	private void initializeTest(CommandLineArgumentsInterpreter arguments) {
+		testClassName = arguments.getValue(FAILING_CLASS);
+		testMethodName = arguments.getValue(FAILING_METHOD);
 	}
 
 	private void prepareWorkingArea(CommandLineArgumentsInterpreter arguments) {

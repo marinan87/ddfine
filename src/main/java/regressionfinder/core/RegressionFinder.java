@@ -20,13 +20,15 @@ import regressionfinder.model.MinimalChangeInFile;
 public class RegressionFinder {
 
 	@Autowired
-	private EvaluationContext evaluationContext;	
+	private EvaluationContext evaluationContext;
+	
+	@Autowired
+	private SourceTreeDifferencer treeDifferencer;
 		
 	@Autowired
 	private ResultViewer resultViewer;
 
 	public void run() {				
-		SourceTreeDifferencer treeDifferencer = new SourceTreeDifferencer(evaluationContext.getReferenceProject(), evaluationContext.getFaultyProject());
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
 		assertContainsOnlySupportedChanges(filteredChanges);
 
