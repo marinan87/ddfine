@@ -24,10 +24,14 @@ public class RegressionFinder {
 	
 	@Autowired
 	private SourceTreeDifferencer treeDifferencer;
+	
+	@Autowired
+	private StatisticsTracker statistics;
 		
 	@Autowired
 	private ResultViewer resultViewer;
 
+	
 	public void run() {				
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
 		assertContainsOnlySupportedChanges(filteredChanges);
@@ -36,7 +40,7 @@ public class RegressionFinder {
 		List<AffectedEntity> failureRelevantFiles = deltaDebug(filteredChanges);
 		resultViewer.showResult(failureRelevantFiles);
 		
-		System.out.println("Total number of trials was: " + evaluationContext.getNumberOfTrials());
+		statistics.logSummary();
 	}
 
 	private void assertContainsOnlySupportedChanges(List<MinimalApplicableChange> filteredChanges) {

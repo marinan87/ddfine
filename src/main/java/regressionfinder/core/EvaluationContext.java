@@ -27,34 +27,37 @@ import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
 public class EvaluationContext extends JUnitTester {
-
+	
 	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
 	private boolean developmentMode;
-	private int trials;
-	
+
 	@Value("${working.directory}")
 	private String preparedWorkingDirectory;
+	
+	@Autowired
+	private StatisticsTracker statistics;
 
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
-	
+
 	@Autowired
 	private MavenCompiler mavenCompiler;
-	
-			
+
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
-		try {		
+		try {
 			/*
-			  TODO: Multiple asserts to check that evaluation context is suitable for running delta debugger:
-			- assert test OK in reference version?
-			- assert test itself unchanged - otherwise do not continue
-			- assert no changes in dependencies (to save time needed to collect them)
-			*/
-			
+			 * TODO: Multiple asserts to check that evaluation context is
+			 * suitable for running delta debugger: - assert test OK in
+			 * reference version? - assert test itself unchanged - otherwise do
+			 * not continue - assert no changes in dependencies (to save time
+			 * needed to collect them)
+			 */
+
+			statistics.initializeResults(arguments);
 			initializeProjects(arguments);
 			initializeTest(arguments);
-			prepareWorkingArea(arguments);			
+			prepareWorkingArea(arguments);
 			reflectionalInvoker.initializeOnce();
 		} catch (Exception e) {
 			System.out.println("Exception during initialization of evaluation context");
@@ -66,11 +69,13 @@ public class EvaluationContext extends JUnitTester {
 	private void initializeProjects(CommandLineArgumentsInterpreter arguments) {
 		referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
 		faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
-		
-		boolean mavenModulesNotChanged = referenceProject.getMavenProjects().keySet().equals(faultyProject.getMavenProjects().keySet());
-		Preconditions.checkState(mavenModulesNotChanged, "There are changes detected in the structure of project. Cannot continue.");
+
+		boolean mavenModulesNotChanged = referenceProject.getMavenProjects().keySet()
+				.equals(faultyProject.getMavenProjects().keySet());
+		Preconditions.checkState(mavenModulesNotChanged,
+				"There are changes detected in the structure of project. Cannot continue.");
 	}
-	
+
 	private void initializeTest(CommandLineArgumentsInterpreter arguments) {
 		testClassName = arguments.getValue(FAILING_CLASS);
 		testMethodName = arguments.getValue(FAILING_METHOD);
@@ -89,7 +94,7 @@ public class EvaluationContext extends JUnitTester {
 		tryCopyReferenceProjectToWorkingArea();
 		mavenCompiler.triggerCompilationWithTestClasses(workingAreaProject);
 	}
-	
+
 	private void tryCopyReferenceProjectToWorkingArea() {
 		try {
 			Path workingDirectory = Files.createTempDirectory("deltadebugging");
@@ -102,15 +107,15 @@ public class EvaluationContext extends JUnitTester {
 	public MultiModuleMavenJavaProject getReferenceProject() {
 		return referenceProject;
 	}
-	
+
 	public MultiModuleMavenJavaProject getFaultyProject() {
 		return faultyProject;
 	}
-	
+
 	public MultiModuleMavenJavaProject getWorkingAreaProject() {
 		return workingAreaProject;
 	}
-	
+
 	public String getTestClassName() {
 		return testClassName;
 	}
@@ -118,24 +123,24 @@ public class EvaluationContext extends JUnitTester {
 	public String getTestMethodName() {
 		return testMethodName;
 	}
-	
+
 	public boolean isDevelopmentMode() {
 		return developmentMode;
 	}
-	
-	public int getNumberOfTrials() {
-		return trials;
-	}
-	
+
+
 	@Override
 	public int test(DeltaSet set) {
-		trials++;
-		
 		@SuppressWarnings("unchecked")
-		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());		
-		return reflectionalInvoker.testAppliedChangeSet(selectedChangeSet); 
+		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream()
+				.collect(toList());
+		int result = reflectionalInvoker.testAppliedChangeSet(selectedChangeSet);
+		
+		statistics.incrementNumberOfTrials();
+		
+		return result;
 	}
-	
+
 	public void cleanUp() throws IOException {
 		if (!developmentMode) {
 			FileUtils.deleteDirectory(workingAreaProject.getRootDirectory().toFile());

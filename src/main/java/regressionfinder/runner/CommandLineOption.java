@@ -4,6 +4,7 @@ import org.apache.commons.cli.Option;
 
 public enum CommandLineOption {
 	
+	EXECUTION_ID("id", "execution ID (=commit ID of the faulty version)", true, true),
 	REFERENCE_VERSION("r", "path to reference version", true, true),
 	FAULTY_VERSION("f", "path to faulty version", true, true),
 	FAILING_CLASS("cn", "fully qualified name of test class which contains failed test", true, true),
