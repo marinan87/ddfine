@@ -23,12 +23,18 @@ public class RegressionFinder {
 			
 	@Autowired
 	private ResultViewer resultViewer;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
 
 	
 	public void run() {
+		statisticsTracker.markPreparationPhaseFinished();
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
+		statisticsTracker.markDistillingPhaseFinished();
 		List<AffectedEntity> failureRelevantFiles = deltaDebug(filteredChanges);
-		resultViewer.showResult(failureRelevantFiles);		
+		statisticsTracker.markDeltaDebuggingPhaseFinished();
+		resultViewer.showResult(failureRelevantFiles);
 	}
 
 	private List<AffectedEntity> deltaDebug(List<MinimalApplicableChange> filteredChanges) {

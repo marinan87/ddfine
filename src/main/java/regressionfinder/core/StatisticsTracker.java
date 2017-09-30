@@ -43,24 +43,8 @@ public class StatisticsTracker {
 	
 	private Path resultsPath;
 	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
-	private long startTime;
+	private long startTime, preparationPhaseEndTime, distillingPhaseEndTime;
 
-	
-	public void incrementNumberOfTrials() {
-		numberOfTrials++;
-	}
-
-	public void incrementNumberOfSourceCodeChangesBySize(int numberOfChanges) {
-		numberOfSourceCodeChanges += numberOfChanges;
-	}
-	
-	public void incrementNumberOfUnsafeSourceCodeChanges() {
-		numberOfUnsafeSourceCodeChanges++;
-	}
-	
-	public void incrementNumberOfStructuralChanges() {
-		numberOfStructuralChanges++;
-	}
 	
 	public void initOnce() {
 		startTime = System.currentTimeMillis();
@@ -81,7 +65,37 @@ public class StatisticsTracker {
 		log("Starting the execution...");
 	}
 	
-	public void log(String line) {
+	public void markPreparationPhaseFinished() {
+		preparationPhaseEndTime = System.currentTimeMillis();
+		log(format("Preparation phase completed. Took time: %s.", getFormattedDuration(startTime)));
+	}
+	
+	public void markDistillingPhaseFinished() {
+		distillingPhaseEndTime = System.currentTimeMillis();
+		log(format("Change distilling phase completed. Took time: %s.", getFormattedDuration(preparationPhaseEndTime)));
+	}
+	
+	public void markDeltaDebuggingPhaseFinished() {
+		log(format("Delta debugging phase completed. Took time: %s.", getFormattedDuration(distillingPhaseEndTime)));
+	}
+	
+	public void incrementNumberOfTrials() {
+		numberOfTrials++;
+	}
+
+	public void incrementNumberOfSourceCodeChangesBySize(int numberOfChanges) {
+		numberOfSourceCodeChanges += numberOfChanges;
+	}
+	
+	public void incrementNumberOfUnsafeSourceCodeChanges() {
+		numberOfUnsafeSourceCodeChanges++;
+	}
+	
+	public void incrementNumberOfStructuralChanges() {
+		numberOfStructuralChanges++;
+	}
+	
+	private void log(String line) {
 		try {
 			Files.write(resultsPath, line.concat("\r\n").getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
@@ -94,23 +108,25 @@ public class StatisticsTracker {
 			.map(MinimalChangeInFile::getSourceCodeChange)
 			.collect(groupingBy(SourceCodeChange::getChangeType, counting()))
 			.entrySet().stream()
-			.sorted(Collections.reverseOrder(Map.Entry.comparingByValue())) // TODO: compare by change type, too
+			.sorted(Map.Entry.comparingByKey())
+			.sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
 			.collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+		log("Following changes detected:");
 		log(StringUtils.join(statisticsOnChangeType.entrySet().toArray(), "\r\n"));
 		
-		log(format("Number of detected changes: source code chunks - %s, structural changes - %s", 
-				numberOfSourceCodeChanges, numberOfStructuralChanges));
+		log(format("Number of detected changes: source code chunks - %s, structural changes - %s, total - %s", 
+				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges)); 
 	}
 	
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		log(format("Total execution time was: %s", getFormattedDuration()));
+		log(format("Total execution time was: %s", getFormattedDuration(startTime)));
 		log("*****");
 	}
 	
-	private String getFormattedDuration() {
+	private String getFormattedDuration(long startTime) {
 		Duration executionDuration = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS);
 		long seconds = executionDuration.getSeconds();
 		return format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
