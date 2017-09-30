@@ -10,15 +10,15 @@ import java.util.stream.Stream;
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
 
-public abstract class AffectedEntity {
+public abstract class AffectedUnit {
 
 	protected final CombinedPath path;
 	
-	protected AffectedEntity(CombinedPath path) {
+	protected AffectedUnit(CombinedPath path) {
 		this.path = path;
 	}
 
-	public static List<AffectedEntity> fromListOfMinimalChanges(List<MinimalApplicableChange> minimalChanges) {
+	public static List<AffectedUnit> fromListOfMinimalChanges(List<MinimalApplicableChange> minimalChanges) {
 		Stream<AffectedFile> streamOfAffectedFiles = extractAffectedFiles(minimalChanges);
 		Stream<AffectedStructuralEntity> streamOfAffectedStructuralEntities = extractAffectedStructuralEntities(minimalChanges);
 		

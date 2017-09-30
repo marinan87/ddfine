@@ -34,7 +34,7 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
-import regressionfinder.model.AffectedEntity;
+import regressionfinder.model.AffectedUnit;
 import regressionfinder.model.MinimalApplicableChange;
 
 @Component
@@ -63,7 +63,7 @@ public class DeltaDebugger extends JUnitTester {
 
 
 	@LogDuration("Delta debugging phase completed.")
-	public List<AffectedEntity> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
+	public List<AffectedUnit> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
 		initializeOnce();
 
 		DeltaSet completeDeltaSet = new DeltaSet();
@@ -71,7 +71,7 @@ public class DeltaDebugger extends JUnitTester {
 				
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> result = (List<MinimalApplicableChange>) new DD(this).ddMin(completeDeltaSet).stream().collect(Collectors.toList());
-		return AffectedEntity.fromListOfMinimalChanges(result);
+		return AffectedUnit.fromListOfMinimalChanges(result);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -116,12 +116,12 @@ public class DeltaDebugger extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
-		List<AffectedEntity> affectedFiles = AffectedEntity.fromListOfMinimalChanges(selectedChangeSet);
-		return runNextTrial(affectedFiles);
+		List<AffectedUnit> affectedUnits = AffectedUnit.fromListOfMinimalChanges(selectedChangeSet);
+		return runNextTrial(affectedUnits);
 	}
 
-	private int runNextTrial(List<AffectedEntity> affectedFiles) {
-		prepareWorkingAreaForNextTrial(affectedFiles);
+	private int runNextTrial(List<AffectedUnit> affectedUnits) {
+		prepareWorkingAreaForNextTrial(affectedUnits);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
 				Stream.of(testRunnerClassPaths.get(), evaluationContext.getWorkingAreaProject().collectClassPaths(), mavenDependenciesClassPaths.get())
@@ -129,19 +129,19 @@ public class DeltaDebugger extends JUnitTester {
 					.collect(Collectors.toSet()),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 		
-		restoreWorkingArea(affectedFiles);
+		restoreWorkingArea(affectedUnits);
 		
 		statisticsTracker.incrementNumberOfTrials();
 		return testOutcome;
 	}
 
-	private void prepareWorkingAreaForNextTrial(List<AffectedEntity> affectedFiles) {
-		affectedFiles.forEach(file -> file.manipulate(prepareWorkingAreaVisitor));	
+	private void prepareWorkingAreaForNextTrial(List<AffectedUnit> affectedUnits) {
+		affectedUnits.forEach(unit -> unit.manipulate(prepareWorkingAreaVisitor));	
 		mavenCompiler.triggerSimpleCompilation(evaluationContext.getWorkingAreaProject());
 	}
 
-	private void restoreWorkingArea(List<AffectedEntity> affectedFiles) {
-		affectedFiles.forEach(file -> file.manipulate(restoreWorkingAreaVisitor));
+	private void restoreWorkingArea(List<AffectedUnit> affectedUnits) {
+		affectedUnits.forEach(unit -> unit.manipulate(restoreWorkingAreaVisitor));
 	}
 	
 	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 

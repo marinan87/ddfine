@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationOutputHandler;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
@@ -56,6 +57,12 @@ public class MavenCompiler {
 		request.setMavenOpts(MAVEN_OPTS);
 		request.setOffline(true);
 		request.setGlobalSettingsFile(mavenSettings);
+		request.setOutputHandler(new InvocationOutputHandler() {
+			@Override
+			public void consumeLine(String arg0) {
+				// silently consume line
+			}
+		});
 
 		Invoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File(MAVEN_HOME));

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import regressionfinder.core.renderer.ResultViewer;
-import regressionfinder.model.AffectedEntity;
+import regressionfinder.model.AffectedUnit;
 import regressionfinder.model.MinimalApplicableChange;
 
 @Component
@@ -24,7 +24,7 @@ public class RegressionFinder {
 	
 	public void run() {
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
-		List<AffectedEntity> failureRelevantFiles = testInvoker.deltaDebug(filteredChanges);
-		resultViewer.showResult(failureRelevantFiles);
+		List<AffectedUnit> failureRelevantUnits = testInvoker.deltaDebug(filteredChanges);
+		resultViewer.showResult(failureRelevantUnits);
 	}
 }

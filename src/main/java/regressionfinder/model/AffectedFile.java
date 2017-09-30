@@ -8,7 +8,7 @@ import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
 
-public class AffectedFile extends AffectedEntity {
+public class AffectedFile extends AffectedUnit {
 
 	private final List<SourceCodeChange> sortedChangesInFile;
 	

@@ -5,7 +5,7 @@ import java.io.IOException;
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
 
-public class AffectedStructuralEntity extends AffectedEntity {
+public class AffectedStructuralEntity extends AffectedUnit {
 
 	private final StructuralChangeType structuralChangeType;
 	

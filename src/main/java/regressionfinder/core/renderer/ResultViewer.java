@@ -15,7 +15,7 @@ import htmlflow.elements.HtmlDiv;
 import htmlflow.elements.HtmlTable;
 import htmlflow.elements.HtmlTr;
 import regressionfinder.core.EvaluationContext;
-import regressionfinder.model.AffectedEntity;
+import regressionfinder.model.AffectedUnit;
 
 @Component
 public class ResultViewer {
@@ -38,10 +38,10 @@ public class ResultViewer {
 	@Autowired
 	private FaultyRenderingVisitor faultyRenderingVisitor;
 
-	public void showResult(List<AffectedEntity> failureRelevantFiles) {		
-		HtmlView<List<AffectedEntity>> fileView = fileView();
+	public void showResult(List<AffectedUnit> failureRelevantUnits) {		
+		HtmlView<List<AffectedUnit>> fileView = fileView();
 		try(PrintStream out = new PrintStream(new FileOutputStream(RESULT_HTML))) {
-            fileView.setPrintStream(out).write(failureRelevantFiles);
+            fileView.setPrintStream(out).write(failureRelevantUnits);
             Desktop.getDesktop().browse(URI.create(RESULT_HTML));
         } catch (IOException e) {
         	throw new RuntimeException(e);
@@ -49,27 +49,27 @@ public class ResultViewer {
 	}
 	    
 	@SuppressWarnings("unchecked")
-	private HtmlView<List<AffectedEntity>> fileView(){
-        HtmlView<List<AffectedEntity>> fileView = new HtmlView<>();
+	private HtmlView<List<AffectedUnit>> fileView(){
+        HtmlView<List<AffectedUnit>> fileView = new HtmlView<>();
         fileView
                 .head()
                 .title(PAGE_TITLE)
                 .scriptLink(SYNTAXHIGHLIGHTER_JS)
                 .linkCss(BOOTSTRAP_CSS)
                 .linkCss(THEME_CSS);
-        HtmlDiv<List<AffectedEntity>> div = fileView
+        HtmlDiv<List<AffectedUnit>> div = fileView
         		.body().classAttr("container")
         		.heading(1, RESULTS_HEADER)
         		.heading(2, String.format(TEST_HEADER_FORMAT, evaluationContext.getTestClassName(), evaluationContext.getTestMethodName()))
         		.div();
         
-        HtmlTable<List<AffectedEntity>> resultsTable = div.table().classAttr("table");
-        HtmlTr<List<AffectedEntity>> header = resultsTable.tr();
+        HtmlTable<List<AffectedUnit>> resultsTable = div.table().classAttr("table");
+        HtmlTr<List<AffectedUnit>> header = resultsTable.tr();
         header.th().text("Reference version");
         header.th().text("Faulty version");	
         resultsTable.trFromIterable(
-        	(AffectedEntity entity) -> entity.render(referenceRenderingVisitor), 
-        	(AffectedEntity entity) -> entity.render(faultyRenderingVisitor));       
+        	(AffectedUnit unit) -> unit.render(referenceRenderingVisitor), 
+        	(AffectedUnit unit) -> unit.render(faultyRenderingVisitor));       
         
         div.table().classAttr("table")
         		.trFromIterable(entity -> entity.toString());
