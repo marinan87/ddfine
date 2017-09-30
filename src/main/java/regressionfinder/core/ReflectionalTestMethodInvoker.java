@@ -1,5 +1,7 @@
 package regressionfinder.core;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
@@ -14,6 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.hamcrest.SelfDescribing;
 import org.junit.runner.manipulation.NoTestsRemainException;
@@ -32,7 +35,7 @@ import regressionfinder.model.AffectedEntity;
 import regressionfinder.model.MinimalApplicableChange;
 
 @Component
-public class ReflectionalTestMethodInvoker {
+public class ReflectionalTestMethodInvoker extends JUnitTester {
 	
 	private Supplier<Stream<URL>> testRunnerClassPaths, mavenDependenciesClassPaths;
 	private Throwable throwable;
@@ -42,6 +45,9 @@ public class ReflectionalTestMethodInvoker {
 	
 	@Autowired
 	private EvaluationContext evaluationContext;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
 
 	@Autowired
 	private PrepareWorkingAreaVisitor prepareWorkingAreaVisitor;
@@ -90,8 +96,15 @@ public class ReflectionalTestMethodInvoker {
 				.map(ProtectionDomain::getCodeSource)
 				.map(CodeSource::getLocation);
 	}
+	
+	@Override
+	public int test(DeltaSet set) {
+		@SuppressWarnings("unchecked")
+		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
+		return testAppliedChangeSet(selectedChangeSet);
+	}
 
-	public int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
+	private int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
 		List<AffectedEntity> affectedFiles = AffectedEntity.fromListOfMinimalChanges(sourceCodeChanges);
 		
 		prepareWorkingAreaForNextTrial(affectedFiles);
@@ -103,6 +116,8 @@ public class ReflectionalTestMethodInvoker {
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { throwable }));
 		
 		restoreWorkingArea(affectedFiles);
+		
+		statisticsTracker.incrementNumberOfTrials();
 		
 		return testOutcome;
 	}

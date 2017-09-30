@@ -1,6 +1,5 @@
 package regressionfinder.core;
 
-import static java.util.stream.Collectors.toList;
 import static regressionfinder.runner.CommandLineOption.DEVELOPMENT_MODE;
 import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
 import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
@@ -10,23 +9,19 @@ import static regressionfinder.runner.CommandLineOption.REFERENCE_VERSION;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 import org.codehaus.plexus.util.FileUtils;
-import org.deltadebugging.ddcore.DeltaSet;
-import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Preconditions;
 
-import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.runner.CommandLineArgumentsInterpreter;
 
 @Component
-public class EvaluationContext extends JUnitTester {
+public class EvaluationContext {
 	
 	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
@@ -34,16 +29,11 @@ public class EvaluationContext extends JUnitTester {
 
 	@Value("${working.directory}")
 	private String preparedWorkingDirectory;
-	
-	@Autowired
-	private StatisticsTracker statisticsTracker;
-
-	@Autowired
-	private ReflectionalTestMethodInvoker reflectionalInvoker;
 
 	@Autowired
 	private MavenCompiler mavenCompiler;
 
+	
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
 		/*
 		 * TODO: Multiple asserts to check that evaluation context is
@@ -56,7 +46,6 @@ public class EvaluationContext extends JUnitTester {
 		initializeProjects(arguments);
 		initializeTest(arguments);
 		prepareWorkingArea(arguments);
-		reflectionalInvoker.initializeOnce();
 	}
 
 	private void initializeProjects(CommandLineArgumentsInterpreter arguments) {
@@ -119,18 +108,6 @@ public class EvaluationContext extends JUnitTester {
 
 	public boolean isDevelopmentMode() {
 		return developmentMode;
-	}
-
-
-	@Override
-	public int test(DeltaSet set) {
-		@SuppressWarnings("unchecked")
-		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
-		int result = reflectionalInvoker.testAppliedChangeSet(selectedChangeSet);
-		
-		statisticsTracker.incrementNumberOfTrials();
-		
-		return result;
 	}
 
 	public void cleanUp() throws IOException {

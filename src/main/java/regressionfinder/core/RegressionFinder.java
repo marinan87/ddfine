@@ -14,29 +14,31 @@ import regressionfinder.model.MinimalApplicableChange;
 
 @Component
 public class RegressionFinder {
-
-	@Autowired
-	private EvaluationContext evaluationContext;
 		
 	@Autowired
 	private SourceTreeDifferencer treeDifferencer;
+	
+	@Autowired
+	private ReflectionalTestMethodInvoker testInvoker;
 			
 	@Autowired
 	private ResultViewer resultViewer;
 
 	
-	public void run() {				
+	public void run() {
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
 		List<AffectedEntity> failureRelevantFiles = deltaDebug(filteredChanges);
 		resultViewer.showResult(failureRelevantFiles);		
 	}
 
-	public List<AffectedEntity> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
+	private List<AffectedEntity> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
+		testInvoker.initializeOnce();
+
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
 				
 		@SuppressWarnings("unchecked")
-		List<MinimalApplicableChange> result = (List<MinimalApplicableChange>) new DD(evaluationContext).ddMin(completeDeltaSet).stream().collect(Collectors.toList());
+		List<MinimalApplicableChange> result = (List<MinimalApplicableChange>) new DD(testInvoker).ddMin(completeDeltaSet).stream().collect(Collectors.toList());
 		return AffectedEntity.fromListOfMinimalChanges(result);
 	}
 }
