@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.base.Preconditions;
 
+import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.runner.ApplicationCommandLineRunner;
 
@@ -39,6 +40,7 @@ public class EvaluationContext {
 	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
 	
+	@LogDuration("Preparation phase completed.")
 	public void initOnce() {
 		/*
 		 * TODO: Multiple asserts to check that evaluation context is

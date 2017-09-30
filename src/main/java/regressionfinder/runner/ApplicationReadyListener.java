@@ -4,7 +4,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 
 import regressionfinder.core.EvaluationContext;
-import regressionfinder.core.StatisticsTracker;
+import regressionfinder.core.statistics.StatisticsTracker;
 
 public class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
 

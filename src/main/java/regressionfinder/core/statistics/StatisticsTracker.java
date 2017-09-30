@@ -1,4 +1,4 @@
-package regressionfinder.core;
+package regressionfinder.core.statistics;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.counting;
@@ -43,7 +43,7 @@ public class StatisticsTracker {
 	
 	private Path resultsPath;
 	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
-	private long startTime, preparationPhaseEndTime, distillingPhaseEndTime;
+	private long startTime;
 
 	
 	public void initOnce() {
@@ -65,20 +65,6 @@ public class StatisticsTracker {
 		log("Starting the execution...");
 	}
 	
-	public void markPreparationPhaseFinished() {
-		preparationPhaseEndTime = System.currentTimeMillis();
-		log(format("Preparation phase completed. Took time: %s.", getFormattedDuration(startTime)));
-	}
-	
-	public void markDistillingPhaseFinished() {
-		distillingPhaseEndTime = System.currentTimeMillis();
-		log(format("Change distilling phase completed. Took time: %s.", getFormattedDuration(preparationPhaseEndTime)));
-	}
-	
-	public void markDeltaDebuggingPhaseFinished() {
-		log(format("Delta debugging phase completed. Took time: %s.", getFormattedDuration(distillingPhaseEndTime)));
-	}
-	
 	public void incrementNumberOfTrials() {
 		numberOfTrials++;
 	}
@@ -93,6 +79,10 @@ public class StatisticsTracker {
 	
 	public void incrementNumberOfStructuralChanges() {
 		numberOfStructuralChanges++;
+	}
+	
+	public void logDuration(String line, long durationInMillis) {
+		log(format(line, getFormattedDuration(durationInMillis)));
 	}
 	
 	private void log(String line) {
@@ -122,12 +112,12 @@ public class StatisticsTracker {
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		log(format("Total execution time was: %s", getFormattedDuration(startTime)));
+		logDuration("Total execution time was: %s", System.currentTimeMillis() - startTime);
 		log("*****");
 	}
 	
-	private String getFormattedDuration(long startTime) {
-		Duration executionDuration = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS);
+	private String getFormattedDuration(long durationInMillis) {
+		Duration executionDuration = Duration.of(durationInMillis, ChronoUnit.MILLIS);
 		long seconds = executionDuration.getSeconds();
 		return format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 	}

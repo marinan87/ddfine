@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.deltadebugging.ddcore.DD;
 import org.deltadebugging.ddcore.DeltaSet;
 import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.hamcrest.SelfDescribing;
@@ -26,6 +27,8 @@ import org.springframework.stereotype.Component;
 
 import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
 import regressionfinder.core.manipulation.RestoreWorkingAreaVisitor;
+import regressionfinder.core.statistics.LogDuration;
+import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
@@ -35,7 +38,7 @@ import regressionfinder.model.AffectedEntity;
 import regressionfinder.model.MinimalApplicableChange;
 
 @Component
-public class ReflectionalTestMethodInvoker extends JUnitTester {
+public class DeltaDebugger extends JUnitTester {
 	
 	private Supplier<Stream<URL>> testRunnerClassPaths, mavenDependenciesClassPaths;
 	private Throwable throwable;
@@ -58,9 +61,21 @@ public class ReflectionalTestMethodInvoker extends JUnitTester {
 	@Autowired
 	private MavenCompiler mavenCompiler;
 
+
+	@LogDuration("Delta debugging phase completed.")
+	public List<AffectedEntity> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
+		initializeOnce();
+
+		DeltaSet completeDeltaSet = new DeltaSet();
+		completeDeltaSet.addAll(filteredChanges);
+				
+		@SuppressWarnings("unchecked")
+		List<MinimalApplicableChange> result = (List<MinimalApplicableChange>) new DD(this).ddMin(completeDeltaSet).stream().collect(Collectors.toList());
+		return AffectedEntity.fromListOfMinimalChanges(result);
+	}
 	
 	@SuppressWarnings("unchecked")
-	public void initializeOnce() {
+	private void initializeOnce() {
 		gatherTestRunnerClassPathsForIsolatedClassLoader();
 		
 		if (!evaluationContext.isDevelopmentMode()) {
