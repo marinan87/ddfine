@@ -13,16 +13,19 @@ import java.time.temporal.ChronoUnit;
 
 import javax.annotation.PreDestroy;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import regressionfinder.runner.CommandLineArgumentsInterpreter;
+import regressionfinder.runner.ApplicationCommandLineRunner;
 
 @Service
 public class StatisticsTracker {
 	
 	private static final String RESULTS_FILE_NAME = "results.txt";
 
+	@Autowired
+	private ApplicationCommandLineRunner commandLineRunner;
 	
 	@Value("${evaluationbase.location}")
 	private String resultsBaseDirectory;
@@ -47,12 +50,12 @@ public class StatisticsTracker {
 	public void incrementNumberOfStructuralChanges() {
 		numberOfStructuralChanges++;
 	}
-		
-	public void initializeStatistics(CommandLineArgumentsInterpreter arguments) {
+	
+	public void initOnce() {
 		startTime = System.currentTimeMillis();
 		
 		try {
-			Path resultsDirectory = Paths.get(resultsBaseDirectory, arguments.getValue(EXECUTION_ID));
+			Path resultsDirectory = Paths.get(resultsBaseDirectory, commandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID));
 			if (!resultsDirectory.toFile().exists()) {
 				Files.createDirectory(resultsDirectory);
 			}

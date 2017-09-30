@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.base.Preconditions;
 
 import regressionfinder.model.MultiModuleMavenJavaProject;
-import regressionfinder.runner.CommandLineArgumentsInterpreter;
+import regressionfinder.runner.ApplicationCommandLineRunner;
 
 @Component
 public class EvaluationContext {
@@ -35,8 +35,11 @@ public class EvaluationContext {
 	@Autowired
 	private MavenCompiler mavenCompiler;
 
+	@Autowired
+	private ApplicationCommandLineRunner commandLineRunner;
 	
-	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
+	
+	public void initOnce() {
 		/*
 		 * TODO: Multiple asserts to check that evaluation context is
 		 * suitable for running delta debugger: - assert test OK in
@@ -45,14 +48,14 @@ public class EvaluationContext {
 		 * needed to collect them)
 		 */
 
-		initializeProjects(arguments);
-		initializeTest(arguments);
-		prepareWorkingArea(arguments);
+		initializeProjects();
+		initializeTest();
+		prepareWorkingArea();
 	}
 
-	private void initializeProjects(CommandLineArgumentsInterpreter arguments) {
-		referenceProject = new MultiModuleMavenJavaProject(arguments.getValue(REFERENCE_VERSION));
-		faultyProject = new MultiModuleMavenJavaProject(arguments.getValue(FAULTY_VERSION));
+	private void initializeProjects() {
+		referenceProject = new MultiModuleMavenJavaProject(commandLineRunner.getArgumentsHolder().getValue(REFERENCE_VERSION));
+		faultyProject = new MultiModuleMavenJavaProject(commandLineRunner.getArgumentsHolder().getValue(FAULTY_VERSION));
 
 		boolean mavenModulesNotChanged = referenceProject.getMavenProjects().keySet()
 				.equals(faultyProject.getMavenProjects().keySet());
@@ -60,13 +63,13 @@ public class EvaluationContext {
 				"There are changes detected in the structure of project. Cannot continue.");
 	}
 
-	private void initializeTest(CommandLineArgumentsInterpreter arguments) {
-		testClassName = arguments.getValue(FAILING_CLASS);
-		testMethodName = arguments.getValue(FAILING_METHOD);
+	private void initializeTest() {
+		testClassName = commandLineRunner.getArgumentsHolder().getValue(FAILING_CLASS);
+		testMethodName = commandLineRunner.getArgumentsHolder().getValue(FAILING_METHOD);
 	}
 
-	private void prepareWorkingArea(CommandLineArgumentsInterpreter arguments) {
-		developmentMode = arguments.isPresent(DEVELOPMENT_MODE);
+	private void prepareWorkingArea() {
+		developmentMode = commandLineRunner.getArgumentsHolder().isPresent(DEVELOPMENT_MODE);
 		if (developmentMode) {
 			workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
 		} else {

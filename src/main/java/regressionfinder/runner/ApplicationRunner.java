@@ -32,4 +32,9 @@ public class ApplicationRunner {
 	public CommandLineRunner commandLineRunner() {
 		return new ApplicationCommandLineRunner();
 	}
+	
+	@Bean
+	public ApplicationReadyListener applicationReadyListener() {
+		return new ApplicationReadyListener();
+	}
 }
