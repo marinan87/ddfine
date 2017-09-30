@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import javax.annotation.PreDestroy;
+
 import org.codehaus.plexus.util.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -110,6 +112,7 @@ public class EvaluationContext {
 		return developmentMode;
 	}
 
+	@PreDestroy
 	public void cleanUp() throws IOException {
 		if (!developmentMode) {
 			FileUtils.deleteDirectory(workingAreaProject.getRootDirectory().toFile());
