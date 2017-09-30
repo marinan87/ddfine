@@ -35,6 +35,7 @@ public class StatisticsTracker {
 	
 	private static final String RESULTS_FILE_NAME = "results.txt";
 
+	
 	@Autowired
 	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
@@ -85,6 +86,12 @@ public class StatisticsTracker {
 		log(format(line, getFormattedDuration(durationInMillis)));
 	}
 	
+	private String getFormattedDuration(long durationInMillis) {
+		Duration executionDuration = Duration.of(durationInMillis, ChronoUnit.MILLIS);
+		long seconds = executionDuration.getSeconds();
+		return format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+	}
+	
 	private void log(String line) {
 		try {
 			Files.write(resultsPath, line.concat("\r\n").getBytes(), StandardOpenOption.APPEND);
@@ -114,11 +121,5 @@ public class StatisticsTracker {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
 		logDuration("Total execution time was: %s", System.currentTimeMillis() - startTime);
 		log("*****");
-	}
-	
-	private String getFormattedDuration(long durationInMillis) {
-		Duration executionDuration = Duration.of(durationInMillis, ChronoUnit.MILLIS);
-		long seconds = executionDuration.getSeconds();
-		return format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 	}
 }

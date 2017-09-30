@@ -116,12 +116,11 @@ public class DeltaDebugger extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
-		return testAppliedChangeSet(selectedChangeSet);
+		List<AffectedEntity> affectedFiles = AffectedEntity.fromListOfMinimalChanges(selectedChangeSet);
+		return runNextTrial(affectedFiles);
 	}
 
-	private int testAppliedChangeSet(List<MinimalApplicableChange> sourceCodeChanges) {
-		List<AffectedEntity> affectedFiles = AffectedEntity.fromListOfMinimalChanges(sourceCodeChanges);
-		
+	private int runNextTrial(List<AffectedEntity> affectedFiles) {
 		prepareWorkingAreaForNextTrial(affectedFiles);
 		
 		int testOutcome = (int) runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, 
@@ -133,7 +132,6 @@ public class DeltaDebugger extends JUnitTester {
 		restoreWorkingArea(affectedFiles);
 		
 		statisticsTracker.incrementNumberOfTrials();
-		
 		return testOutcome;
 	}
 
