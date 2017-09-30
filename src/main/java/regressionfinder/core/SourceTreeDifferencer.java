@@ -40,11 +40,33 @@ public class SourceTreeDifferencer {
 	@Autowired
 	private EvaluationContext evaluationContext;
 	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
+	
+
 	public List<MinimalApplicableChange> distillChanges() {
-		return new SourceTreeScanner().distillChanges();
+		List<MinimalApplicableChange> result = new SourceTreeScanner().distillChanges();
+		assertContainsOnlySupportedChanges(result);
+		statisticsTracker.logDetectedChanges();
+		return result;
+	}
+	
+	private void assertContainsOnlySupportedChanges(List<MinimalApplicableChange> filteredChanges) {
+		List<MinimalChangeInFile> unsupportedChanges = filteredChanges.stream()
+			.filter(change -> (change instanceof MinimalChangeInFile))
+			.map(change -> (MinimalChangeInFile) change)
+			.filter(changeInFile -> {
+				SourceCodeChange sourceCodeChange = changeInFile.getSourceCodeChange();
+				return !SupportedModificationsRegistry.supportsModification(sourceCodeChange.getClass(), sourceCodeChange.getChangeType());
+			})
+			.collect(Collectors.toList());
+			
+		Preconditions.checkState(unsupportedChanges.isEmpty(), 
+				"Cannot continue. The following changes are not supported by the current prototype implementation:\r\n" 
+				+ unsupportedChanges);
 	}
 
-	public Stream<MinimalChangeInFile> distillChangesForPath(CombinedPath path) {
+	private Stream<MinimalChangeInFile> distillChangesForPath(CombinedPath path) {
 		File left = evaluationContext.getReferenceProject().findFile(path);
 		File right = evaluationContext.getFaultyProject().findFile(path);
 		
@@ -52,10 +74,14 @@ public class SourceTreeDifferencer {
 		distiller.extractClassifiedSourceCodeChanges(left, right);
 		
 		return filterOutSafeChanges(distiller.getSourceCodeChanges())
-			.map(change -> new MinimalChangeInFile(path, change));
+			.map(change -> {
+				statisticsTracker.incrementNumberOfUnsafeSourceCodeChanges();
+				return new MinimalChangeInFile(path, change);
+			});
 	}
 	
 	private Stream<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {
+		statisticsTracker.incrementNumberOfSourceCodeChangesBySize(allChanges.size());
 		return allChanges.stream()
 				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE);
 	}
@@ -81,13 +107,25 @@ public class SourceTreeDifferencer {
 			changesStream = Stream.concat(changesStream, 
 					comparisonResults.getModifiedFiles().stream().flatMap(SourceTreeDifferencer.this::distillChangesForPath));
 			changesStream = Stream.concat(changesStream,
-					comparisonResults.getRemovedFiles().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.FILE_REMOVED)));
+					comparisonResults.getRemovedFiles().stream().map(path -> {
+						statisticsTracker.incrementNumberOfStructuralChanges();
+						return new MinimalStructuralChange(path, StructuralChangeType.FILE_REMOVED);
+					}));
 			changesStream = Stream.concat(changesStream,
-					comparisonResults.getAddedFiles().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.FILE_ADDED)));
+					comparisonResults.getAddedFiles().stream().map(path -> {
+						statisticsTracker.incrementNumberOfStructuralChanges();
+						return new MinimalStructuralChange(path, StructuralChangeType.FILE_ADDED);
+					}));
 			changesStream = Stream.concat(changesStream,
-					comparisonResults.getRemovedPackages().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_REMOVED)));
+					comparisonResults.getRemovedPackages().stream().map(path -> {
+						statisticsTracker.incrementNumberOfStructuralChanges();
+						return new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_REMOVED);
+					}));
 			changesStream = Stream.concat(changesStream,
-					comparisonResults.getAddedPackages().stream().map(path -> new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_ADDED)));
+					comparisonResults.getAddedPackages().stream().map(path -> {
+						statisticsTracker.incrementNumberOfStructuralChanges();
+						return new MinimalStructuralChange(path, StructuralChangeType.PACKAGE_ADDED);
+					}));
 			
 			return changesStream.collect(Collectors.toList());
 		}	

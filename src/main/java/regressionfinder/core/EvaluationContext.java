@@ -36,7 +36,7 @@ public class EvaluationContext extends JUnitTester {
 	private String preparedWorkingDirectory;
 	
 	@Autowired
-	private StatisticsTracker statistics;
+	private StatisticsTracker statisticsTracker;
 
 	@Autowired
 	private ReflectionalTestMethodInvoker reflectionalInvoker;
@@ -45,25 +45,18 @@ public class EvaluationContext extends JUnitTester {
 	private MavenCompiler mavenCompiler;
 
 	public void initializeOnce(CommandLineArgumentsInterpreter arguments) {
-		try {
-			/*
-			 * TODO: Multiple asserts to check that evaluation context is
-			 * suitable for running delta debugger: - assert test OK in
-			 * reference version? - assert test itself unchanged - otherwise do
-			 * not continue - assert no changes in dependencies (to save time
-			 * needed to collect them)
-			 */
+		/*
+		 * TODO: Multiple asserts to check that evaluation context is
+		 * suitable for running delta debugger: - assert test OK in
+		 * reference version? - assert test itself unchanged - otherwise do
+		 * not continue - assert no changes in dependencies (to save time
+		 * needed to collect them)
+		 */
 
-			statistics.initializeResults(arguments);
-			initializeProjects(arguments);
-			initializeTest(arguments);
-			prepareWorkingArea(arguments);
-			reflectionalInvoker.initializeOnce();
-		} catch (Exception e) {
-			System.out.println("Exception during initialization of evaluation context");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		initializeProjects(arguments);
+		initializeTest(arguments);
+		prepareWorkingArea(arguments);
+		reflectionalInvoker.initializeOnce();
 	}
 
 	private void initializeProjects(CommandLineArgumentsInterpreter arguments) {
@@ -132,11 +125,10 @@ public class EvaluationContext extends JUnitTester {
 	@Override
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
-		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream()
-				.collect(toList());
+		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
 		int result = reflectionalInvoker.testAppliedChangeSet(selectedChangeSet);
 		
-		statistics.incrementNumberOfTrials();
+		statisticsTracker.incrementNumberOfTrials();
 		
 		return result;
 	}

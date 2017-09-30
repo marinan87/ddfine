@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,19 +26,29 @@ public class StatisticsTracker {
 	private String resultsBaseDirectory;
 	
 	private Path resultsPath;
-	
-	private int trials;
+	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
+	private long startTime;
 
 	
 	public void incrementNumberOfTrials() {
-		trials++;
-	}
-	
-	public int getNumberOfTrials() {
-		return trials;
+		numberOfTrials++;
 	}
 
-	public void initializeResults(CommandLineArgumentsInterpreter arguments) {
+	public void incrementNumberOfSourceCodeChangesBySize(int numberOfChanges) {
+		numberOfSourceCodeChanges += numberOfChanges;
+	}
+	
+	public void incrementNumberOfUnsafeSourceCodeChanges() {
+		numberOfUnsafeSourceCodeChanges++;
+	}
+	
+	public void incrementNumberOfStructuralChanges() {
+		numberOfStructuralChanges++;
+	}
+		
+	public void initializeStatistics(CommandLineArgumentsInterpreter arguments) {
+		startTime = System.currentTimeMillis();
+		
 		try {
 			Path resultsDirectory = Paths.get(resultsBaseDirectory, arguments.getValue(EXECUTION_ID));
 			if (!resultsDirectory.toFile().exists()) {
@@ -50,10 +62,10 @@ public class StatisticsTracker {
 			throw new RuntimeException("Failed to initialize results file.", e);
 		}
 		
-		logResult("Starting the execution...");
+		log("Starting the execution...");
 	}
 	
-	public void logResult(String line) {
+	public void log(String line) {
 		try {
 			Files.write(resultsPath, line.concat("\r\n").getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
@@ -61,7 +73,21 @@ public class StatisticsTracker {
 		}
 	}
 	
-	public void logSummary() {
-		logResult(format("Total number of DD iterations was: %s", trials));
+	public void logDetectedChanges() {
+		log(format("Number of detected changes: source code chunks - %s, structural changes - %s", 
+				numberOfSourceCodeChanges, numberOfStructuralChanges));
+		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges)); 
+	}
+	
+	public void logExecutionSummary() {
+		log(format("Total number of DD iterations was: %s", numberOfTrials));
+		log(format("Total execution time was: %s", getFormattedDuration()));
+		log("*****");
+	}
+	
+	private String getFormattedDuration() {
+		Duration executionDuration = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS);
+		long seconds = executionDuration.getSeconds();
+		return format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 	}
 }

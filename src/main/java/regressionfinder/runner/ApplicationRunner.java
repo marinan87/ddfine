@@ -10,6 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.RegressionFinder;
+import regressionfinder.core.StatisticsTracker;
 
 @SpringBootApplication
 @ComponentScan(basePackageClasses = { RegressionFinder.class } )
@@ -22,6 +23,10 @@ public class ApplicationRunner {
 	
 	@Autowired
 	private RegressionFinder handler;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
+	
 
 	public static void main(String[] args) {
 		configureHeadlessProperty();
@@ -34,11 +39,21 @@ public class ApplicationRunner {
 	
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext context) {
-		return args -> {
-			CommandLineArgumentsInterpreter arguments = new CommandLineArgumentsInterpreter(args);
-			evaluationContext.initializeOnce(arguments);
-			handler.run();
-			evaluationContext.cleanUp();
+		return args -> {			
+			try {
+				CommandLineArgumentsInterpreter arguments = new CommandLineArgumentsInterpreter(args);
+				statisticsTracker.initializeStatistics(arguments);
+				evaluationContext.initializeOnce(arguments);
+				
+				handler.run();
+				
+				statisticsTracker.logExecutionSummary();
+				evaluationContext.cleanUp();
+			} catch (Exception e) {
+				statisticsTracker.log("Exception during evaluation. Terminating application...");
+				e.printStackTrace();
+				System.exit(1);
+			}
 		};
 	}
 }
