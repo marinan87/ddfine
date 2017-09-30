@@ -45,16 +45,20 @@ public class SourceTreeDifferencer {
 	
 
 	public List<MinimalApplicableChange> distillChanges() {
-		List<MinimalApplicableChange> result = new SourceTreeScanner().distillChanges();
-		assertContainsOnlySupportedChanges(result);
-		statisticsTracker.logDetectedChanges();
-		return result;
+		List<MinimalApplicableChange> filteredChanges = new SourceTreeScanner().distillChanges();
+		
+		List<MinimalChangeInFile> sourceCodeChanges = filteredChanges.stream()
+				.filter(change -> (change instanceof MinimalChangeInFile))
+				.map(change -> (MinimalChangeInFile) change)
+				.collect(Collectors.toList());
+		assertContainsOnlySupportedChanges(sourceCodeChanges);
+		statisticsTracker.logDetectedChanges(sourceCodeChanges);
+		
+		return filteredChanges;
 	}
 	
-	private void assertContainsOnlySupportedChanges(List<MinimalApplicableChange> filteredChanges) {
-		List<MinimalChangeInFile> unsupportedChanges = filteredChanges.stream()
-			.filter(change -> (change instanceof MinimalChangeInFile))
-			.map(change -> (MinimalChangeInFile) change)
+	private void assertContainsOnlySupportedChanges(List<MinimalChangeInFile> changesInFile) {
+		List<MinimalChangeInFile> unsupportedChanges = changesInFile.stream()
 			.filter(changeInFile -> {
 				SourceCodeChange sourceCodeChange = changeInFile.getSourceCodeChange();
 				return !SupportedModificationsRegistry.supportsModification(sourceCodeChange.getClass(), sourceCodeChange.getChangeType());

@@ -1,6 +1,9 @@
 package regressionfinder.core;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 import static regressionfinder.runner.CommandLineOption.EXECUTION_ID;
 
 import java.io.IOException;
@@ -10,13 +13,21 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
+import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.runner.ApplicationCommandLineRunner;
 
 @Service
@@ -25,7 +36,7 @@ public class StatisticsTracker {
 	private static final String RESULTS_FILE_NAME = "results.txt";
 
 	@Autowired
-	private ApplicationCommandLineRunner commandLineRunner;
+	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
 	@Value("${evaluationbase.location}")
 	private String resultsBaseDirectory;
@@ -55,7 +66,7 @@ public class StatisticsTracker {
 		startTime = System.currentTimeMillis();
 		
 		try {
-			Path resultsDirectory = Paths.get(resultsBaseDirectory, commandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID));
+			Path resultsDirectory = Paths.get(resultsBaseDirectory, applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID));
 			if (!resultsDirectory.toFile().exists()) {
 				Files.createDirectory(resultsDirectory);
 			}
@@ -78,7 +89,15 @@ public class StatisticsTracker {
 		}
 	}
 	
-	public void logDetectedChanges() {
+	public void logDetectedChanges(List<MinimalChangeInFile> sourceCodeChanges) {
+		Map<ChangeType, Long> statisticsOnChangeType = sourceCodeChanges.stream()
+			.map(MinimalChangeInFile::getSourceCodeChange)
+			.collect(groupingBy(SourceCodeChange::getChangeType, counting()))
+			.entrySet().stream()
+			.sorted(Collections.reverseOrder(Map.Entry.comparingByValue())) // TODO: compare by change type, too
+			.collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+		log(StringUtils.join(statisticsOnChangeType.entrySet().toArray(), "\r\n"));
+		
 		log(format("Number of detected changes: source code chunks - %s, structural changes - %s", 
 				numberOfSourceCodeChanges, numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges)); 

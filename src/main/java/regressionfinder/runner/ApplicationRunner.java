@@ -1,6 +1,5 @@
 package regressionfinder.runner;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -29,7 +28,7 @@ public class ApplicationRunner {
 	}
 	
 	@Bean
-	public CommandLineRunner commandLineRunner() {
+	public ApplicationCommandLineRunner applicationCommandLineRunner() {
 		return new ApplicationCommandLineRunner();
 	}
 	

@@ -36,7 +36,7 @@ public class EvaluationContext {
 	private MavenCompiler mavenCompiler;
 
 	@Autowired
-	private ApplicationCommandLineRunner commandLineRunner;
+	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
 	
 	public void initOnce() {
@@ -54,8 +54,8 @@ public class EvaluationContext {
 	}
 
 	private void initializeProjects() {
-		referenceProject = new MultiModuleMavenJavaProject(commandLineRunner.getArgumentsHolder().getValue(REFERENCE_VERSION));
-		faultyProject = new MultiModuleMavenJavaProject(commandLineRunner.getArgumentsHolder().getValue(FAULTY_VERSION));
+		referenceProject = new MultiModuleMavenJavaProject(applicationCommandLineRunner.getArgumentsHolder().getValue(REFERENCE_VERSION));
+		faultyProject = new MultiModuleMavenJavaProject(applicationCommandLineRunner.getArgumentsHolder().getValue(FAULTY_VERSION));
 
 		boolean mavenModulesNotChanged = referenceProject.getMavenProjects().keySet()
 				.equals(faultyProject.getMavenProjects().keySet());
@@ -64,12 +64,12 @@ public class EvaluationContext {
 	}
 
 	private void initializeTest() {
-		testClassName = commandLineRunner.getArgumentsHolder().getValue(FAILING_CLASS);
-		testMethodName = commandLineRunner.getArgumentsHolder().getValue(FAILING_METHOD);
+		testClassName = applicationCommandLineRunner.getArgumentsHolder().getValue(FAILING_CLASS);
+		testMethodName = applicationCommandLineRunner.getArgumentsHolder().getValue(FAILING_METHOD);
 	}
 
 	private void prepareWorkingArea() {
-		developmentMode = commandLineRunner.getArgumentsHolder().isPresent(DEVELOPMENT_MODE);
+		developmentMode = applicationCommandLineRunner.getArgumentsHolder().isPresent(DEVELOPMENT_MODE);
 		if (developmentMode) {
 			workingAreaProject = new MultiModuleMavenJavaProject(preparedWorkingDirectory);
 		} else {
