@@ -67,8 +67,9 @@ public class StatisticsTracker {
 		log("Starting the execution...");
 	}
 	
-	public void registerNextTrial(TestOutcome outcome) {
-		log(format("DD trial #%s. Outcome was: %s.", numberOfTrials + 1, outcome));
+	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
+		log(format("DD trial #%s. Set size: %s. Outcome was: %s.", numberOfTrials + 1, setSize, outcome));
+		log(format("Set content: %s", setContent));
 		numberOfTrials++;
 	}
 

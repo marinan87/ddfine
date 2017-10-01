@@ -2,6 +2,8 @@ package regressionfinder.core;
 
 import static java.util.stream.Collectors.toList;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,10 @@ import regressionfinder.model.TestOutcome;
 
 @Component
 public class DeltaDebugger extends JUnitTester {
+	
+	private static PrintStream DEFAULT_PRINT_STREAM = System.out;
+	private ByteArrayOutputStream deltaDebuggerOutputStream;
+	
 	
 	@Autowired
 	private EvaluationContext evaluationContext;
@@ -45,12 +51,27 @@ public class DeltaDebugger extends JUnitTester {
 	public List<AffectedUnit> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
+		
+		redirectSystemOutput();
 				
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> result = (List<MinimalApplicableChange>) new DD(this).ddMin(completeDeltaSet).stream().collect(Collectors.toList());
+		
+		restoreSystemOutput();
 		return AffectedUnit.fromListOfMinimalChanges(result);
 	}
 	
+	private void redirectSystemOutput() {
+		deltaDebuggerOutputStream = new ByteArrayOutputStream();
+	    PrintStream ps = new PrintStream(deltaDebuggerOutputStream);
+	    System.setOut(ps);
+	}
+	
+	private void restoreSystemOutput() {
+	    System.out.flush();
+	    System.setOut(DEFAULT_PRINT_STREAM);		
+	}
+
 	@Override
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
@@ -58,7 +79,7 @@ public class DeltaDebugger extends JUnitTester {
 		List<AffectedUnit> affectedUnits = AffectedUnit.fromListOfMinimalChanges(selectedChangeSet);
 		
 		int testOutcome = runNextTrial(affectedUnits);
-		statisticsTracker.registerNextTrial(TestOutcome.fromNumericCode(testOutcome));
+		statisticsTracker.registerNextTrial(extractOutputFromStream(), selectedChangeSet.size(), TestOutcome.fromNumericCode(testOutcome));
 		return testOutcome;
 	}
 
@@ -76,5 +97,13 @@ public class DeltaDebugger extends JUnitTester {
 
 	private void restoreWorkingArea(List<AffectedUnit> affectedUnits) {
 		affectedUnits.forEach(unit -> unit.manipulate(restoreWorkingAreaVisitor));
+	}
+	
+	private String extractOutputFromStream() {
+		String result = deltaDebuggerOutputStream.toString();
+		String lookupCalledString = "Lookup called: ";
+		result = result.substring(result.lastIndexOf(lookupCalledString) + lookupCalledString.length());
+		deltaDebuggerOutputStream.reset();
+		return result;
 	}
 }
