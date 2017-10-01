@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.TestOutcome;
 import regressionfinder.runner.ApplicationCommandLineRunner;
@@ -97,7 +98,7 @@ public class StatisticsTracker {
 	
 	private void log(String line) {
 		try {
-			Files.write(resultsPath, line.concat("\r\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(resultsPath, line.trim().concat("\r\n").getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -117,6 +118,13 @@ public class StatisticsTracker {
 		log(format("Number of detected changes: source code chunks - %s, structural changes - %s, total - %s", 
 				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges)); 
+	}
+	
+	public void logDeltaDebuggingChunks(List<MinimalApplicableChange> chunks) {
+		int chunkNumber = 0;
+		for (MinimalApplicableChange chunk : chunks) {
+			log(format("[%s] %s", chunkNumber++, chunk));
+		}			
 	}
 	
 	@PreDestroy

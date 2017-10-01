@@ -51,6 +51,7 @@ public class DeltaDebugger extends JUnitTester {
 	public List<AffectedUnit> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);
+		statisticsTracker.logDeltaDebuggingChunks(filteredChanges);
 		
 		redirectSystemOutput();
 				

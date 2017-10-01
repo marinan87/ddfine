@@ -1,5 +1,7 @@
 package regressionfinder.model;
 
+import static java.lang.String.format;
+
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 
 public class MinimalChangeInFile extends MinimalApplicableChange {
@@ -17,6 +19,6 @@ public class MinimalChangeInFile extends MinimalApplicableChange {
 	
 	@Override
 	public String toString() {
-		return String.format("Change of type %s in path %s\r\n", sourceCodeChange.getChangeType(), pathToFile);
+		return format("Change of type %s in path %s\r\n", sourceCodeChange.getChangeType(), pathToFile);
 	}
 }

@@ -1,5 +1,7 @@
 package regressionfinder.model;
 
+import static java.lang.String.format;
+
 public class MinimalStructuralChange extends MinimalApplicableChange {
 	
 	private final StructuralChangeType structuralChange;
@@ -15,6 +17,6 @@ public class MinimalStructuralChange extends MinimalApplicableChange {
 	
 	@Override
 	public String toString() {
-		return String.format("Structural change of type %s in path %s\r\n", structuralChange, pathToFile);
+		return format("Structural change of type %s in path %s\r\n", structuralChange, pathToFile);
 	}
 }
