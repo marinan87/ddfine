@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.model.MinimalChangeInFile;
+import regressionfinder.model.TestOutcome;
 import regressionfinder.runner.ApplicationCommandLineRunner;
 
 @Service
@@ -66,7 +67,8 @@ public class StatisticsTracker {
 		log("Starting the execution...");
 	}
 	
-	public void incrementNumberOfTrials() {
+	public void registerNextTrial(TestOutcome outcome) {
+		log(format("DD trial #%s. Outcome was: %s.", numberOfTrials + 1, outcome));
 		numberOfTrials++;
 	}
 

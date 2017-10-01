@@ -1,0 +1,60 @@
+Starting the execution...
+Preparation phase completed. Took time: 0:00:06.
+Following changes detected:
+INCREASING_ACCESSIBILITY_CHANGE=4
+DECREASING_ACCESSIBILITY_CHANGE=3
+STATEMENT_INSERT=3
+ADDITIONAL_FUNCTIONALITY=2
+STATEMENT_UPDATE=2
+ADDITIONAL_CLASS=1
+ADDITIONAL_OBJECT_STATE=1
+METHOD_RENAMING=1
+PARAMETER_INSERT=1
+PARAMETER_RENAMING=1
+PARAMETER_TYPE_CHANGE=1
+REMOVED_FUNCTIONALITY=1
+REMOVING_ATTRIBUTE_MODIFIABILITY=1
+REMOVING_CLASS_DERIVABILITY=1
+REMOVING_METHOD_OVERRIDABILITY=1
+Number of detected changes: source code chunks - 25, structural changes - 4, total - 29
+Number of changes to try after filtering out safe changes: 28
+Change distilling phase completed. Took time: 0:00:01.
+DD trial #1. Outcome was: PASS.
+DD trial #2. Outcome was: FAIL.
+DD trial #3. Outcome was: PASS.
+DD trial #4. Outcome was: UNRESOLVED.
+DD trial #5. Outcome was: UNRESOLVED.
+DD trial #6. Outcome was: PASS.
+DD trial #7. Outcome was: FAIL.
+DD trial #8. Outcome was: PASS.
+DD trial #9. Outcome was: PASS.
+DD trial #10. Outcome was: UNRESOLVED.
+DD trial #11. Outcome was: PASS.
+DD trial #12. Outcome was: FAIL.
+DD trial #13. Outcome was: FAIL.
+DD trial #14. Outcome was: PASS.
+DD trial #15. Outcome was: UNRESOLVED.
+DD trial #16. Outcome was: PASS.
+DD trial #17. Outcome was: UNRESOLVED.
+DD trial #18. Outcome was: PASS.
+DD trial #19. Outcome was: FAIL.
+DD trial #20. Outcome was: FAIL.
+DD trial #21. Outcome was: PASS.
+DD trial #22. Outcome was: UNRESOLVED.
+DD trial #23. Outcome was: UNRESOLVED.
+DD trial #24. Outcome was: PASS.
+DD trial #25. Outcome was: FAIL.
+DD trial #26. Outcome was: PASS.
+DD trial #27. Outcome was: PASS.
+DD trial #28. Outcome was: FAIL.
+DD trial #29. Outcome was: FAIL.
+DD trial #30. Outcome was: FAIL.
+DD trial #31. Outcome was: FAIL.
+DD trial #32. Outcome was: PASS.
+DD trial #33. Outcome was: UNRESOLVED.
+DD trial #34. Outcome was: UNRESOLVED.
+DD trial #35. Outcome was: PASS.
+Delta debugging phase completed. Took time: 0:01:50.
+Total number of DD iterations was: 35
+Total execution time was: 0:01:59
+*****

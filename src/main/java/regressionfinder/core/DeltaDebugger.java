@@ -14,8 +14,10 @@ import org.springframework.stereotype.Component;
 import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
 import regressionfinder.core.manipulation.RestoreWorkingAreaVisitor;
 import regressionfinder.core.statistics.LogDuration;
+import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.AffectedUnit;
 import regressionfinder.model.MinimalApplicableChange;
+import regressionfinder.model.TestOutcome;
 
 @Component
 public class DeltaDebugger extends JUnitTester {
@@ -34,6 +36,9 @@ public class DeltaDebugger extends JUnitTester {
 	
 	@Autowired
 	private ReflectionalTestMethodRunner testMethodRunner;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
 
 
 	@LogDuration("Delta debugging phase completed.")
@@ -51,7 +56,10 @@ public class DeltaDebugger extends JUnitTester {
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
 		List<AffectedUnit> affectedUnits = AffectedUnit.fromListOfMinimalChanges(selectedChangeSet);
-		return runNextTrial(affectedUnits);
+		
+		int testOutcome = runNextTrial(affectedUnits);
+		statisticsTracker.registerNextTrial(TestOutcome.fromNumericCode(testOutcome));
+		return testOutcome;
 	}
 
 	private int runNextTrial(List<AffectedUnit> affectedUnits) {

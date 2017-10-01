@@ -8,7 +8,6 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
@@ -21,9 +20,6 @@ public class ReflectionalTestMethodRunner {
 	@Autowired
 	private EvaluationContext evaluationContext;
 	
-	@Autowired
-	private StatisticsTracker statisticsTracker;
-	
 	
 	public <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object obtainOriginalException() {
 		return runMethodInIsolatedTestRunner(JUnitTestRunner.class, evaluationContext.getClassPathsForObtainingOriginalFault(),
@@ -31,8 +27,6 @@ public class ReflectionalTestMethodRunner {
 	}
 	
 	public <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runFaultyTest() {
-		statisticsTracker.incrementNumberOfTrials();
-
 		return runMethodInIsolatedTestRunner(DeltaDebuggerTestRunner.class, evaluationContext.getClasspathsForTestExecution(),
 				new MethodDescriptor("runTest", new Class<?>[] { Throwable.class }, new Object[] { evaluationContext.getThrowable() }));
 	}
