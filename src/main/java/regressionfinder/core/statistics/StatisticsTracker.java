@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.statistics.persistence.entities.Execution;
+import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.TestOutcome;
@@ -41,9 +43,13 @@ public class StatisticsTracker {
 	@Autowired
 	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
+	@Autowired
+	private ExecutionRepository executionRepository;
+		
 	@Value("${evaluationbase.location}")
 	private String resultsBaseDirectory;
 	
+	private String executionId;
 	private Path resultsPath;
 	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
 	private long startTime;
@@ -53,9 +59,10 @@ public class StatisticsTracker {
 	
 	public void initOnce() {
 		startTime = System.currentTimeMillis();
+		executionId = applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID);
 		
 		try {
-			Path resultsDirectory = Paths.get(resultsBaseDirectory, applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID));
+			Path resultsDirectory = Paths.get(resultsBaseDirectory, executionId);
 			if (!resultsDirectory.toFile().exists()) {
 				Files.createDirectory(resultsDirectory);
 			}
@@ -68,7 +75,19 @@ public class StatisticsTracker {
 			throw new RuntimeException("Failed to initialize results file.", e);
 		}
 		
+		logStart();
+	}
+	
+	private void logStart() {
 		log("Starting the execution...");
+		
+		Execution previousExecution = executionRepository.findByExecutionId(executionId);
+		if (previousExecution != null) {
+			executionRepository.delete(previousExecution);
+		}
+		
+		Execution execution = new Execution(executionId);
+		executionRepository.save(execution);
 	}
 	
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
