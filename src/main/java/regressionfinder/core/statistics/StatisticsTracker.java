@@ -60,9 +60,10 @@ public class StatisticsTracker {
 				Files.createDirectory(resultsDirectory);
 			}
 			resultsPath = resultsDirectory.resolve(RESULTS_FILE_NAME);
-			if (!resultsPath.toFile().exists()) {
-				Files.createFile(resultsPath);
+			if (resultsPath.toFile().exists()) {
+				Files.delete(resultsPath);
 			}
+			Files.createFile(resultsPath);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to initialize results file.", e);
 		}
