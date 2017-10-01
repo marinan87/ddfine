@@ -18,31 +18,31 @@ REMOVING_CLASS_DERIVABILITY=1
 REMOVING_METHOD_OVERRIDABILITY=1
 Number of detected changes: source code chunks - 25, structural changes - 4, total - 29
 Number of changes to try after filtering out safe changes: 28
-Change distilling phase completed. Took time: 0:00:01.
-[0] Change of type REMOVING_CLASS_DERIVABILITY in path \..\package1\Example.java
-[1] Change of type REMOVING_ATTRIBUTE_MODIFIABILITY in path \..\package1\Example.java
-[2] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[3] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[4] Change of type STATEMENT_UPDATE in path \..\package1\Example.java
-[5] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[6] Change of type STATEMENT_INSERT in path \..\package1\Example.java
-[7] Change of type STATEMENT_INSERT in path \..\package1\Example.java
-[8] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[9] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[10] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[11] Change of type PARAMETER_RENAMING in path \..\package1\Example.java
-[12] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java
-[13] Change of type STATEMENT_INSERT in path \..\package1\Example.java
-[14] Change of type STATEMENT_UPDATE in path \..\package1\Example.java
-[15] Change of type REMOVING_METHOD_OVERRIDABILITY in path \..\package1\Example.java
-[16] Change of type PARAMETER_INSERT in path \..\package1\Example.java
-[17] Change of type METHOD_RENAMING in path \..\package1\Example.java
-[18] Change of type PARAMETER_TYPE_CHANGE in path \..\package1\Example.java
-[19] Change of type ADDITIONAL_FUNCTIONALITY in path \..\package1\Example.java
-[20] Change of type REMOVED_FUNCTIONALITY in path \..\package1\Example.java
-[21] Change of type ADDITIONAL_OBJECT_STATE in path \..\package1\Example.java
-[22] Change of type ADDITIONAL_CLASS in path \..\package1\Example.java
-[23] Change of type ADDITIONAL_FUNCTIONALITY in path \..\package2\Example2.java
+Change distilling phase completed. Took time: 0:00:00.
+[0] Change of type REMOVING_CLASS_DERIVABILITY in path \..\package1\Example.java. Location in reference version: 27.
+[1] Change of type REMOVING_ATTRIBUTE_MODIFIABILITY in path \..\package1\Example.java. Location in reference version: 56.
+[2] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 432.
+[3] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 589.
+[4] Change of type STATEMENT_UPDATE in path \..\package1\Example.java. Location in reference version: 125.
+[5] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 88.
+[6] Change of type STATEMENT_INSERT in path \..\package1\Example.java. Location in reference version: 326.
+[7] Change of type STATEMENT_INSERT in path \..\package1\Example.java. Location in reference version: 326.
+[8] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 745.
+[9] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 347.
+[10] Change of type INCREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 521.
+[11] Change of type PARAMETER_RENAMING in path \..\package1\Example.java. Location in reference version: 933.
+[12] Change of type DECREASING_ACCESSIBILITY_CHANGE in path \..\package1\Example.java. Location in reference version: 655.
+[13] Change of type STATEMENT_INSERT in path \..\package1\Example.java. Location in reference version: 187.
+[14] Change of type STATEMENT_UPDATE in path \..\package1\Example.java. Location in reference version: 187.
+[15] Change of type REMOVING_METHOD_OVERRIDABILITY in path \..\package1\Example.java. Location in reference version: 153.
+[16] Change of type PARAMETER_INSERT in path \..\package1\Example.java. Location in reference version: 866.
+[17] Change of type METHOD_RENAMING in path \..\package1\Example.java. Location in reference version: 1037.
+[18] Change of type PARAMETER_TYPE_CHANGE in path \..\package1\Example.java. Location in reference version: 1013.
+[19] Change of type ADDITIONAL_FUNCTIONALITY in path \..\package1\Example.java. Location in reference version: 1154.
+[20] Change of type REMOVED_FUNCTIONALITY in path \..\package1\Example.java. Location in reference version: 215.
+[21] Change of type ADDITIONAL_OBJECT_STATE in path \..\package1\Example.java. Location in reference version: 1154.
+[22] Change of type ADDITIONAL_CLASS in path \..\package1\Example.java. Location in reference version: 1154.
+[23] Change of type ADDITIONAL_FUNCTIONALITY in path \..\package2\Example2.java. Location in reference version: 85.
 [24] Structural change of type FILE_REMOVED in path \..\package1\ToRemove.java
 [25] Structural change of type FILE_ADDED in path \..\package1\ToAdd.java
 [26] Structural change of type PACKAGE_REMOVED in path \..\package1\package4\package5
@@ -117,7 +117,7 @@ DD trial #34. Set size: 1. Outcome was: UNRESOLVED.
 Set content: [14]
 DD trial #35. Set size: 1. Outcome was: PASS.
 Set content: [13]
-Delta debugging phase completed. Took time: 0:01:43.
+Delta debugging phase completed. Took time: 0:01:45.
 Total number of DD iterations was: 35
-Total execution time was: 0:01:52
+Total execution time was: 0:01:53
 *****
