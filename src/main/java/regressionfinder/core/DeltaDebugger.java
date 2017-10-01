@@ -13,8 +13,6 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
-import regressionfinder.core.manipulation.RestoreWorkingAreaVisitor;
 import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.AffectedUnit;
@@ -29,22 +27,10 @@ public class DeltaDebugger extends JUnitTester {
 	
 	
 	@Autowired
-	private EvaluationContext evaluationContext;
-	
-	@Autowired
-	private PrepareWorkingAreaVisitor prepareWorkingAreaVisitor;
-	
-	@Autowired
-	private RestoreWorkingAreaVisitor restoreWorkingAreaVisitor;
-	
-	@Autowired
-	private MavenCompiler mavenCompiler;
-	
-	@Autowired
-	private ReflectionalTestMethodRunner testMethodRunner;
-	
-	@Autowired
 	private StatisticsTracker statisticsTracker;
+	
+	@Autowired
+	private DeltaDebuggerWorker deltaDebuggerWorker;
 
 
 	@LogDuration("Delta debugging phase completed.")
@@ -83,22 +69,6 @@ public class DeltaDebugger extends JUnitTester {
 		statisticsTracker.registerNextTrial(extractOutputFromStream(), selectedChangeSet.size(), TestOutcome.fromNumericCode(testOutcome));
 		return testOutcome;
 	}
-
-	private int runNextTrial(List<AffectedUnit> affectedUnits) {
-		prepareWorkingAreaForNextTrial(affectedUnits);
-		int testOutcome = (int) testMethodRunner.runFaultyTest();
-		restoreWorkingArea(affectedUnits);
-		return testOutcome;
-	}
-
-	private void prepareWorkingAreaForNextTrial(List<AffectedUnit> affectedUnits) {
-		affectedUnits.forEach(unit -> unit.manipulate(prepareWorkingAreaVisitor));	
-		mavenCompiler.triggerSimpleCompilation(evaluationContext.getWorkingAreaProject());
-	}
-
-	private void restoreWorkingArea(List<AffectedUnit> affectedUnits) {
-		affectedUnits.forEach(unit -> unit.manipulate(restoreWorkingAreaVisitor));
-	}
 	
 	private String extractOutputFromStream() {
 		String result = deltaDebuggerOutputStream.toString();
@@ -106,5 +76,13 @@ public class DeltaDebugger extends JUnitTester {
 		result = result.substring(result.lastIndexOf(lookupCalledString) + lookupCalledString.length());
 		deltaDebuggerOutputStream.reset();
 		return result;
+	}
+
+	private int runNextTrial(List<AffectedUnit> affectedUnits) {
+		deltaDebuggerWorker.prepareWorkingAreaForNextTrial(affectedUnits);
+		deltaDebuggerWorker.recompileWorkingArea();
+		int testOutcome = deltaDebuggerWorker.runFaultyTest();
+		deltaDebuggerWorker.restoreWorkingArea(affectedUnits);
+		return testOutcome;
 	}
 }

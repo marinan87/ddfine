@@ -28,9 +28,19 @@ public class TimeTrackingAspect {
 		LogDuration logDurationAnnotation =  method.getAnnotation(LogDuration.class);
 		String value = logDurationAnnotation.value().concat(" Took time: %s.");
 		
-		statisticsTracker.logDuration(value, System.currentTimeMillis() - startTime);
+		statisticsTracker.logDuration(value, startTime);
 		
 		return result;
 	}
-
+	
+	@Around("execution(@regressionfinder.core.statistics.LogTrialDuration * *(..)) && @annotation(LogTrialDuration)")
+	public Object measureTrialTimeAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
+		long startTime = System.currentTimeMillis();
+		
+		Object result = joinPoint.proceed();
+				
+		statisticsTracker.updateLastTrialMetrics(System.currentTimeMillis() - startTime);
+		
+		return result;
+	}	
 }

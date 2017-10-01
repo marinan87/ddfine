@@ -47,7 +47,9 @@ public class StatisticsTracker {
 	private Path resultsPath;
 	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
 	private long startTime;
-
+	private long[] lastTrialMetrics = new long[4];
+	private int lastTrialCounter = 0;
+	
 	
 	public void initOnce() {
 		startTime = System.currentTimeMillis();
@@ -71,6 +73,8 @@ public class StatisticsTracker {
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
 		log(format("DD trial #%s. Set size: %s. Outcome was: %s.", numberOfTrials + 1, setSize, outcome));
 		log(format("Set content: %s", setContent));
+		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
+				lastTrialMetrics[0], lastTrialMetrics[1], lastTrialMetrics[2], lastTrialMetrics[3]));
 		numberOfTrials++;
 	}
 
@@ -86,8 +90,13 @@ public class StatisticsTracker {
 		numberOfStructuralChanges++;
 	}
 	
-	public void logDuration(String line, long durationInMillis) {
-		log(format(line, getFormattedDuration(durationInMillis)));
+	public void updateLastTrialMetrics(long phaseDurationInMillis) {
+		lastTrialMetrics[lastTrialCounter++] = phaseDurationInMillis;
+		lastTrialCounter %= lastTrialMetrics.length;
+	}
+	
+	public void logDuration(String line, long startTime) {
+		log(format(line, getFormattedDuration(System.currentTimeMillis() - startTime)));
 	}
 	
 	private String getFormattedDuration(long durationInMillis) {
@@ -130,7 +139,7 @@ public class StatisticsTracker {
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		logDuration("Total execution time was: %s", System.currentTimeMillis() - startTime);
+		logDuration("Total execution time was: %s", startTime);
 		log("*****");
 	}
 }
