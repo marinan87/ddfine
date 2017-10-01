@@ -39,6 +39,7 @@ public class SourceTreeDifferencer {
 
 	private static final Path ROOT_PATH = Paths.get(StringUtils.EMPTY);
 	
+	
 	@Autowired
 	private EvaluationContext evaluationContext;
 	

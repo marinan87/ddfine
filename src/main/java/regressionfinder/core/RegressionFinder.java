@@ -16,7 +16,7 @@ public class RegressionFinder {
 	private SourceTreeDifferencer treeDifferencer;
 	
 	@Autowired
-	private DeltaDebugger testInvoker;
+	private DeltaDebugger deltaDebugger;
 			
 	@Autowired
 	private ResultViewer resultViewer;
@@ -24,7 +24,7 @@ public class RegressionFinder {
 	
 	public void run() {
 		List<MinimalApplicableChange> filteredChanges = treeDifferencer.distillChanges();
-		List<AffectedUnit> failureRelevantUnits = testInvoker.deltaDebug(filteredChanges);
+		List<AffectedUnit> failureRelevantUnits = deltaDebugger.deltaDebug(filteredChanges);
 		resultViewer.showResult(failureRelevantUnits);
 	}
 }

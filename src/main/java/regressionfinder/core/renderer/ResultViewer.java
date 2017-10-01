@@ -38,6 +38,7 @@ public class ResultViewer {
 	@Autowired
 	private FaultyRenderingVisitor faultyRenderingVisitor;
 
+	
 	public void showResult(List<AffectedUnit> failureRelevantUnits) {		
 		HtmlView<List<AffectedUnit>> fileView = fileView();
 		try(PrintStream out = new PrintStream(new FileOutputStream(RESULT_HTML))) {
