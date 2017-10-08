@@ -1,5 +1,6 @@
 package regressionfinder.core.statistics.persistence.entities;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
@@ -19,7 +20,7 @@ public class Execution {
 	private String executionId;
 	
 	@Column(updatable = false)
-	private LocalDateTime startTime = LocalDateTime.now();
+	private Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
 	
 	private Integer preparationPhaseDuration;
 	
