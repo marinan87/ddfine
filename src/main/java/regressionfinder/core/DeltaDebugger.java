@@ -13,6 +13,7 @@ import org.deltadebugging.ddcore.tester.JUnitTester;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.AffectedUnit;
@@ -33,7 +34,7 @@ public class DeltaDebugger extends JUnitTester {
 	private DeltaDebuggerWorker deltaDebuggerWorker;
 
 
-	@LogDuration("Delta debugging phase completed.")
+	@LogDuration(ExecutionPhase.DELTA_DEBUGGING)
 	public List<AffectedUnit> deltaDebug(List<MinimalApplicableChange> filteredChanges) {
 		DeltaSet completeDeltaSet = new DeltaSet();
 		completeDeltaSet.addAll(filteredChanges);

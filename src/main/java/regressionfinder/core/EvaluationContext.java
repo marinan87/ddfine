@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.base.Preconditions;
 
+import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.model.MultiModuleMavenJavaProject;
@@ -63,7 +64,7 @@ public class EvaluationContext {
 	private ReflectionalTestMethodRunner testMethodRunner;
 	
 	
-	@LogDuration("Preparation phase completed.")
+	@LogDuration(ExecutionPhase.PREPARATION)
 	public void initOnce() {
 		/*
 		 * TODO: Multiple asserts to check that evaluation context is

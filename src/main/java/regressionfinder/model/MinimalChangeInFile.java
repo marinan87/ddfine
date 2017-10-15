@@ -20,6 +20,11 @@ public class MinimalChangeInFile extends MinimalApplicableChange {
 	@Override
 	public String toString() {
 		return format("Change of type %s in path %s. Location in reference version: %s.\r\n", 
-				sourceCodeChange.getChangeType(), pathToFile, sourceCodeChange.getChangedEntity().getStartPosition());
+				getChangeTypeString(), pathToFile, sourceCodeChange.getChangedEntity().getStartPosition());
+	}
+
+	@Override
+	public String getChangeTypeString() {
+		return sourceCodeChange.getChangeType().toString();
 	}
 }

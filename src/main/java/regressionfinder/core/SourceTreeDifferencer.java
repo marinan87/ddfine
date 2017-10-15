@@ -24,6 +24,7 @@ import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
 import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.CombinedPath;
@@ -47,7 +48,7 @@ public class SourceTreeDifferencer {
 	private StatisticsTracker statisticsTracker;
 	
 	
-	@LogDuration("Change distilling phase completed.")
+	@LogDuration(ExecutionPhase.CHANGE_DISTILLING)
 	public List<MinimalApplicableChange> distillChanges() {
 		List<MinimalApplicableChange> filteredChanges = new SourceTreeScanner().distillChanges();
 		

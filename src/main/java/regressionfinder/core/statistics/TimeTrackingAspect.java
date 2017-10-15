@@ -26,9 +26,8 @@ public class TimeTrackingAspect {
 		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 		Method method = signature.getMethod();
 		LogDuration logDurationAnnotation =  method.getAnnotation(LogDuration.class);
-		String value = logDurationAnnotation.value().concat(" Took time: %s.");
 		
-		statisticsTracker.logDuration(value, startTime);
+		statisticsTracker.logPhaseDuration(logDurationAnnotation.value(), startTime);
 		
 		return result;
 	}
@@ -39,7 +38,7 @@ public class TimeTrackingAspect {
 		
 		Object result = joinPoint.proceed();
 				
-		statisticsTracker.updateLastTrialMetrics(System.currentTimeMillis() - startTime);
+		statisticsTracker.updateLastTrialMetrics(startTime);
 		
 		return result;
 	}	

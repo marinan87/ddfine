@@ -27,8 +27,7 @@ import org.springframework.stereotype.Service;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
-import regressionfinder.core.statistics.persistence.entities.Execution;
-import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
+import regressionfinder.core.statistics.persistence.StatisticsService;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.TestOutcome;
@@ -44,7 +43,7 @@ public class StatisticsTracker {
 	private ApplicationCommandLineRunner applicationCommandLineRunner;
 	
 	@Autowired
-	private ExecutionRepository executionRepository;
+	private StatisticsService statisticsService;
 		
 	@Value("${evaluationbase.location}")
 	private String resultsBaseDirectory;
@@ -61,6 +60,12 @@ public class StatisticsTracker {
 		startTime = System.currentTimeMillis();
 		executionId = applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID);
 		
+		initResultsFile();
+		
+		logStart();
+	}
+
+	private void initResultsFile() {
 		try {
 			Path resultsDirectory = Paths.get(resultsBaseDirectory, executionId);
 			if (!resultsDirectory.toFile().exists()) {
@@ -74,20 +79,13 @@ public class StatisticsTracker {
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to initialize results file.", e);
 		}
-		
-		logStart();
 	}
 	
 	private void logStart() {
 		log("Starting the execution...");
 		
-		Execution previousExecution = executionRepository.findByExecutionId(executionId);
-		if (previousExecution != null) {
-			executionRepository.delete(previousExecution);
-		}
-		
-		Execution execution = new Execution(executionId);
-		executionRepository.save(execution);
+		statisticsService.deleteOldExecutionIfExists(executionId);
+		statisticsService.createNewExecution(executionId);
 	}
 	
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
@@ -95,6 +93,7 @@ public class StatisticsTracker {
 		log(format("Set content: %s", setContent));
 		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
 				lastTrialMetrics[0], lastTrialMetrics[1], lastTrialMetrics[2], lastTrialMetrics[3]));
+		
 		numberOfTrials++;
 	}
 
@@ -110,13 +109,21 @@ public class StatisticsTracker {
 		numberOfStructuralChanges++;
 	}
 	
-	public void updateLastTrialMetrics(long phaseDurationInMillis) {
-		lastTrialMetrics[lastTrialCounter++] = phaseDurationInMillis;
+	public void logPhaseDuration(ExecutionPhase phase, long startTime) {
+		String value = phase.displayName().concat(" completed. Took time: %s.");
+		long duration = System.currentTimeMillis() - startTime;
+		logDuration(value, duration);
+		
+		statisticsService.storePhaseExecutionTime(executionId, phase, duration);
+	}
+	
+	public void updateLastTrialMetrics(long startTime) {
+		lastTrialMetrics[lastTrialCounter++] = System.currentTimeMillis() - startTime;
 		lastTrialCounter %= lastTrialMetrics.length;
 	}
 	
-	public void logDuration(String line, long startTime) {
-		log(format(line, getFormattedDuration(System.currentTimeMillis() - startTime)));
+	private void logDuration(String line, long duration) {
+		log(format(line, getFormattedDuration(duration)));
 	}
 	
 	private String getFormattedDuration(long durationInMillis) {
@@ -146,20 +153,30 @@ public class StatisticsTracker {
 		
 		log(format("Number of detected changes: source code chunks - %s, structural changes - %s, total - %s", 
 				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
-		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges)); 
+		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges));
+		
+		statisticsService.storeStructuralChanges(executionId, numberOfSourceCodeChanges);
+		statisticsService.storeSourceCodeChanges(executionId, numberOfStructuralChanges);
 	}
 	
 	public void logDeltaDebuggingChunks(List<MinimalApplicableChange> chunks) {
 		int chunkNumber = 0;
 		for (MinimalApplicableChange chunk : chunks) {
 			log(format("[%s] %s", chunkNumber++, chunk));
-		}			
+		}
+		
+		statisticsService.storeDistilledChanges(executionId, chunks);
 	}
 	
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		logDuration("Total execution time was: %s", startTime);
+		statisticsService.storeDeltaDebuggingTrials(executionId, numberOfTrials);
+		
+		long totalDuration = System.currentTimeMillis() - startTime;
+		logDuration("Total execution time was: %s", totalDuration);
 		log("*****");
+		
+		statisticsService.storeTotalDuration(executionId, totalDuration);
 	}
 }

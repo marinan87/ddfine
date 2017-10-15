@@ -6,5 +6,5 @@ import regressionfinder.core.statistics.persistence.entities.Execution;
 
 public interface ExecutionRepository extends CrudRepository<Execution, Long> {
 	
-    Execution findByExecutionId(String executionId);
+    Execution findByExecutionIdentifier(String executionId);
 }

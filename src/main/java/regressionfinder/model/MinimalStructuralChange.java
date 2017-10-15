@@ -17,6 +17,11 @@ public class MinimalStructuralChange extends MinimalApplicableChange {
 	
 	@Override
 	public String toString() {
-		return format("Structural change of type %s in path %s\r\n", structuralChange, pathToFile);
+		return format("Structural change of type %s in path %s\r\n", getChangeTypeString(), pathToFile);
+	}
+
+	@Override
+	public String getChangeTypeString() {
+		return structuralChange.toString();
 	}
 }

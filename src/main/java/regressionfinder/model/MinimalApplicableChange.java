@@ -11,4 +11,6 @@ public abstract class MinimalApplicableChange {
 	public CombinedPath getPathToFile() {
 		return pathToFile;
 	}
+	
+	public abstract String getChangeTypeString();
 }

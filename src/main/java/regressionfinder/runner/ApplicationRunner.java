@@ -1,9 +1,5 @@
 package regressionfinder.runner;
 
-import javax.annotation.PostConstruct;
-
-import org.hsqldb.util.DatabaseManagerSwing;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -26,16 +22,7 @@ public class ApplicationRunner {
 	
 	private static final String SYSTEM_PROPERTY_JAVA_AWT_HEADLESS = "java.awt.headless";
 	
-	@Value("${spring.datasource.url}")
-	private String databaseUrl;
 	
-	@Value("${spring.datasource.username}")
-	private String databaseUser;
-	
-	@Value("${spring.datasource.password}")
-	private String databasePassword;
-
-
 	public static void main(String[] args) {
 		configureHeadlessProperty();
 		
@@ -56,10 +43,5 @@ public class ApplicationRunner {
 	@Bean
 	public ApplicationReadyListener applicationReadyListener() {
 		return new ApplicationReadyListener();
-	}
-	
-	@PostConstruct
-	public void startDbManager() {
-		DatabaseManagerSwing.main(new String[] { "--url", databaseUrl, "--user", databaseUser, "--password", databasePassword });
 	}
 }
