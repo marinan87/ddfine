@@ -48,6 +48,10 @@ public class Execution {
 	@JoinColumn(name = "EXECUTION_ID")
 	private List<DistilledChange> distilledChanges = new ArrayList<>();
 
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "EXECUTION_ID")
+	private List<Trial> trials = new ArrayList<>();
+	
 	
 	protected Execution() {
 		super();
@@ -127,6 +131,10 @@ public class Execution {
 
 	public void addDistilledChange(DistilledChange distilledChange) {
 		this.distilledChanges.add(distilledChange);
+	}
+	
+	public void addTrial(Trial trial) {
+		this.trials.add(trial);
 	}
 	
 	public void setPhaseExecutionTime(ExecutionPhase phase, long duration) {

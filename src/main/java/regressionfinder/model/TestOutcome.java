@@ -18,4 +18,8 @@ public enum TestOutcome {
 		}
 		throw new IllegalArgumentException("Unknown test outcome numeric code.");
 	}
+	
+	public int getNumCode() {
+		return numCode;
+	}
 }

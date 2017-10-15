@@ -6,11 +6,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.persistence.entities.DistilledChange;
 import regressionfinder.core.statistics.persistence.entities.DistilledSourceCodeChange;
 import regressionfinder.core.statistics.persistence.entities.Execution;
+import regressionfinder.core.statistics.persistence.entities.Trial;
+import regressionfinder.core.statistics.persistence.repository.DistilledChangeRepository;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
@@ -21,6 +24,9 @@ public class StatisticsService {
 	
 	@Autowired
 	private ExecutionRepository executionRepository;
+	
+	@Autowired
+	private DistilledChangeRepository distilledChangeRepository;
 
 	
 	@Transactional
@@ -77,6 +83,30 @@ public class StatisticsService {
 
 			chunkNumber++;
 		}
+	}
+	
+	@Transactional
+	public void storeTrial(String executionId, int trialNumber, String setContent, int outcome, long[] lastTrialMetrics) {
+		Trial trial = new Trial();
+		trial.setTrialNumber(trialNumber);
+		trial.setOutcome(outcome);
+		trial.setPrepareDuration(lastTrialMetrics[0]);
+		trial.setRecompileDuration(lastTrialMetrics[1]);
+		trial.setRunDuration(lastTrialMetrics[2]);
+		trial.setRestoreDuration(lastTrialMetrics[3]);
+		
+		setContent = setContent.trim();
+		setContent = StringUtils.trimLeadingCharacter(setContent, '[');
+		setContent = StringUtils.trimTrailingCharacter(setContent, ']');
+		for (String str : setContent.split(", ")) {
+			if (str.length() > 0) {
+				int chunkNumber = Integer.valueOf(str);
+				DistilledChange change = distilledChangeRepository.findByExecutionIdentifierAndChunkNumber(executionId, chunkNumber);
+				trial.addDistilledChange(change);
+			}
+		}
+
+		findExecution(executionId).addTrial(trial);
 	}
 	
 	private DistilledChange getDistilledChange(MinimalChangeInFile chunk, int chunkNumber) {

@@ -94,6 +94,8 @@ public class StatisticsTracker {
 		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
 				lastTrialMetrics[0], lastTrialMetrics[1], lastTrialMetrics[2], lastTrialMetrics[3]));
 		
+		statisticsService.storeTrial(executionId, (numberOfTrials + 1), setContent, outcome.getNumCode(), lastTrialMetrics);
+		
 		numberOfTrials++;
 	}
 
