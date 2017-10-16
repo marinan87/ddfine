@@ -3,15 +3,18 @@ package regressionfinder.core.statistics.persistence;
 
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.persistence.entities.DistilledChange;
 import regressionfinder.core.statistics.persistence.entities.DistilledSourceCodeChange;
 import regressionfinder.core.statistics.persistence.entities.Execution;
+import regressionfinder.core.statistics.persistence.entities.ExecutionMetadata;
 import regressionfinder.core.statistics.persistence.entities.Trial;
 import regressionfinder.core.statistics.persistence.repository.DistilledChangeRepository;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
@@ -23,6 +26,9 @@ import regressionfinder.model.MinimalChangeInFile;
 public class StatisticsService {
 	
 	@Autowired
+	private EvaluationContext evaluationContext;
+			
+	@Autowired
 	private ExecutionRepository executionRepository;
 	
 	@Autowired
@@ -30,46 +36,52 @@ public class StatisticsService {
 
 	
 	@Transactional
-	public void deleteOldExecutionIfExists(String executionId) {
-		Execution previousExecution = findExecution(executionId);
+	public void deleteOldExecutionIfExists() {
+		Execution previousExecution = findCurrentExecution();
 		if (previousExecution != null) {
 			executionRepository.delete(previousExecution);
 		}
 	}
 	
 	@Transactional
-	public void createNewExecution(String executionId) {
-		Execution execution = new Execution(executionId);
+	public void createNewExecution() {
+		Execution execution = new Execution(evaluationContext.getExecutionId());
+		
+		ExecutionMetadata metadata = execution.getExecutionMetadata();
+		metadata.setFailedClassName(evaluationContext.getTestClassName());
+		metadata.setFailedMethodName(evaluationContext.getTestMethodName());
+		metadata.setStackTrace(ExceptionUtils.getStackTrace(evaluationContext.getThrowable()));
+		
 		executionRepository.save(execution);
 	}
 
 	@Transactional
-	public void storePhaseExecutionTime(String executionId, ExecutionPhase phase, long duration) {
-		findExecution(executionId).setPhaseExecutionTime(phase, duration);
+	public void storePhaseExecutionTime(ExecutionPhase phase, long duration) {
+		findCurrentExecution().setPhaseExecutionTime(phase, duration);
 	}
 	
 	@Transactional
-	public void storeTotalDuration(String executionId, long duration) {
-		findExecution(executionId).setTotalExecutionDuration(duration);
+	public void storeTotalDuration(long duration) {
+		findCurrentExecution().setTotalExecutionDuration(duration);
 	}
 	
 	@Transactional
-	public void storeDeltaDebuggingTrials(String executionId, int numTrials) {
-		findExecution(executionId).setDdTrials(numTrials);
+	public void storeDeltaDebuggingTrials(int numTrials) {
+		findCurrentExecution().setDdTrials(numTrials);
 	}
 	
 	@Transactional
-	public void storeSourceCodeChanges(String executionId, int numChanges) {
-		findExecution(executionId).setDetectedSourceCodeChanges(numChanges);
+	public void storeSourceCodeChanges(int numChanges) {
+		findCurrentExecution().setDetectedSourceCodeChanges(numChanges);
 	}
 	
 	@Transactional
-	public void storeStructuralChanges(String executionId, int numChanges) {
-		findExecution(executionId).setDetectedStructuralChanges(numChanges);
+	public void storeStructuralChanges(int numChanges) {
+		findCurrentExecution().setDetectedStructuralChanges(numChanges);
 	}
 	
 	@Transactional
-	public void storeDistilledChanges(String executionId, List<MinimalApplicableChange> chunks) {
+	public void storeDistilledChanges(List<MinimalApplicableChange> chunks) {
 		int chunkNumber = 0;
 		for (MinimalApplicableChange chunk : chunks) {
 			DistilledChange distilledChange;
@@ -79,14 +91,14 @@ public class StatisticsService {
 				distilledChange = getDistilledChange(chunk, chunkNumber);
 			}
 			
-			findExecution(executionId).addDistilledChange(distilledChange);
+			findCurrentExecution().addDistilledChange(distilledChange);
 
 			chunkNumber++;
 		}
 	}
 	
 	@Transactional
-	public void storeTrial(String executionId, int trialNumber, String setContent, int outcome, long[] lastTrialMetrics) {
+	public void storeTrial(int trialNumber, String setContent, int outcome, long[] lastTrialMetrics) {
 		Trial trial = new Trial();
 		trial.setTrialNumber(trialNumber);
 		trial.setOutcome(outcome);
@@ -101,12 +113,12 @@ public class StatisticsService {
 		for (String str : setContent.split(", ")) {
 			if (str.length() > 0) {
 				int chunkNumber = Integer.valueOf(str);
-				DistilledChange change = distilledChangeRepository.findByExecutionIdentifierAndChunkNumber(executionId, chunkNumber);
+				DistilledChange change = distilledChangeRepository.findByExecutionIdentifierAndChunkNumber(evaluationContext.getExecutionId(), chunkNumber);
 				trial.addDistilledChange(change);
 			}
 		}
 
-		findExecution(executionId).addTrial(trial);
+		findCurrentExecution().addTrial(trial);
 	}
 	
 	private DistilledChange getDistilledChange(MinimalChangeInFile chunk, int chunkNumber) {
@@ -129,12 +141,13 @@ public class StatisticsService {
 		
 		return distilledChange;
 	}
-
-	private Execution findExecution(String executionId) {
-		return executionRepository.findByExecutionIdentifier(executionId);
+	
+	@Transactional 
+	public void storeNumberOfLinesToInspect(int number) {
+		findCurrentExecution().setNumberOfLinesToInspect(number);
 	}
 	
-	public List<Execution> findAllExecutionsOrdered() {
-		return executionRepository.findAllByOrderByStartTimeDesc();
+	public Execution findCurrentExecution() {
+		return executionRepository.findByExecutionIdentifier(evaluationContext.getExecutionId());
 	}
 }

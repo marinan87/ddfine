@@ -14,6 +14,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import regressionfinder.core.statistics.ExecutionPhase;
 
@@ -44,6 +45,8 @@ public class Execution {
 	
 	private Integer detectedSourceCodeChanges;
 	
+	private Integer numberOfLinesToInspect;
+	
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "EXECUTION_ID")
 	private List<DistilledChange> distilledChanges = new ArrayList<>();
@@ -52,13 +55,17 @@ public class Execution {
 	@JoinColumn(name = "EXECUTION_ID")
 	private List<Trial> trials = new ArrayList<>();
 	
+	@OneToOne(optional = false, cascade = CascadeType.ALL)
+	private ExecutionMetadata executionMetadata;
+	
 	
 	protected Execution() {
-		super();
+		this(null);
 	}
 	
 	public Execution(String executionId) {
 		this.executionIdentifier = executionId;
+		this.executionMetadata = new ExecutionMetadata();
 	}
 	
 	public Long getId() {
@@ -132,6 +139,14 @@ public class Execution {
 	public void setDetectedSourceCodeChanges(Integer sourceCodeChanges) {
 		this.detectedSourceCodeChanges = sourceCodeChanges;
 	}
+	
+	public Integer getNumberOfLinesToInspect() {
+		return numberOfLinesToInspect;
+	}
+	
+	public void setNumberOfLinesToInspect(Integer number) {
+		this.numberOfLinesToInspect = number;
+	}
 
 	public void addDistilledChange(DistilledChange distilledChange) {
 		this.distilledChanges.add(distilledChange);
@@ -139,6 +154,14 @@ public class Execution {
 	
 	public void addTrial(Trial trial) {
 		this.trials.add(trial);
+	}
+	
+	public ExecutionMetadata getExecutionMetadata() {
+		return executionMetadata;
+	}
+	
+	public boolean hasExecutionMetadata() {
+		return executionMetadata.getResultSummary() != null;
 	}
 	
 	public void setPhaseExecutionTime(ExecutionPhase phase, long duration) {

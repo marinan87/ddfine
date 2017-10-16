@@ -1,15 +1,21 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Getting Started: Serving Web Content</title>
+    <title>All executions</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style type="text/css">
+    	.noInfo {
+    		color: red;
+    	}
+    </style>
 </head>
 <body>
     <h3>Registered executions</h3>
     <ul>
 	    <th:block th:each="execution : ${executions}">
 	    	<li>
-	    		<a th:href="@{'/executions/' + ${execution.executionIdentifier}}"><span th:text="|${execution.executionIdentifier}|"></span></a>
+	    		<a th:href="@{'/executions/' + ${execution.executionIdentifier}}">
+	    		<span th:class="${execution.hasExecutionMetadata()} ? '' : 'noInfo'" th:text="|${execution.executionIdentifier}|"></span></a>
 	    		<span th:text="|(${execution.startTime})|"></span>
 	    	</li>
 	    </th:block>

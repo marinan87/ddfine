@@ -54,8 +54,8 @@ public class StatisticsTracker {
 	public void init() {
 		log("Starting the execution...");
 		
-		statisticsService.deleteOldExecutionIfExists(evaluationContext.getExecutionId());
-		statisticsService.createNewExecution(evaluationContext.getExecutionId());
+		statisticsService.deleteOldExecutionIfExists();
+		statisticsService.createNewExecution();
 	}
 	
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
@@ -64,7 +64,7 @@ public class StatisticsTracker {
 		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
 				lastTrialMetrics[0], lastTrialMetrics[1], lastTrialMetrics[2], lastTrialMetrics[3]));
 		
-		statisticsService.storeTrial(evaluationContext.getExecutionId(), (numberOfTrials + 1), setContent, outcome.getNumCode(), lastTrialMetrics);
+		statisticsService.storeTrial(numberOfTrials + 1, setContent, outcome.getNumCode(), lastTrialMetrics);
 		
 		numberOfTrials++;
 	}
@@ -86,7 +86,7 @@ public class StatisticsTracker {
 		long duration = System.currentTimeMillis() - startTime;
 		logDuration(value, duration);
 		
-		statisticsService.storePhaseExecutionTime(evaluationContext.getExecutionId(), phase, duration);
+		statisticsService.storePhaseExecutionTime(phase, duration);
 	}
 	
 	public void updateLastTrialMetrics(long startTime) {
@@ -127,8 +127,8 @@ public class StatisticsTracker {
 				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges));
 		
-		statisticsService.storeStructuralChanges(evaluationContext.getExecutionId(), numberOfSourceCodeChanges);
-		statisticsService.storeSourceCodeChanges(evaluationContext.getExecutionId(), numberOfStructuralChanges);
+		statisticsService.storeStructuralChanges(numberOfSourceCodeChanges);
+		statisticsService.storeSourceCodeChanges(numberOfStructuralChanges);
 	}
 	
 	public void logDeltaDebuggingChunks(List<MinimalApplicableChange> chunks) {
@@ -137,18 +137,22 @@ public class StatisticsTracker {
 			log(format("[%s] %s", chunkNumber++, chunk));
 		}
 		
-		statisticsService.storeDistilledChanges(evaluationContext.getExecutionId(), chunks);
+		statisticsService.storeDistilledChanges(chunks);
+	}
+	
+	public void logNumberOfLinesToInspect(int number) {
+		statisticsService.storeNumberOfLinesToInspect(number);
 	}
 	
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		statisticsService.storeDeltaDebuggingTrials(evaluationContext.getExecutionId(), numberOfTrials);
+		statisticsService.storeDeltaDebuggingTrials(numberOfTrials);
 		
 		long totalDuration = System.currentTimeMillis() - startTime;
 		logDuration("Total execution time was: %s", totalDuration);
 		log("*****");
 		
-		statisticsService.storeTotalDuration(evaluationContext.getExecutionId(), totalDuration);
+		statisticsService.storeTotalDuration(totalDuration);
 	}
 }

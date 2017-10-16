@@ -1,0 +1,20 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Execution details</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <h3 th:text="| Execution # ${executionId}|"></h3>
+    <form action="#" th:action="@{'/executions/' + ${executionId}}" th:object="${metadata}" method="post">
+    	<p>Reference SHA: <input type="text" th:field="*{referenceSha}" size="50"/></p>
+        <p>Faulty SHA: <input type="text" th:field="*{faultySha}" size="50"/></p>
+        <p>Fixed SHA: <input type="text" th:field="*{fixedSha}" size="50"/></p>
+        <p>Commit message / author / date: <input type="text" th:field="*{commitMessage}" size="100"/></p>
+        <p>Was successful? <input type="checkbox" th:field="*{resultSummary}" /></p>
+        <p><textarea rows="20" cols="80" th:field="*{resultComment}"></textarea></p>
+        <p><input type="submit" value="Store results" /></p>
+    </form>
+    <a th:href="@{/executions/}">Back to list of executions</a>
+</body>
+</html>

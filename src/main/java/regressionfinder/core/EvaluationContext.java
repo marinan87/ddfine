@@ -91,12 +91,12 @@ public class EvaluationContext {
 		executionId = applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID);
 		
 		initResultsDirectory();
-		statisticsTracker.init();
-
 		initializeProjects();
 		initializeTest();
 		prepareWorkingArea();
 		obtainOriginalFault();
+		
+		statisticsTracker.init();
 	}
 	
 	private void initResultsDirectory() {

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.manipulation.SourceCodeFileManipulator;
+import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
 import regressionfinder.model.CombinedPath;
@@ -20,6 +21,10 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 
 	@Autowired
 	private EvaluationContext evaluationContext;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
+	
 	
 	@Override
 	public String visit(AffectedFile entity) {
@@ -54,6 +59,7 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 		}
 		scanner.close();
 		
+		statisticsTracker.logNumberOfLinesToInspect(lines.size());
 		return lines;
 	}
 

@@ -11,13 +11,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import regressionfinder.core.statistics.persistence.StatisticsService;
 import regressionfinder.core.statistics.persistence.entities.Execution;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
 
 @Profile("datamanager")
 @SpringBootApplication
-@ComponentScan(basePackageClasses = { StatisticsService.class, ExecutionHistoryController.class } )
+@ComponentScan(basePackageClasses = { ExecutionHistoryService.class, ExecutionHistoryController.class } )
 @EnableJpaRepositories(basePackageClasses = ExecutionRepository.class)
 @EntityScan(basePackageClasses = Execution.class)
 public class DataManagerRunner {
