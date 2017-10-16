@@ -49,110 +49,110 @@ Change distilling phase completed. Took time: 0:00:00.
 [27] Structural change of type PACKAGE_ADDED in path \..\package1\package3\package6
 DD trial #1. Set size: 0. Outcome was: PASS.
 Set content: []
-Timing: (prepare working area) - 16 ms, (recompile working area) - 1723 ms, (run test) - 171 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 8 ms, (recompile working area) - 1563 ms, (run test) - 176 ms, (restore working area) - 1 ms.
 DD trial #2. Set size: 28. Outcome was: FAIL.
 Set content: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1844 ms, (run test) - 171 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 13 ms, (recompile working area) - 1844 ms, (run test) - 192 ms, (restore working area) - 8 ms.
 DD trial #3. Set size: 14. Outcome was: PASS.
 Set content: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2094 ms, (run test) - 171 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1845 ms, (run test) - 170 ms, (restore working area) - 1 ms.
 DD trial #4. Set size: 14. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 1921 ms, (run test) - 250 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 8 ms, (recompile working area) - 1998 ms, (run test) - 185 ms, (restore working area) - 8 ms.
 DD trial #5. Set size: 14. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 2060 ms, (run test) - 203 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 9 ms, (recompile working area) - 2046 ms, (run test) - 182 ms, (restore working area) - 8 ms.
 DD trial #6. Set size: 14. Outcome was: PASS.
 Set content: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2018 ms, (run test) - 172 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1929 ms, (run test) - 173 ms, (restore working area) - 2 ms.
 DD trial #7. Set size: 28. Outcome was: FAIL.
 Set content: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1953 ms, (run test) - 172 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 7 ms, (recompile working area) - 1817 ms, (run test) - 167 ms, (restore working area) - 8 ms.
 DD trial #8. Set size: 7. Outcome was: PASS.
 Set content: [0, 1, 2, 3, 4, 5, 6]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2397 ms, (run test) - 172 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1859 ms, (run test) - 171 ms, (restore working area) - 1 ms.
 DD trial #9. Set size: 7. Outcome was: PASS.
 Set content: [7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1907 ms, (run test) - 171 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1851 ms, (run test) - 181 ms, (restore working area) - 1 ms.
 DD trial #10. Set size: 7. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1968 ms, (run test) - 219 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1960 ms, (run test) - 209 ms, (restore working area) - 1 ms.
 DD trial #11. Set size: 7. Outcome was: PASS.
 Set content: [21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 2148 ms, (run test) - 156 ms, (restore working area) - 16 ms.
+Timing: (prepare working area) - 12 ms, (recompile working area) - 1946 ms, (run test) - 174 ms, (restore working area) - 9 ms.
 DD trial #12. Set size: 21. Outcome was: FAIL.
 Set content: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 2047 ms, (run test) - 156 ms, (restore working area) - 15 ms.
+Timing: (prepare working area) - 7 ms, (recompile working area) - 1928 ms, (run test) - 169 ms, (restore working area) - 8 ms.
 DD trial #13. Set size: 21. Outcome was: FAIL.
 Set content: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1953 ms, (run test) - 156 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 8 ms, (recompile working area) - 1875 ms, (run test) - 165 ms, (restore working area) - 7 ms.
 DD trial #14. Set size: 7. Outcome was: PASS.
 Set content: [7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2046 ms, (run test) - 156 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 2 ms, (recompile working area) - 1864 ms, (run test) - 161 ms, (restore working area) - 2 ms.
 DD trial #15. Set size: 7. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 15 ms, (recompile working area) - 2078 ms, (run test) - 219 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1804 ms, (run test) - 167 ms, (restore working area) - 1 ms.
 DD trial #16. Set size: 7. Outcome was: PASS.
 Set content: [21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 1984 ms, (run test) - 187 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 6 ms, (recompile working area) - 1913 ms, (run test) - 172 ms, (restore working area) - 7 ms.
 DD trial #17. Set size: 14. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2063 ms, (run test) - 187 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 8 ms, (recompile working area) - 1965 ms, (run test) - 171 ms, (restore working area) - 7 ms.
 DD trial #18. Set size: 14. Outcome was: PASS.
 Set content: [7, 8, 9, 10, 11, 12, 13, 21, 22, 23, 24, 25, 26, 27]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2000 ms, (run test) - 156 ms, (restore working area) - 16 ms.
+Timing: (prepare working area) - 13 ms, (recompile working area) - 1917 ms, (run test) - 173 ms, (restore working area) - 8 ms.
 DD trial #19. Set size: 14. Outcome was: FAIL.
 Set content: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 2047 ms, (run test) - 171 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1950 ms, (run test) - 169 ms, (restore working area) - 2 ms.
 DD trial #20. Set size: 14. Outcome was: FAIL.
 Set content: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 16 ms, (recompile working area) - 2233 ms, (run test) - 815 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1944 ms, (run test) - 171 ms, (restore working area) - 1 ms.
 DD trial #21. Set size: 7. Outcome was: PASS.
 Set content: [7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2161 ms, (run test) - 462 ms, (restore working area) - 0 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1968 ms, (run test) - 161 ms, (restore working area) - 4 ms.
 DD trial #22. Set size: 7. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2420 ms, (run test) - 6865 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1934 ms, (run test) - 166 ms, (restore working area) - 2 ms.
 DD trial #23. Set size: 7. Outcome was: UNRESOLVED.
 Set content: [14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1942 ms, (run test) - 177 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1895 ms, (run test) - 164 ms, (restore working area) - 1 ms.
 DD trial #24. Set size: 7. Outcome was: PASS.
 Set content: [7, 8, 9, 10, 11, 12, 13]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1942 ms, (run test) - 148 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 2 ms, (recompile working area) - 1933 ms, (run test) - 159 ms, (restore working area) - 1 ms.
 DD trial #25. Set size: 14. Outcome was: FAIL.
 Set content: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1942 ms, (run test) - 157 ms, (restore working area) - 2 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1837 ms, (run test) - 166 ms, (restore working area) - 1 ms.
 DD trial #26. Set size: 3. Outcome was: PASS.
 Set content: [7, 8, 9]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1927 ms, (run test) - 151 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1873 ms, (run test) - 153 ms, (restore working area) - 1 ms.
 DD trial #27. Set size: 3. Outcome was: PASS.
 Set content: [10, 11, 12]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2042 ms, (run test) - 157 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1890 ms, (run test) - 160 ms, (restore working area) - 1 ms.
 DD trial #28. Set size: 4. Outcome was: FAIL.
 Set content: [13, 14, 15, 16]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2013 ms, (run test) - 157 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1820 ms, (run test) - 164 ms, (restore working area) - 1 ms.
 DD trial #29. Set size: 4. Outcome was: FAIL.
 Set content: [13, 14, 15, 16]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1917 ms, (run test) - 169 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1858 ms, (run test) - 162 ms, (restore working area) - 1 ms.
 DD trial #30. Set size: 2. Outcome was: FAIL.
 Set content: [13, 14]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2083 ms, (run test) - 208 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 0 ms, (recompile working area) - 1844 ms, (run test) - 157 ms, (restore working area) - 1 ms.
 DD trial #31. Set size: 2. Outcome was: FAIL.
 Set content: [13, 14]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1990 ms, (run test) - 152 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1820 ms, (run test) - 160 ms, (restore working area) - 1 ms.
 DD trial #32. Set size: 1. Outcome was: PASS.
 Set content: [13]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 1955 ms, (run test) - 179 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1897 ms, (run test) - 163 ms, (restore working area) - 1 ms.
 DD trial #33. Set size: 1. Outcome was: UNRESOLVED.
 Set content: [14]
-Timing: (prepare working area) - 0 ms, (recompile working area) - 1999 ms, (run test) - 182 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1881 ms, (run test) - 170 ms, (restore working area) - 1 ms.
 DD trial #34. Set size: 1. Outcome was: UNRESOLVED.
 Set content: [14]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2046 ms, (run test) - 176 ms, (restore working area) - 1 ms.
+Timing: (prepare working area) - 1 ms, (recompile working area) - 1866 ms, (run test) - 233 ms, (restore working area) - 1 ms.
 DD trial #35. Set size: 1. Outcome was: PASS.
 Set content: [13]
-Timing: (prepare working area) - 1 ms, (recompile working area) - 2043 ms, (run test) - 156 ms, (restore working area) - 1 ms.
-Delta debugging phase completed. Took time: 0:01:25.
+Timing: (prepare working area) - 0 ms, (recompile working area) - 1817 ms, (run test) - 158 ms, (restore working area) - 1 ms.
+Delta debugging phase completed. Took time: 0:01:12.
 Total number of DD iterations was: 35
-Total execution time was: 0:01:32
+Total execution time was: 0:01:21
 *****

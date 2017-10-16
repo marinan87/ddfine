@@ -1,6 +1,7 @@
 package regressionfinder.core;
 
 import static regressionfinder.runner.CommandLineOption.DEVELOPMENT_MODE;
+import static regressionfinder.runner.CommandLineOption.EXECUTION_ID;
 import static regressionfinder.runner.CommandLineOption.FAILING_CLASS;
 import static regressionfinder.runner.CommandLineOption.FAILING_METHOD;
 import static regressionfinder.runner.CommandLineOption.FAULTY_VERSION;
@@ -12,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.Set;
@@ -34,6 +36,7 @@ import com.google.common.base.Preconditions;
 
 import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.LogDuration;
+import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.isolatedrunner.DeltaDebuggerTestRunner;
 import regressionfinder.model.MultiModuleMavenJavaProject;
 import regressionfinder.runner.ApplicationCommandLineRunner;
@@ -41,11 +44,17 @@ import regressionfinder.runner.ApplicationCommandLineRunner;
 @Component
 public class EvaluationContext {
 	
+	private static final String RESULTS_FILE_NAME = "results.txt";
+	private static final String RESULT_HTML = "results.html";
+
+	
+	private String executionId;
 	private MultiModuleMavenJavaProject referenceProject, faultyProject, workingAreaProject;
 	private String testClassName, testMethodName;
 	private boolean developmentMode;
 	private Supplier<Stream<URL>> testRunnerClassPaths, mavenDependenciesClassPaths;
 	private Throwable throwable;
+	private Path resultsTxtPath, resultsHtmlPath;
 	
 
 	@Value("${working.directory}")
@@ -53,6 +62,9 @@ public class EvaluationContext {
 	
 	@Value("${dependencies.file}")
 	private String preparedDependenciesFile;
+		
+	@Value("${evaluationbase.location}")
+	private String resultsBaseDirectory;
 
 	@Autowired
 	private MavenCompiler mavenCompiler;
@@ -62,6 +74,9 @@ public class EvaluationContext {
 	
 	@Autowired
 	private ReflectionalTestMethodRunner testMethodRunner;
+	
+	@Autowired
+	private StatisticsTracker statisticsTracker;
 	
 	
 	@LogDuration(ExecutionPhase.PREPARATION)
@@ -73,11 +88,34 @@ public class EvaluationContext {
 		 * not continue - assert no changes in dependencies (to save time
 		 * needed to collect them)
 		 */
+		executionId = applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID);
+		
+		initResultsDirectory();
+		statisticsTracker.init();
 
 		initializeProjects();
 		initializeTest();
 		prepareWorkingArea();
 		obtainOriginalFault();
+	}
+	
+	private void initResultsDirectory() {
+		try {
+			Path resultsDirectory = Paths.get(resultsBaseDirectory, executionId);
+			
+			if (!resultsDirectory.toFile().exists()) {
+				Files.createDirectory(resultsDirectory);
+			}
+			resultsTxtPath = resultsDirectory.resolve(RESULTS_FILE_NAME);
+			if (resultsTxtPath.toFile().exists()) {
+				Files.delete(resultsTxtPath);
+			}
+			Files.createFile(resultsTxtPath);
+			
+			resultsHtmlPath = resultsDirectory.resolve(RESULT_HTML);
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to initialize results file.", e);
+		}
 	}
 
 	private void initializeProjects() {
@@ -189,7 +227,19 @@ public class EvaluationContext {
 	public Throwable getThrowable() {
 		return throwable;
 	}
+	
+	public String getExecutionId() {
+		return executionId;
+	}
 
+	public Path getResultsTxt() {
+		return resultsTxtPath;
+	}
+	
+	public Path getResultsHtml() {
+		return resultsHtmlPath;
+	}
+	
 	@PreDestroy
 	public void cleanUp() throws IOException {
 		if (!developmentMode) {

@@ -65,6 +65,10 @@ public class Execution {
 		return id;
 	}
 	
+	public Timestamp getStartTime() {
+		return startTime;
+	}
+	
 	public String getExecutionIdentifier() {
 		return executionIdentifier;
 	}

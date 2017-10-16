@@ -1,10 +1,10 @@
 package regressionfinder.core.renderer;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +21,9 @@ import regressionfinder.model.AffectedUnit;
 public class ResultViewer {
 	
 	private static final String PAGE_TITLE = "Failure inducing changes";
-	private static final String SYNTAXHIGHLIGHTER_JS = "syntaxhighlighter.js";
+	private static final String SYNTAXHIGHLIGHTER_JS = "../../syntaxhighlighter.js";
 	private static final String BOOTSTRAP_CSS = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css";
-	private static final String THEME_CSS = "theme.css";
-	private static final String RESULT_HTML = "results.html";
+	private static final String THEME_CSS = "../../theme.css";
 	private static final String RESULTS_HEADER = "Results";
 	private static final String TEST_HEADER_FORMAT = "%s.%s()";
 
@@ -41,9 +40,10 @@ public class ResultViewer {
 	
 	public void showResult(List<AffectedUnit> failureRelevantUnits) {		
 		HtmlView<List<AffectedUnit>> fileView = fileView();
-		try(PrintStream out = new PrintStream(new FileOutputStream(RESULT_HTML))) {
+		File resultsHtmlFile = evaluationContext.getResultsHtml().toFile();
+		try (PrintStream out = new PrintStream(new FileOutputStream(resultsHtmlFile))) {
             fileView.setPrintStream(out).write(failureRelevantUnits);
-            Desktop.getDesktop().browse(URI.create(RESULT_HTML));
+            Desktop.getDesktop().browse(resultsHtmlFile.toURI());
         } catch (IOException e) {
         	throw new RuntimeException(e);
         }				

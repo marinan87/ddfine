@@ -133,4 +133,8 @@ public class StatisticsService {
 	private Execution findExecution(String executionId) {
 		return executionRepository.findByExecutionIdentifier(executionId);
 	}
+	
+	public List<Execution> findAllExecutionsOrdered() {
+		return executionRepository.findAllByOrderByStartTimeDesc();
+	}
 }

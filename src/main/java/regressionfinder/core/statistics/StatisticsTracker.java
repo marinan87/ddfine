@@ -4,12 +4,9 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
-import static regressionfinder.runner.CommandLineOption.EXECUTION_ID;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -18,74 +15,47 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.statistics.persistence.StatisticsService;
 import regressionfinder.model.MinimalApplicableChange;
 import regressionfinder.model.MinimalChangeInFile;
 import regressionfinder.model.TestOutcome;
-import regressionfinder.runner.ApplicationCommandLineRunner;
 
 @Service
 public class StatisticsTracker {
 	
-	private static final String RESULTS_FILE_NAME = "results.txt";
-
-	
-	@Autowired
-	private ApplicationCommandLineRunner applicationCommandLineRunner;
-	
 	@Autowired
 	private StatisticsService statisticsService;
-		
-	@Value("${evaluationbase.location}")
-	private String resultsBaseDirectory;
 	
-	private String executionId;
-	private Path resultsPath;
+	@Autowired
+	private EvaluationContext evaluationContext;
+
+	
 	private int numberOfTrials, numberOfSourceCodeChanges, numberOfUnsafeSourceCodeChanges, numberOfStructuralChanges;
 	private long startTime;
 	private long[] lastTrialMetrics = new long[4];
 	private int lastTrialCounter = 0;
 	
 	
-	public void initOnce() {
+	@PostConstruct
+	public void logStartTime() {
 		startTime = System.currentTimeMillis();
-		executionId = applicationCommandLineRunner.getArgumentsHolder().getValue(EXECUTION_ID);
-		
-		initResultsFile();
-		
-		logStart();
-	}
-
-	private void initResultsFile() {
-		try {
-			Path resultsDirectory = Paths.get(resultsBaseDirectory, executionId);
-			if (!resultsDirectory.toFile().exists()) {
-				Files.createDirectory(resultsDirectory);
-			}
-			resultsPath = resultsDirectory.resolve(RESULTS_FILE_NAME);
-			if (resultsPath.toFile().exists()) {
-				Files.delete(resultsPath);
-			}
-			Files.createFile(resultsPath);
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to initialize results file.", e);
-		}
 	}
 	
-	private void logStart() {
+	public void init() {
 		log("Starting the execution...");
 		
-		statisticsService.deleteOldExecutionIfExists(executionId);
-		statisticsService.createNewExecution(executionId);
+		statisticsService.deleteOldExecutionIfExists(evaluationContext.getExecutionId());
+		statisticsService.createNewExecution(evaluationContext.getExecutionId());
 	}
 	
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
@@ -94,7 +64,7 @@ public class StatisticsTracker {
 		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
 				lastTrialMetrics[0], lastTrialMetrics[1], lastTrialMetrics[2], lastTrialMetrics[3]));
 		
-		statisticsService.storeTrial(executionId, (numberOfTrials + 1), setContent, outcome.getNumCode(), lastTrialMetrics);
+		statisticsService.storeTrial(evaluationContext.getExecutionId(), (numberOfTrials + 1), setContent, outcome.getNumCode(), lastTrialMetrics);
 		
 		numberOfTrials++;
 	}
@@ -116,7 +86,7 @@ public class StatisticsTracker {
 		long duration = System.currentTimeMillis() - startTime;
 		logDuration(value, duration);
 		
-		statisticsService.storePhaseExecutionTime(executionId, phase, duration);
+		statisticsService.storePhaseExecutionTime(evaluationContext.getExecutionId(), phase, duration);
 	}
 	
 	public void updateLastTrialMetrics(long startTime) {
@@ -136,7 +106,7 @@ public class StatisticsTracker {
 	
 	private void log(String line) {
 		try {
-			Files.write(resultsPath, line.trim().concat("\r\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(evaluationContext.getResultsTxt(), line.trim().concat("\r\n").getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -157,8 +127,8 @@ public class StatisticsTracker {
 				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges));
 		
-		statisticsService.storeStructuralChanges(executionId, numberOfSourceCodeChanges);
-		statisticsService.storeSourceCodeChanges(executionId, numberOfStructuralChanges);
+		statisticsService.storeStructuralChanges(evaluationContext.getExecutionId(), numberOfSourceCodeChanges);
+		statisticsService.storeSourceCodeChanges(evaluationContext.getExecutionId(), numberOfStructuralChanges);
 	}
 	
 	public void logDeltaDebuggingChunks(List<MinimalApplicableChange> chunks) {
@@ -167,18 +137,18 @@ public class StatisticsTracker {
 			log(format("[%s] %s", chunkNumber++, chunk));
 		}
 		
-		statisticsService.storeDistilledChanges(executionId, chunks);
+		statisticsService.storeDistilledChanges(evaluationContext.getExecutionId(), chunks);
 	}
 	
 	@PreDestroy
 	public void logExecutionSummary() {
 		log(format("Total number of DD iterations was: %s", numberOfTrials));
-		statisticsService.storeDeltaDebuggingTrials(executionId, numberOfTrials);
+		statisticsService.storeDeltaDebuggingTrials(evaluationContext.getExecutionId(), numberOfTrials);
 		
 		long totalDuration = System.currentTimeMillis() - startTime;
 		logDuration("Total execution time was: %s", totalDuration);
 		log("*****");
 		
-		statisticsService.storeTotalDuration(executionId, totalDuration);
+		statisticsService.storeTotalDuration(evaluationContext.getExecutionId(), totalDuration);
 	}
 }

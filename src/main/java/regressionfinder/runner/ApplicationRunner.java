@@ -3,6 +3,8 @@ package regressionfinder.runner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -13,7 +15,7 @@ import regressionfinder.core.RegressionFinder;
 import regressionfinder.core.statistics.persistence.entities.Execution;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
 
-@SpringBootApplication
+@SpringBootApplication(exclude={ EmbeddedServletContainerAutoConfiguration.class, WebMvcAutoConfiguration.class })
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @ComponentScan(basePackageClasses = { RegressionFinder.class } )
 @EnableJpaRepositories(basePackageClasses = ExecutionRepository.class)
