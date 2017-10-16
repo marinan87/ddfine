@@ -60,12 +60,12 @@ public class Execution {
 	
 	
 	protected Execution() {
-		this(null);
+		this(null, null);
 	}
 	
-	public Execution(String executionId) {
+	public Execution(String executionId, ImmutableMetadata immutableMetadata) {
 		this.executionIdentifier = executionId;
-		this.executionMetadata = new ExecutionMetadata();
+		this.executionMetadata = new ExecutionMetadata(immutableMetadata);
 	}
 	
 	public Long getId() {
@@ -80,34 +80,18 @@ public class Execution {
 		return executionIdentifier;
 	}
 
-	public void setExecutionIdentifier(String executionId) {
-		this.executionIdentifier = executionId;
-	}
-
 	public Long getPreparationPhaseDuration() {
 		return preparationPhaseDuration;
-	}
-
-	public void setPreparationPhaseDuration(Long preparationPhaseDuration) {
-		this.preparationPhaseDuration = preparationPhaseDuration;
 	}
 
 	public Long getChangeDistillingPhaseDuration() {
 		return changeDistillingPhaseDuration;
 	}
 
-	public void setChangeDistillingPhaseDuration(Long changeDistillingPhaseDuration) {
-		this.changeDistillingPhaseDuration = changeDistillingPhaseDuration;
-	}
-
 	public Long getDeltaDebuggingPhaseDuration() {
 		return deltaDebuggingPhaseDuration;
 	}
-
-	public void setDeltaDebuggingPhaseDuration(Long deltaDebuggingPhaseDuration) {
-		this.deltaDebuggingPhaseDuration = deltaDebuggingPhaseDuration;
-	}
-
+	
 	public Long getTotalExecutionDuration() {
 		return totalExecutionDuration;
 	}

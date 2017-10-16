@@ -14,7 +14,7 @@ import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.persistence.entities.DistilledChange;
 import regressionfinder.core.statistics.persistence.entities.DistilledSourceCodeChange;
 import regressionfinder.core.statistics.persistence.entities.Execution;
-import regressionfinder.core.statistics.persistence.entities.ExecutionMetadata;
+import regressionfinder.core.statistics.persistence.entities.ImmutableMetadata;
 import regressionfinder.core.statistics.persistence.entities.Trial;
 import regressionfinder.core.statistics.persistence.repository.DistilledChangeRepository;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
@@ -45,13 +45,12 @@ public class StatisticsService {
 	
 	@Transactional
 	public void createNewExecution() {
-		Execution execution = new Execution(evaluationContext.getExecutionId());
-		
-		ExecutionMetadata metadata = execution.getExecutionMetadata();
-		metadata.setFailedClassName(evaluationContext.getTestClassName());
-		metadata.setFailedMethodName(evaluationContext.getTestMethodName());
-		metadata.setStackTrace(ExceptionUtils.getStackTrace(evaluationContext.getThrowable()));
-		
+		ImmutableMetadata immutableMetadata = new ImmutableMetadata(
+				evaluationContext.getTestClassName(), 
+				evaluationContext.getTestMethodName(), 
+				ExceptionUtils.getStackTrace(evaluationContext.getThrowable()));
+		Execution execution = new Execution(evaluationContext.getExecutionId(), immutableMetadata);
+
 		executionRepository.save(execution);
 	}
 

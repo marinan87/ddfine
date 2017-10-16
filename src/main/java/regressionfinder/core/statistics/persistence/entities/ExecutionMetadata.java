@@ -1,6 +1,6 @@
 package regressionfinder.core.statistics.persistence.entities;
 
-import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,12 +13,8 @@ public class ExecutionMetadata {
 	@GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
 	
-	private String failedClassName;
-	
-	private String failedMethodName;
-	
-	@Column(length = 5000, columnDefinition = "LONGVARCHAR")
-	private String stackTrace;
+	@Embedded
+	private ImmutableMetadata immutableMetadata;
 	
 	private String referenceSha;
 	
@@ -33,32 +29,16 @@ public class ExecutionMetadata {
 	private String resultComment;
 	
 	
+	protected ExecutionMetadata() {
+		this(null);
+	}
+	
+	public ExecutionMetadata(ImmutableMetadata immutableMetadata) {
+		this.immutableMetadata = immutableMetadata;
+	}
+	
 	public Long getId() {
 		return id;
-	}
-
-	public String getFailedClassName() {
-		return failedClassName;
-	}
-
-	public void setFailedClassName(String failedClassName) {
-		this.failedClassName = failedClassName;
-	}
-
-	public String getFailedMethodName() {
-		return failedMethodName;
-	}
-
-	public void setFailedMethodName(String failedMethodName) {
-		this.failedMethodName = failedMethodName;
-	}
-
-	public String getStackTrace() {
-		return stackTrace;
-	}
-
-	public void setStackTrace(String stackTrace) {
-		this.stackTrace = stackTrace;
 	}
 
 	public String getReferenceSha() {

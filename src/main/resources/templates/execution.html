@@ -12,7 +12,7 @@
         <p>Fixed SHA: <input type="text" th:field="*{fixedSha}" size="50"/></p>
         <p>Commit message / author / date: <input type="text" th:field="*{commitMessage}" size="100"/></p>
         <p>Was successful? <input type="checkbox" th:field="*{resultSummary}" /></p>
-        <p><textarea rows="20" cols="80" th:field="*{resultComment}"></textarea></p>
+        <p>Summary of results<textarea rows="20" cols="80" th:field="*{resultComment}"></textarea></p>
         <p><input type="submit" value="Store results" /></p>
     </form>
     <a th:href="@{/executions/}">Back to list of executions</a>
