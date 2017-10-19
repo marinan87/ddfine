@@ -1,8 +1,15 @@
 package regressionfinder.core.manipulation;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.java.JavaEntityType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
@@ -21,22 +28,36 @@ public class SourceCodeFileManipulator {
 	private static Pattern INSIDE_PARENTHESES = Pattern.compile("^\\((.*)\\);$");
 
 	private final AffectedFile file;
-	private final MultiModuleMavenJavaProject workingAreaProject;
+	private final MultiModuleMavenJavaProject workingAreaProject, faultyProject;
 	private final StringBuilder content;
 	private int offset = 0;
 	
-	public SourceCodeFileManipulator(AffectedFile file, MultiModuleMavenJavaProject workingAreaProject) throws IOException {
+	public SourceCodeFileManipulator(AffectedFile file, MultiModuleMavenJavaProject workingAreaProject, MultiModuleMavenJavaProject faultyProject) throws IOException {
 		this.file = file;
 		this.workingAreaProject = workingAreaProject;
+		this.faultyProject = faultyProject;
 		
         content = new StringBuilder(workingAreaProject.readSourceCode(file.getPath()));
 	}
 
 	public void applyChanges() throws IOException {
 		file.getChangesInFile().forEach(this::applySourceCodeChange);
+		mergeImports();
 		workingAreaProject.writeSourceCode(file.getPath(), content.toString());
 	}
 	
+	private void mergeImports() throws IOException {
+		List<String> faultyFileLines = Files.readAllLines(faultyProject.findFile(file.getPath()).toPath());
+		Set<String> importLines = faultyFileLines.stream().filter(line -> line.trim().startsWith("import ")).collect(Collectors.toSet());
+		String importLinesString = "\r\n" + StringUtils.join(importLines, "\r\n");
+		
+		Scanner scan = new Scanner(content.toString());
+		int importsInsertPosition = scan.skip("package.*?;").match().end();
+		scan.close();
+	
+		content.replace(importsInsertPosition, importsInsertPosition, importLinesString);
+	}
+
 	private void applySourceCodeChange(SourceCodeChange sourceCodeChange) {
 		if (sourceCodeChange instanceof Insert) {
 			applySourceCodeChange((Insert) sourceCodeChange);

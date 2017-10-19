@@ -173,11 +173,11 @@ public class EvaluationContext {
 		    	System.out.println("Problem with deserializing prepared dependencies file.");
 		    	throw new RuntimeException(e);
 		    }
-/*		} else {
-			mavenDependencies = workingAreaProject.getMavenProjects().values().stream()
-					.flatMap(mavenCompiler::getLocalMavenDependencies)
-					.collect(toSet());
-		}*/
+//		} else {
+//			mavenDependencies = workingAreaProject.getMavenProjects().values().stream()
+//					.flatMap(mavenCompiler::getLocalMavenDependencies)
+//					.collect(Collectors.toSet());
+//		}
 		mavenDependenciesClassPaths = () -> mavenDependencies.stream();
 		
 		throwable = (Throwable) testMethodRunner.obtainOriginalException();

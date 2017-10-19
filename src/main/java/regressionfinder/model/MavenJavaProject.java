@@ -67,10 +67,6 @@ public class MavenJavaProject extends MavenProject {
 			return "Sources directory is missing or empty.";
 		}
 		
-		if (!targetClassesPath.toFile().isDirectory()) {
-			return "Target classes directory is missing.";
-		}
-		
 		return StringUtils.EMPTY;
 	}
 	
@@ -127,9 +123,10 @@ public class MavenJavaProject extends MavenProject {
 	}
 	
 	public void copyFileToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {
-		Files.copy(findAbsolutePath(relativePath),
+		Path copiedFile = Files.copy(findAbsolutePath(relativePath),
 				targetProject.findAbsolutePath(relativePath),
 				StandardCopyOption.REPLACE_EXISTING);
+		copiedFile.toFile().setLastModified(System.currentTimeMillis());
 	}
 	
 	public void copyDirectoryToAnotherProject(MavenJavaProject targetProject, Path relativePath) throws IOException {

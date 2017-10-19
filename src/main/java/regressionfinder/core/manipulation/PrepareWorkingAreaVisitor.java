@@ -20,7 +20,7 @@ public class PrepareWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 	
 	@Override
 	public void visit(AffectedFile entity) throws IOException {
-		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject()).applyChanges();
+		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject(), evaluationContext.getFaultyProject()).applyChanges();
 	}
 
 	@Override

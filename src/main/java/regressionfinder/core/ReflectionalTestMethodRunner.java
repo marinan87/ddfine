@@ -3,7 +3,9 @@ package regressionfinder.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,8 +34,16 @@ public class ReflectionalTestMethodRunner {
 	}
 	
 	private <T extends IsolatedClassLoaderAwareJUnitTestRunner> Object runMethodInIsolatedTestRunner(Class<T> clazz, 
-			Set<URL> classPaths, MethodDescriptor methodDescriptor) {
-		URL[] classPathURLs = classPaths.toArray(new URL[0]);
+			Set<URL> classPaths, MethodDescriptor methodDescriptor) {	
+		Set<URL> filteredClassPaths = new HashSet<>();
+		Pattern pattern = Pattern.compile(".*roadlog.*jar$");
+		for (URL classPathUrl : classPaths) {
+			if (!classPathUrl.toString().contains("jcl-over-slf4j") && !pattern.matcher(classPathUrl.toString()).matches()) {
+				filteredClassPaths.add(classPathUrl);
+			}
+		}
+		
+		URL[] classPathURLs = filteredClassPaths.toArray(new URL[0]);
 		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPathURLs)) {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
 			Constructor<?> constructor = runnerClass.getConstructor(String.class, String.class);
