@@ -111,11 +111,12 @@ public class SourceCodeFileManipulator {
 			return;
 		}
 
-		StringBuilder textToInsert = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter);
+		StringBuilder extractedText = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter);
+		String text = extractedText.toString().replaceAll("<no type> ", "") + ";";
 		int startPosition = insert.getChangedEntity().getStartPosition();
 
-		content.replace(startPosition + offset, startPosition + offset, textToInsert.toString());
-		offset += textToInsert.length();
+		content.replace(startPosition + offset, startPosition + offset, text);
+		offset += text.length();
 	}
 
 	private StringBuilder appendDelimiters(String string, boolean inline, boolean commaDelimiter) {
@@ -157,6 +158,8 @@ public class SourceCodeFileManipulator {
 		} else {
 			newStatement = update.getNewEntity().getUniqueName();
 		}
+
+		newStatement = newStatement.replaceAll("<no type> ", "");
 
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;

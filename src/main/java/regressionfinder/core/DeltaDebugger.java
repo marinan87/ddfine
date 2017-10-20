@@ -4,7 +4,9 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.deltadebugging.ddcore.DD;
@@ -25,6 +27,7 @@ public class DeltaDebugger extends JUnitTester {
 	
 	private static PrintStream DEFAULT_PRINT_STREAM = System.out;
 	private ByteArrayOutputStream deltaDebuggerOutputStream;
+	private Map<String, Integer> trialsCache = new HashMap<>();
 	
 	
 	@Autowired
@@ -64,10 +67,19 @@ public class DeltaDebugger extends JUnitTester {
 	public int test(DeltaSet set) {
 		@SuppressWarnings("unchecked")
 		List<MinimalApplicableChange> selectedChangeSet = (List<MinimalApplicableChange>) set.stream().collect(toList());
+		String setContent = extractOutputFromStream();
 		List<AffectedUnit> affectedUnits = AffectedUnit.fromListOfMinimalChanges(selectedChangeSet);
 		
-		int testOutcome = runNextTrial(affectedUnits);
-		statisticsTracker.registerNextTrial(extractOutputFromStream(), selectedChangeSet.size(), TestOutcome.fromNumericCode(testOutcome));
+		int testOutcome = 2;
+		Integer cachedOutcome = trialsCache.get(setContent);
+		if (cachedOutcome == null) {
+			testOutcome = runNextTrial(affectedUnits);
+			trialsCache.put(setContent, testOutcome);
+		} else {
+			testOutcome = cachedOutcome.intValue();
+		}
+		
+		statisticsTracker.registerNextTrial(setContent, selectedChangeSet.size(), TestOutcome.fromNumericCode(testOutcome));
 		return testOutcome;
 	}
 	

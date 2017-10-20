@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableMap;
 public class MultiModuleMavenJavaProject extends MavenProject {
 	
 	private static final List<String> IGNORED_DIRS_FOR_SCAN = ImmutableList.of("src", ".settings", ".svn", ".metadata", "archetype", "ci");	
-	private static final List<String> IGNORED_DIRS_FOR_COPY = ImmutableList.of(".settings", ".svn", ".metadata");
+	private static final List<String> IGNORED_DIRS_FOR_COPY = ImmutableList.of(".settings", ".svn", ".metadata", ".git", ".idea");
 	
 	private Map<Path, MavenJavaProject> mavenProjects = new HashMap<>();
 	

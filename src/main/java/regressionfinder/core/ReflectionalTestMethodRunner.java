@@ -15,6 +15,7 @@ import regressionfinder.isolatedrunner.IsolatedClassLoaderAwareJUnitTestRunner;
 import regressionfinder.isolatedrunner.IsolatedURLClassLoader;
 import regressionfinder.isolatedrunner.JUnitTestRunner;
 import regressionfinder.isolatedrunner.MethodDescriptor;
+import regressionfinder.model.TestOutcome;
 
 @Service
 public class ReflectionalTestMethodRunner {
@@ -42,7 +43,7 @@ public class ReflectionalTestMethodRunner {
 				filteredClassPaths.add(classPathUrl);
 			}
 		}
-		
+
 		URL[] classPathURLs = filteredClassPaths.toArray(new URL[0]);
 		try (IsolatedURLClassLoader isolatedClassLoader = new IsolatedURLClassLoader(classPathURLs)) {
 			Class<?> runnerClass = isolatedClassLoader.loadClass(clazz.getName());
@@ -53,7 +54,7 @@ public class ReflectionalTestMethodRunner {
 			Method method = isolatedTestRunner.getClass().getMethod(methodDescriptor.getMethodName(), methodDescriptor.getParameterTypes());
 			return method.invoke(isolatedTestRunner, methodDescriptor.getArgs());			
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			return TestOutcome.UNRESOLVED.getNumCode();
 		}
 	}
 }

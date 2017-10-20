@@ -66,6 +66,7 @@ public class StatisticsTracker {
 		
 		statisticsService.storeTrial(numberOfTrials + 1, setContent, outcome.getNumCode(), lastTrialMetrics);
 		
+		lastTrialMetrics[0] = lastTrialMetrics[1] = lastTrialMetrics[2] = lastTrialMetrics[3] = -1;
 		numberOfTrials++;
 	}
 
