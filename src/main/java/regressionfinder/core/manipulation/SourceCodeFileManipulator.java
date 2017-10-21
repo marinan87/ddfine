@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
 import ch.uzh.ifi.seal.changedistiller.model.classifiers.java.JavaEntityType;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Delete;
 import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
@@ -110,13 +111,18 @@ public class SourceCodeFileManipulator {
 		default:
 			return;
 		}
-
-		StringBuilder extractedText = appendDelimiters(insert.getChangedEntity().getContent(), inline, commaDelimiter);
-		String text = extractedText.toString().replaceAll("<no type> ", "") + ";";
+		
+		String changedEntityContent = insert.getChangedEntity().getContent();
+		if (insert.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
+			changedEntityContent = "return " + changedEntityContent;
+		} 
+		
+		changedEntityContent = changedEntityContent.replaceAll("<no type> ", "");
+		StringBuilder extractedText = appendDelimiters(changedEntityContent, inline, commaDelimiter);
 		int startPosition = insert.getChangedEntity().getStartPosition();
-
-		content.replace(startPosition + offset, startPosition + offset, text);
-		offset += text.length();
+		
+		content.replace(startPosition + offset, startPosition + offset, extractedText.toString());
+		offset += extractedText.length();
 	}
 
 	private StringBuilder appendDelimiters(String string, boolean inline, boolean commaDelimiter) {
@@ -138,6 +144,7 @@ public class SourceCodeFileManipulator {
 	private void applySourceCodeChange(Update update) {
 		switch (update.getChangeType()) {
 		case STATEMENT_UPDATE:
+		case CONDITION_EXPRESSION_CHANGE:
 		case INCREASING_ACCESSIBILITY_CHANGE:
 		case DECREASING_ACCESSIBILITY_CHANGE:
 		case PARAMETER_RENAMING:
@@ -163,7 +170,14 @@ public class SourceCodeFileManipulator {
 
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;
-
+		if (update.getChangeType() == ChangeType.CONDITION_EXPRESSION_CHANGE) {
+			newStatement = "if (" + newStatement + ")";
+			Scanner scanner = new Scanner(content.toString().substring(startPosition + offset));
+			Pattern ifCondition = Pattern.compile("if \\((.*)\\)");
+			String oldStatement = scanner.findInLine(ifCondition);
+			scanner.close();
+			changedEntityValueLength = oldStatement.length();
+		}
 		content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, newStatement);
 		offset += newStatement.length() - changedEntityValueLength;
 	}
@@ -171,17 +185,38 @@ public class SourceCodeFileManipulator {
 	private void applySourceCodeChange(Delete delete) {
 		switch (delete.getChangeType()) {
 		case REMOVED_FUNCTIONALITY:
+		case STATEMENT_DELETE:
+		case ALTERNATIVE_PART_DELETE:
 			break;
 		default:
 			throw new UnsupportedOperationException();
 		}
 
-		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD) {
-			int startPosition = delete.getChangedEntity().getStartPosition();
+		int startPosition = delete.getChangedEntity().getStartPosition();
+		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD 
+				|| delete.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT
+				|| delete.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 
 			content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, "");
 			offset -= changedEntityValueLength;
+		} else if (delete.getChangedEntity().getType() == JavaEntityType.IF_STATEMENT) {
+			String entity = delete.getChangedEntity().getContent();
+			Pattern pattern = Pattern.compile("^\\((.*)\\)$");
+			Matcher matcher = pattern.matcher(delete.getChangedEntity().getContent());
+			if (matcher.matches()) {
+				entity = matcher.group(1);
+			}
+			int oldValueLength = entity.length();
+
+			content.replace(startPosition + offset + "if (".length(), startPosition + offset + "if (".length() + oldValueLength, "false");
+			offset -= (oldValueLength - "false".length());
+		} else if (delete.getChangedEntity().getType() == JavaEntityType.ELSE_STATEMENT) {
+			// ignore for a while
+//			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
+//
+//			content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, "{}");
+//			offset -= (changedEntityValueLength - "{}".length());
 		} else {
 			throw new UnsupportedOperationException();
 		}
