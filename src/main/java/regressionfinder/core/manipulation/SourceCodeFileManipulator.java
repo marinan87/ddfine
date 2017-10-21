@@ -67,12 +67,11 @@ public class SourceCodeFileManipulator {
 		} else if (sourceCodeChange instanceof Delete) {
 			applySourceCodeChange((Delete) sourceCodeChange);
 		} else {
-			throw new UnsupportedOperationException(); // TODO: Move operation?
+			throw new UnsupportedOperationException();
 		}
 	}
 
 	private void applySourceCodeChange(Insert insert) {
-		// TODO: refactor
 		boolean inline = false, commaDelimiter = false;
 		switch (insert.getChangeType()) {
 		case STATEMENT_INSERT:
