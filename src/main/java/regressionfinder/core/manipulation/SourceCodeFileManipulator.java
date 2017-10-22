@@ -102,6 +102,7 @@ public class SourceCodeFileManipulator {
 			inline = false;
 			break;
 		case PARAMETER_INSERT:
+		case PARENT_INTERFACE_INSERT:
 			inline = true;
 			if (insert.getPosition() > 0) {
 				commaDelimiter = true;
@@ -142,6 +143,7 @@ public class SourceCodeFileManipulator {
 
 	private void applySourceCodeChange(Update update) {
 		switch (update.getChangeType()) {
+		case ATTRIBUTE_TYPE_CHANGE:
 		case STATEMENT_UPDATE:
 		case CONDITION_EXPRESSION_CHANGE:
 		case INCREASING_ACCESSIBILITY_CHANGE:
@@ -184,6 +186,7 @@ public class SourceCodeFileManipulator {
 	private void applySourceCodeChange(Delete delete) {
 		switch (delete.getChangeType()) {
 		case REMOVED_FUNCTIONALITY:
+		case REMOVED_OBJECT_STATE:
 		case STATEMENT_DELETE:
 		case ALTERNATIVE_PART_DELETE:
 			break;
@@ -194,7 +197,8 @@ public class SourceCodeFileManipulator {
 		int startPosition = delete.getChangedEntity().getStartPosition();
 		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD 
 				|| delete.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT
-				|| delete.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
+				|| delete.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT
+				|| delete.getChangedEntity().getType() == JavaEntityType.FIELD) {
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 
 			content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, "");
