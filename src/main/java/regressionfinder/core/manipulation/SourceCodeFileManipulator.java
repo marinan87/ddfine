@@ -111,7 +111,7 @@ public class SourceCodeFileManipulator {
 		default:
 			return;
 		}
-		
+				
 		String changedEntityContent = insert.getChangedEntity().getContent();
 		if (insert.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			changedEntityContent = "return " + changedEntityContent;
@@ -151,11 +151,12 @@ public class SourceCodeFileManipulator {
 		case PARAMETER_RENAMING:
 		case PARAMETER_TYPE_CHANGE:
 		case METHOD_RENAMING:
+		case RETURN_TYPE_CHANGE:
 			break;
 		default:
 			throw new UnsupportedOperationException();
 		}
-
+		
 		String newStatement = "";
 		if (update.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT) {
 			newStatement = "return ";
@@ -172,12 +173,21 @@ public class SourceCodeFileManipulator {
 		int startPosition = update.getChangedEntity().getStartPosition();
 		int changedEntityValueLength = update.getChangedEntity().getEndPosition() - startPosition + 1;
 		if (update.getChangeType() == ChangeType.CONDITION_EXPRESSION_CHANGE) {
-			newStatement = "if (" + newStatement + ")";
-			Scanner scanner = new Scanner(content.toString().substring(startPosition + offset));
-			Pattern ifCondition = Pattern.compile("if \\((.*)\\)");
-			String oldStatement = scanner.findInLine(ifCondition);
-			scanner.close();
-			changedEntityValueLength = oldStatement.length();
+			if (update.getChangedEntity().getType() == JavaEntityType.IF_STATEMENT) {
+				newStatement = "if (" + newStatement + ")";
+				Scanner scanner = new Scanner(content.toString().substring(startPosition + offset));
+				Pattern ifCondition = Pattern.compile("if \\((.*)\\)");
+				String oldStatement = scanner.findInLine(ifCondition);
+				scanner.close();
+				changedEntityValueLength = oldStatement.length();
+			} else {
+				newStatement = "for (" + newStatement + ")";
+				Scanner scanner = new Scanner(content.toString().substring(startPosition + offset));
+				Pattern forCondition = Pattern.compile("for \\((.*)\\)");
+				String oldStatement = scanner.findInLine(forCondition);
+				scanner.close();
+				changedEntityValueLength = oldStatement.length();
+			}
 		}
 		content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, newStatement);
 		offset += newStatement.length() - changedEntityValueLength;
@@ -189,16 +199,24 @@ public class SourceCodeFileManipulator {
 		case REMOVED_OBJECT_STATE:
 		case STATEMENT_DELETE:
 		case ALTERNATIVE_PART_DELETE:
+		case PARAMETER_DELETE:
 			break;
 		default:
 			throw new UnsupportedOperationException();
 		}
-
+		
 		int startPosition = delete.getChangedEntity().getStartPosition();
+		if (delete.getChangedEntity().getType() == JavaEntityType.PARAMETER) {
+			startPosition -= (delete.getChangedEntity().getContent().lastIndexOf(" ") + 1);
+		}
+		
 		if (delete.getChangedEntity().getType() == JavaEntityType.METHOD 
 				|| delete.getChangedEntity().getType() == JavaEntityType.VARIABLE_DECLARATION_STATEMENT
 				|| delete.getChangedEntity().getType() == JavaEntityType.RETURN_STATEMENT
-				|| delete.getChangedEntity().getType() == JavaEntityType.FIELD) {
+				|| delete.getChangedEntity().getType() == JavaEntityType.FIELD
+				|| delete.getChangedEntity().getType() == JavaEntityType.METHOD_INVOCATION
+				|| delete.getChangedEntity().getType() == JavaEntityType.ASSIGNMENT
+				|| delete.getChangedEntity().getType() == JavaEntityType.PARAMETER) {
 			int changedEntityValueLength = delete.getChangedEntity().getEndPosition() - startPosition + 1;
 
 			content.replace(startPosition + offset, startPosition + offset + changedEntityValueLength, "");

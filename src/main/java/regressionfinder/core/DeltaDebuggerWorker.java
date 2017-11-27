@@ -9,6 +9,7 @@ import regressionfinder.core.manipulation.PrepareWorkingAreaVisitor;
 import regressionfinder.core.manipulation.RestoreWorkingAreaVisitor;
 import regressionfinder.core.statistics.LogTrialDuration;
 import regressionfinder.model.AffectedUnit;
+import regressionfinder.model.TestOutcome;
 
 @Service
 public class DeltaDebuggerWorker {
@@ -35,8 +36,13 @@ public class DeltaDebuggerWorker {
 	}
 	
 	@LogTrialDuration
-	public void recompileWorkingArea() {
-		mavenCompiler.triggerSimpleCompilation(evaluationContext.getWorkingAreaProject());
+	public int recompileWorkingArea() {
+		return mavenCompiler.triggerSimpleCompilation(evaluationContext.getWorkingAreaProject());
+	}
+	
+	@LogTrialDuration
+	public int pretendToRunTest() {
+		return TestOutcome.UNRESOLVED.getNumCode();
 	}
 	
 	@LogTrialDuration

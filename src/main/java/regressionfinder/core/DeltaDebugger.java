@@ -91,10 +91,12 @@ public class DeltaDebugger extends JUnitTester {
 		return result;
 	}
 
-	private int runNextTrial(List<AffectedUnit> affectedUnits) {
+	private int runNextTrial(List<AffectedUnit> affectedUnits) {		
 		deltaDebuggerWorker.prepareWorkingAreaForNextTrial(affectedUnits);
-		deltaDebuggerWorker.recompileWorkingArea();
-		int testOutcome = deltaDebuggerWorker.runFaultyTest();
+		int compilationResult = deltaDebuggerWorker.recompileWorkingArea();
+		int testOutcome = (compilationResult != MavenCompiler.SUCCESSFUL_COMPILATION_CODE) 
+				? deltaDebuggerWorker.pretendToRunTest()
+				: deltaDebuggerWorker.runFaultyTest();
 		deltaDebuggerWorker.restoreWorkingArea(affectedUnits);
 		return testOutcome;
 	}

@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,11 +22,12 @@ import org.springframework.stereotype.Service;
 
 import regressionfinder.model.MavenProject;
 import regressionfinder.model.MultiModuleMavenJavaProject;
+import regressionfinder.model.TestOutcome;
 
 @Service
 public class MavenCompiler {
 	
-	private static final int SUCCESSFUL_COMPILATION_CODE = 0;
+	public static final int SUCCESSFUL_COMPILATION_CODE = 0;
 	private static final String PHASE_COMPILE = "compile";
 	private static final String PHASE_TEST_COMPILE = "test-compile";
 	private static final String GOAL_BUILD_CLASSPATH = "dependency:build-classpath";
@@ -45,8 +47,8 @@ public class MavenCompiler {
 		}
 	}
 
-	public void triggerSimpleCompilation(MultiModuleMavenJavaProject project) {
-		triggerCompilation(project, PHASE_COMPILE);
+	public int triggerSimpleCompilation(MavenProject project) {
+		return triggerCompilation(project, PHASE_COMPILE);
 	}
 
 	private int triggerCompilation(MavenProject project, String phase) {
@@ -113,5 +115,43 @@ public class MavenCompiler {
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(String.format("Error while converting JAR path %s to URL", path.toString()));
 		}
+	}
+	
+	public int runTest(MavenProject project, String testClassName, String testMethodName) {
+		InvocationRequest request = new DefaultInvocationRequest();
+		request.setPomFile(project.getRootPomXml());
+		request.setGoals(Arrays.asList("test"));
+		request.setThreads(THREADS_1C);
+		request.setMavenOpts(MAVEN_OPTS);
+		request.setOffline(true);
+		request.setGlobalSettingsFile(mavenSettings);
+		StringBuilder sb = new StringBuilder();
+		request.setOutputHandler(new InvocationOutputHandler() {
+			@Override
+			public void consumeLine(String arg0) {
+				sb.append(arg0 + "\r\n");
+			}
+		});
+		
+		Properties properties = new Properties();
+		properties.setProperty("test", testClassName + "#" + testMethodName);
+		properties.setProperty("failIfNoTests", "false");
+		request.setProperties(properties);
+
+		Invoker invoker = new DefaultInvoker();
+		invoker.setMavenHome(new File(MAVEN_HOME));
+		InvocationResult invocationResult;
+		try {
+			invocationResult = invoker.execute(request);
+		} catch (MavenInvocationException e) {
+			throw new RuntimeException(e);
+		}
+		
+		if (invocationResult.getExitCode() != SUCCESSFUL_COMPILATION_CODE) {
+			return TestOutcome.UNRESOLVED.getNumCode();
+		}
+
+		String errorIndicationLine = "Tests in error: \r\n  " + testClassName.substring(testClassName.lastIndexOf(".") + 1) + "." + testMethodName;
+		return sb.toString().contains(errorIndicationLine) ? TestOutcome.FAIL.getNumCode() : TestOutcome.PASS.getNumCode();	
 	}
 }

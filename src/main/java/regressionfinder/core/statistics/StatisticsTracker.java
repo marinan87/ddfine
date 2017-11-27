@@ -59,6 +59,10 @@ public class StatisticsTracker {
 	}
 	
 	public void registerNextTrial(String setContent, int setSize, TestOutcome outcome) {
+		if ((System.currentTimeMillis() - startTime) > 5400000) {
+			throw new RuntimeException();
+		}
+		
 		log(format("DD trial #%s. Set size: %s. Outcome was: %s.", numberOfTrials + 1, setSize, outcome));
 		log(format("Set content: %s", setContent));
 		log(format("Timing: (prepare working area) - %s ms, (recompile working area) - %s ms, (run test) - %s ms, (restore working area) - %s ms.",
