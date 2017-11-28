@@ -126,7 +126,7 @@ public class StatisticsService {
 		distilledChange.setChunkNumber(chunkNumber);
 		distilledChange.setChangePath(chunk.getPathToFile().toString());
 		distilledChange.setChangeType(chunk.getChangeTypeString());
-		distilledChange.setLocation(chunk.getSourceCodeChange().getChangedEntity().getStartPosition());
+		distilledChange.setLocation(chunk.getPatch().start1);
 		
 		return distilledChange;
 	}

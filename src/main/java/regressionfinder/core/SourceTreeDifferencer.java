@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,11 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 
-import ch.uzh.ifi.seal.changedistiller.ChangeDistiller;
-import ch.uzh.ifi.seal.changedistiller.ChangeDistiller.Language;
-import ch.uzh.ifi.seal.changedistiller.distilling.FileDistiller;
-import ch.uzh.ifi.seal.changedistiller.model.classifiers.SignificanceLevel;
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import name.fraser.neil.plaintext.diff_match_patch;
+import name.fraser.neil.plaintext.diff_match_patch.Patch;
 import regressionfinder.core.statistics.ExecutionPhase;
 import regressionfinder.core.statistics.LogDuration;
 import regressionfinder.core.statistics.StatisticsTracker;
@@ -47,6 +45,9 @@ public class SourceTreeDifferencer {
 	@Autowired
 	private StatisticsTracker statisticsTracker;
 	
+	@Autowired
+	private diff_match_patch diffMatchPatch;
+	
 	
 	@LogDuration(ExecutionPhase.CHANGE_DISTILLING)
 	public List<MinimalApplicableChange> distillChanges() {
@@ -56,43 +57,28 @@ public class SourceTreeDifferencer {
 				.filter(change -> (change instanceof MinimalChangeInFile))
 				.map(change -> (MinimalChangeInFile) change)
 				.collect(Collectors.toList());
-		assertContainsOnlySupportedChanges(sourceCodeChanges);
 		statisticsTracker.logDetectedChanges(sourceCodeChanges);
 		
 		return filteredChanges;
 	}
-	
-	private void assertContainsOnlySupportedChanges(List<MinimalChangeInFile> changesInFile) {
-		List<MinimalChangeInFile> unsupportedChanges = changesInFile.stream()
-			.filter(changeInFile -> {
-				SourceCodeChange sourceCodeChange = changeInFile.getSourceCodeChange();
-				return !SupportedModificationsRegistry.supportsModification(sourceCodeChange.getClass(), sourceCodeChange.getChangeType());
-			})
-			.collect(Collectors.toList());
-			
-		Preconditions.checkState(unsupportedChanges.isEmpty(), 
-				"Cannot continue. The following changes are not supported by the current prototype implementation:\r\n" 
-				+ unsupportedChanges);
-	}
 
 	private Stream<MinimalChangeInFile> distillChangesForPath(CombinedPath path) {
-		File left = evaluationContext.getReferenceProject().findFile(path);
-		File right = evaluationContext.getFaultyProject().findFile(path);
-		
-		FileDistiller distiller = ChangeDistiller.createFileDistiller(Language.JAVA);
-		distiller.extractClassifiedSourceCodeChanges(left, right);
-		
-		return filterOutSafeChanges(distiller.getSourceCodeChanges())
-			.map(change -> {
-				statisticsTracker.incrementNumberOfUnsafeSourceCodeChanges();
-				return new MinimalChangeInFile(path, change);
-			});
-	}
-	
-	private Stream<SourceCodeChange> filterOutSafeChanges(List<SourceCodeChange> allChanges) {
-		statisticsTracker.incrementNumberOfSourceCodeChangesBySize(allChanges.size());
-		return allChanges.stream()
-				.filter(change -> change.getChangeType().getSignificance() != SignificanceLevel.NONE);
+		try {
+			String left = evaluationContext.getReferenceProject().readSourceCode(path);
+			String right = evaluationContext.getFaultyProject().readSourceCode(path);
+			
+			diffMatchPatch.Match_Distance = 5000;
+			LinkedList<Patch> patches = diffMatchPatch.patch_make(left, right);
+			statisticsTracker.incrementNumberOfSourceCodeChangesBySize(patches.size());
+
+			return patches.stream()
+					.map(patch -> {
+						statisticsTracker.incrementNumberOfUnsafeSourceCodeChanges();
+						return new MinimalChangeInFile(path, patch);
+					});
+		} catch (IOException ioe) {
+			throw new RuntimeException("An I/O error occurred while trying to obtain diff.");
+		}
 	}
 	
 	private class SourceTreeScanner {		

@@ -3,34 +3,25 @@ package regressionfinder.model;
 import java.io.IOException;
 import java.util.List;
 
-import ch.uzh.ifi.seal.changedistiller.model.entities.Insert;
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import name.fraser.neil.plaintext.diff_match_patch.Patch;
 import regressionfinder.core.manipulation.WorkingAreaManipulationVisitor;
 import regressionfinder.core.renderer.RenderingVisitor;
 
 public class AffectedFile extends AffectedUnit {
 
-	private final List<SourceCodeChange> sortedChangesInFile;
+	private final List<Patch> sortedChangesInFile;
 	
-	public AffectedFile(CombinedPath path, List<SourceCodeChange> changes) {
+	public AffectedFile(CombinedPath path, List<Patch> changes) {
 		super(path);
 		sortChanges(changes);
 		this.sortedChangesInFile = changes;
 	}
 	
-	private void sortChanges(List<SourceCodeChange> sourceCodeChanges) {
-		sourceCodeChanges.sort((o1, o2) -> {
-			int firstStartPosition = o1.getChangedEntity().getStartPosition();
-			int secondStartPosition = o2.getChangedEntity().getStartPosition();
-
-			if (firstStartPosition == secondStartPosition && o1 instanceof Insert && o2 instanceof Insert) {
-				return ((Insert) o1).getPosition() - ((Insert) o2).getPosition();
-			}
-			return firstStartPosition - secondStartPosition;
-		});
+	private void sortChanges(List<Patch> sourceCodeChanges) {
+		sourceCodeChanges.sort((o1, o2) -> (o1.start1 - o2.start1));
 	}
 
-	public List<SourceCodeChange> getChangesInFile() {
+	public List<Patch> getChangesInFile() {
 		return sortedChangesInFile;
 	}
 	

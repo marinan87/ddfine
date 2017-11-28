@@ -32,7 +32,7 @@ public abstract class AffectedUnit {
 			.collect(
 				toMap(
 					MinimalChangeInFile::getPathToFile, 
-					change -> newArrayList(change.getSourceCodeChange()),
+					change -> newArrayList(change.getPatch()),
 					(a, b) -> { 
 						a.addAll(b);
 						return a;

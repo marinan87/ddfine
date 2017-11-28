@@ -2,29 +2,29 @@ package regressionfinder.model;
 
 import static java.lang.String.format;
 
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import name.fraser.neil.plaintext.diff_match_patch.Patch;
 
 public class MinimalChangeInFile extends MinimalApplicableChange {
 	
-	private final SourceCodeChange sourceCodeChange;
+	private final Patch patch;
 	
-	public MinimalChangeInFile(CombinedPath pathToFile, SourceCodeChange sourceCodeChange) {
+	public MinimalChangeInFile(CombinedPath pathToFile, Patch patch) {
 		super(pathToFile);
-		this.sourceCodeChange = sourceCodeChange;
+		this.patch = patch;
 	}
 
-	public SourceCodeChange getSourceCodeChange() {
-		return sourceCodeChange;
+	public Patch getPatch() {
+		return patch;
 	}
 	
 	@Override
 	public String toString() {
 		return format("Change of type %s in path %s. Location in reference version: %s.\r\n", 
-				getChangeTypeString(), pathToFile, sourceCodeChange.getChangedEntity().getStartPosition());
+				getChangeTypeString(), pathToFile, patch.start1);
 	}
 
 	@Override
 	public String getChangeTypeString() {
-		return sourceCodeChange.getChangeType().toString();
+		return "UNCLASSIFIED";
 	}
 }

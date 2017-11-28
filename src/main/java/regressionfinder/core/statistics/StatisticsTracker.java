@@ -1,29 +1,20 @@
 package regressionfinder.core.statistics;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import ch.uzh.ifi.seal.changedistiller.model.classifiers.ChangeType;
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.core.statistics.persistence.StatisticsService;
 import regressionfinder.model.MinimalApplicableChange;
@@ -118,16 +109,6 @@ public class StatisticsTracker {
 	}
 	
 	public void logDetectedChanges(List<MinimalChangeInFile> sourceCodeChanges) {
-		Map<ChangeType, Long> statisticsOnChangeType = sourceCodeChanges.stream()
-			.map(MinimalChangeInFile::getSourceCodeChange)
-			.collect(groupingBy(SourceCodeChange::getChangeType, counting()))
-			.entrySet().stream()
-			.sorted(Map.Entry.comparingByKey())
-			.sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-			.collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-		log("Following changes detected:");
-		log(StringUtils.join(statisticsOnChangeType.entrySet().toArray(), "\r\n"));
-		
 		log(format("Number of detected changes: source code chunks - %s, structural changes - %s, total - %s", 
 				numberOfSourceCodeChanges, numberOfStructuralChanges, numberOfSourceCodeChanges + numberOfStructuralChanges));
 		log(format("Number of changes to try after filtering out safe changes: %s", numberOfUnsafeSourceCodeChanges + numberOfStructuralChanges));

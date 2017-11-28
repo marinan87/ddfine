@@ -8,9 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ch.uzh.ifi.seal.changedistiller.model.entities.SourceCodeChange;
+import name.fraser.neil.plaintext.diff_match_patch.Patch;
 import regressionfinder.core.EvaluationContext;
-import regressionfinder.core.manipulation.SourceCodeFileManipulator;
 import regressionfinder.core.statistics.StatisticsTracker;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
@@ -39,25 +38,28 @@ public class FaultyRenderingVisitor implements RenderingVisitor {
 	}
 	
 	private List<Integer> getLineNumbers(AffectedFile file, String sourceCode) {
-		List<SourceCodeChange> remainingChanges = new ArrayList<>(file.getChangesInFile());
+		List<Patch> remainingChanges = new ArrayList<>(file.getChangesInFile());
+		List<Integer> offsets = new ArrayList<>();
+		offsets.add(0);
 		List<Integer> lines = new ArrayList<>();
+		int totalOffset = 0;
 		
 		Scanner scanner = new Scanner(sourceCode);
-		int line = 0;
 		while (scanner.hasNextLine()) {
-			line++;
-			String nextLine = scanner.nextLine();
-			
-			for (SourceCodeChange change : remainingChanges) {
-				String changeContent = SourceCodeFileManipulator.normalizeEntityValue(change.getChangedEntity().getContent());
-				if (nextLine.contains(changeContent)) {
-					lines.add(line);
-					remainingChanges.remove(change);
-					break;
-				}	
-			}
+			totalOffset += scanner.nextLine().length() + 2;
+			offsets.add(totalOffset);
 		}
 		scanner.close();
+		
+		for (Patch change : remainingChanges) {
+			int line = 0;
+			for (; line < offsets.size(); line++) {
+				if (change.start1 >= offsets.get(line) && (line + 1 == offsets.size() || change.start1 < offsets.get(line + 1))) {
+					break;
+				}
+			}
+			lines.add(line + 1);
+		}
 		
 		statisticsTracker.logNumberOfLinesToInspect(lines.size());
 		return lines;

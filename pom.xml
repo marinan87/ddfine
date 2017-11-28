@@ -83,13 +83,13 @@
 			<version>3.1</version>
 		</dependency>
 		
-		<!-- ChangeDistiller (enhanced) -->
+		<!-- Diff-match-patch -->
 		<dependency>
-			<groupId>changedistiller</groupId>
-			<artifactId>changedistiller</artifactId>
+			<groupId>diff-match-patch</groupId>
+			<artifactId>diff-match-patch</artifactId>
 			<version>1.0</version>
 			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/changedistiller.jar</systemPath>
+			<systemPath>${project.basedir}/lib/diff-match-patch.jar</systemPath>
 		</dependency>
 
 		<!-- DDCore (Zeller's original version) -->

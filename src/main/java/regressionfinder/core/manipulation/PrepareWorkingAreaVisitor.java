@@ -6,6 +6,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import name.fraser.neil.plaintext.diff_match_patch;
 import regressionfinder.core.EvaluationContext;
 import regressionfinder.model.AffectedFile;
 import regressionfinder.model.AffectedStructuralEntity;
@@ -18,9 +19,13 @@ public class PrepareWorkingAreaVisitor implements WorkingAreaManipulationVisitor
 	@Autowired
 	private EvaluationContext evaluationContext;
 	
+	@Autowired
+	private diff_match_patch diffMatchPatch;
+	
+	
 	@Override
 	public void visit(AffectedFile entity) throws IOException {
-		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject(), evaluationContext.getFaultyProject()).applyChanges();
+		new SourceCodeFileManipulator(entity, evaluationContext.getWorkingAreaProject(), diffMatchPatch).applyChanges();
 	}
 
 	@Override

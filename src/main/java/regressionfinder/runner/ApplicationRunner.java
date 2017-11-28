@@ -11,6 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import name.fraser.neil.plaintext.diff_match_patch;
 import regressionfinder.core.RegressionFinder;
 import regressionfinder.core.statistics.persistence.entities.Execution;
 import regressionfinder.core.statistics.persistence.repository.ExecutionRepository;
@@ -45,5 +46,10 @@ public class ApplicationRunner {
 	@Bean
 	public ApplicationReadyListener applicationReadyListener() {
 		return new ApplicationReadyListener();
+	}
+	
+	@Bean
+	public diff_match_patch diffMatchPatch() {
+		return new diff_match_patch();
 	}
 }
