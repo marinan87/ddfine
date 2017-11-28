@@ -6,6 +6,7 @@
 </head>
 <body>
     <h3 th:text="| Execution # ${executionId}|"></h3>
+    <h4 th:text="| ${failedClassName}.${failedMethodName}()|"></h4>
     <form action="#" th:action="@{'/executions/' + ${executionId}}" th:object="${metadata}" method="post">
     	<p>Reference SHA: <input type="text" th:field="*{referenceSha}" size="50"/></p>
         <p>Faulty SHA: <input type="text" th:field="*{faultySha}" size="50"/></p>

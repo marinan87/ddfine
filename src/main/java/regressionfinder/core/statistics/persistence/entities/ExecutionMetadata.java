@@ -88,4 +88,12 @@ public class ExecutionMetadata {
 	public void setResultComment(String resultComment) {
 		this.resultComment = resultComment;
 	}
+	
+	public String getFailedClassName() {
+		return this.immutableMetadata.getFailedClassName();
+	}
+	
+	public String getFailedMethodName() {
+		return this.immutableMetadata.getFailedMethodName();
+	}
 }

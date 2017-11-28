@@ -31,8 +31,11 @@ public class ExecutionHistoryController {
 	@RequestMapping("/{executionId}")
 	public String viewExecution(@PathVariable("executionId") String executionId, Model model) {
 		Execution execution = executionHistoryService.findExecution(executionId);
+		ExecutionMetadata metadata = execution.getExecutionMetadata();
 		model.addAttribute("executionId", executionId);
-		model.addAttribute("metadata", execution.getExecutionMetadata());
+		model.addAttribute("failedClassName", metadata.getFailedClassName());
+		model.addAttribute("failedMethodName", metadata.getFailedMethodName());
+		model.addAttribute("metadata", metadata);
         return "execution";
 	}
 	
