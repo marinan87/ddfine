@@ -11,7 +11,7 @@ public class DeltaDebuggerTestRunner extends IsolatedClassLoaderAwareJUnitTestRu
 		super(testClassName, testMethodName);
 	}
 
-	public int runTest(Throwable throwable) {	
+	public int runTest(Throwable throwable) {
 		alterStackTraceToEffectivelyDisableComparisonByLineNumbersAndDiscardNonSignificantPart(throwable);
 
 		CustomizedJUnitTester tester = new CustomizedJUnitTester(jUnitTestAdapter);
@@ -38,9 +38,9 @@ public class DeltaDebuggerTestRunner extends IsolatedClassLoaderAwareJUnitTestRu
             	break;
             }
                        	
-            if (origElems[i].getFileName().compareTo(currElems[i].getFileName()) == 0
-            		&& origElems[i].getClassName().compareTo(currElems[i].getClassName()) == 0
-            		&& origElems[i].getMethodName().compareTo(currElems[i].getMethodName()) == 0) {
+            if (areEqual(origElems[i].getFileName(), currElems[i].getFileName())
+            		&& areEqual(origElems[i].getClassName(), currElems[i].getClassName())
+            		&& areEqual(origElems[i].getMethodName(), currElems[i].getMethodName())) {
             	origElems[i] = new StackTraceElement(origElems[i].getClassName(), origElems[i].getMethodName(), origElems[i].getFileName(), currElems[i].getLineNumber());
             }
             
@@ -54,6 +54,16 @@ public class DeltaDebuggerTestRunner extends IsolatedClassLoaderAwareJUnitTestRu
         
         throwable.setStackTrace(newStackTrace);
 	}
+	
+	private boolean areEqual(Object object1, Object object2) {
+        if (object1 == object2) {
+            return true;
+        }
+        if (object1 == null || object2 == null) {
+            return false;
+        }
+        return object1.equals(object2);
+    }
 	
 	class CustomizedJUnitTester extends JUnitTester {
 		CustomizedJUnitTester(Test testObject) {

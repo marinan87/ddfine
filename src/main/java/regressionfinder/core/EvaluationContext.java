@@ -166,17 +166,17 @@ public class EvaluationContext {
 		
 		final Set<URL> mavenDependencies;
 //			if (developmentMode)  {
-			try (	FileInputStream in = new FileInputStream(preparedDependenciesFile);
+/*			try (	FileInputStream in = new FileInputStream(preparedDependenciesFile);
 					ObjectInputStream ois = new ObjectInputStream(in);				) {
 				mavenDependencies = ((Set<URL>) ois.readObject());
 		    } catch (Exception e) {
 		    	System.out.println("Problem with deserializing prepared dependencies file.");
 		    	throw new RuntimeException(e);
-		    }
+		    }*/
 //		} else {
-//			mavenDependencies = workingAreaProject.getMavenProjects().values().stream()
-//					.flatMap(mavenCompiler::getLocalMavenDependencies)
-//					.collect(Collectors.toSet());
+			mavenDependencies = workingAreaProject.getMavenProjects().values().stream()
+					.flatMap(mavenCompiler::getLocalMavenDependencies)
+					.collect(Collectors.toSet());
 //		}
 		mavenDependenciesClassPaths = () -> mavenDependencies.stream();
 		
